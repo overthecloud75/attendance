@@ -1,0 +1,34 @@
+<div class="row justify-content-between my-3">  <!-- 양쪽정렬 justify-content-between로 변경 -->
+    <div class="col-2">
+        <select class="form-control so">
+            <option value="6month" {% if so=='6month' %}selected{% endif %}>6달</option>
+            <option value="1year" {% if so=='1year' %}selected{% endif %}>1년</option>
+            <option value="3year" {% if so=='3year' %}selected{% endif %}>3년</option>
+        </select>
+    </div>
+    <div class="col-4 input-group" style="max-width:500px;">
+        <input type="text" class="form-control kw" value="{{ keyword or '' }}">
+        <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="button" id="btn_search">찾기</button>
+        </div>
+    </div>
+</div>
+<form id="searchForm" method="get">
+    <input type="hidden" id="kw" name="kw" value="{{ keyword or '' }}">
+    <input type="hidden" id="page" name="page" value="{{ page }}">
+    <input type="hidden" id="so" name="so" value="{{ so }}">
+</form>
+<script type='text/javascript'>
+$(document).ready(function(){
+    $(".so").on('change', function() {
+        $("#so").val($(this).val());
+        $("#page").val(1);
+        $("#searchForm").submit();
+    });
+    $("#btn_search").on('click', function() {
+        $("#kw").val($(".kw").val());
+        $("#page").val(1);  // 검색버튼을 클릭할 경우 1페이지부터 조회한다.
+        $("#searchForm").submit();
+    });
+});
+</script>
