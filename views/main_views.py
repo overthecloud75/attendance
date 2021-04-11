@@ -71,7 +71,7 @@ def employees():
 def attend():
     page, keyword, so = request_get(request.args)
     paging, today, month, data_list = get_attend(page=page)
-    return render_template('report/attend.html', **locals())
+    return render_template('report/attendance.html', **locals())
 
 @bp.before_app_request
 def load_logged_in_user():

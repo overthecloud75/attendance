@@ -49,8 +49,8 @@ def paginate(page, per_page, count):
 
 def checkHoliday(date):
     isHoliday = False
-    month = date[4:6]
-    day = date[6:]
+    month = date[5:7]
+    day = date[8:]
     monthDay = month + day
     if monthDay in holidays:
         isHoliday = True
@@ -63,7 +63,7 @@ def checkTime():
     today = datetime.date.today()
     now = datetime.datetime.now()
     hour = now.hour
-    today = today.strftime("%Y%m%d")
+    today = today.strftime("%Y-%m-%d")
     month = now.month
     year = now.year
     firstDay = datetime.datetime(year, month, 1, 0, 0, 0)

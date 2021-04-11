@@ -24,8 +24,9 @@ def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.urandom(32)
 
-    from views import main_views
+    from views import main_views, calendar_views
     app.register_blueprint(main_views.bp)
+    app.register_blueprint(calendar_views.bp)
     return app
 
 def saveDB():

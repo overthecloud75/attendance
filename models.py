@@ -13,7 +13,7 @@ import json
 from views.config import page_default
 from utils import paginate, checkTime, checkHoliday
 
-from mainconfig import accessDBPwd, office365, beginTime, lunchFinishTime, workStatus
+from mainconfig import accessDBPwd, calendarUrl, office365, beginTime, lunchFinishTime, workStatus
 
 mongoClient = MongoClient('mongodb://localhost:27017/')
 db = mongoClient['report']
@@ -35,16 +35,24 @@ def post_schedule(scheduleList):
             collection.update_one({'date':schedule['date'], 'name':schedule['name']}, {'$set':schedule}, upsert=True)
     return scheduleDict
 
-def get_schedule(today):
+def get_schedule(date=None, startDate=None, endDate=None):
     collection = db['schedule']
-    scheduleDict = {}
-    data_list = collection.find({'date':today})
-    for data in data_list:
-        scheduleDict[data['name']] = data['status']
-    return scheduleDict
+    if startDate is None:
+        scheduleDict = {}
+        data_list = collection.find({'date':date})
+        for data in data_list:
+            scheduleDict[data['name']] = data['status']
+        return scheduleDict
+    else:
+        schedule = []
+        data_list = collection.find({'date':{"$gte":startDate, "$lte":endDate}})
+        for data in data_list:
+            title = data['name'] + ' / ' + data['status']
+            start = data['date']
+            schedule.append({'title':title, 'start':start})
+        return schedule
 
-def get_calendarData():
-    calendarUrl = 'https://mirageworks.sharepoint.com/sites/msteams_a0f4c8/Lists/List/calendar.aspx'
+def get_calendarFromSharePoint():
     driver = webdriver.Chrome(executable_path='chromedriver')
     driver.get(url=calendarUrl)
 
@@ -100,7 +108,6 @@ def get_calendarData():
                 if date:
                     date = date[0]
                     if text == date:
-                        date = date[0:4] + date[5:7] + date[8:10]
                         if 'date' not in scheduleList[-1]:
                             scheduleList[-1]['date'] = date
                         else:
@@ -118,9 +125,10 @@ def saveDB():
     hour, today, _ = checkTime()
     isHoliday = checkHoliday(today)
     if not isHoliday:
-        cursor.execute("select e_name, e_date, e_time from tenter where e_date = ?", today)
-        get_calendarData()
-        scheduleDict = get_schedule(today)
+        accessDay = today[0:4] + today[5:7] + today[8:] # accessDay 형식으로 변환
+        cursor.execute("select e_name, e_date, e_time from tenter where e_date = ?", accessDay)
+        get_calendarFromSharePoint()
+        scheduleDict = get_schedule(date=today)
 
         attend = {}
         employees = get_employees(page='all')
@@ -244,3 +252,7 @@ def get_attend(page=1):
     paging = paginate(page, per_page, count)
     return paging, today, month, data_list
 
+# calendar
+def get_calendar():
+    _, today, month = checkTime()
+    return today

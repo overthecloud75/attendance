@@ -1,4 +1,4 @@
-# PyTrade
+# ATTENDANCE
 ### 1. Result
 ### 2. Usage
 py -3.7 main.py <br>
@@ -9,3 +9,4 @@ To connect 32bit Access file, this implementation has been tested with 32bit Pyt
 https://wikidocs.net/book/4542 (flask)<br>
 https://pypi.org/project/pyodbc/ (to connect Access file of ADT ADserver)<br>
 https://selenium-python.readthedocs.io/ (to parse schedule in OFFICE365 sharepoint<br>
+https://github.com/sukeesh/flask-calendar (fullcalendar.js with flask)
