@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, PasswordField
+from wtforms import StringField, TextAreaField, PasswordField, DateField
 from wtforms.fields.html5 import EmailField
 from wtforms.validators import DataRequired, Length, EqualTo, Email
 
@@ -16,3 +16,7 @@ class UserLoginForm(FlaskForm):
 
 class EmployeesSubmitForm(FlaskForm):
     name = StringField('name', validators=[DataRequired(), Length(min=2, max=5)])
+
+class DateSubmitForm(FlaskForm):
+    startDate = DateField('Pick a Date', format="%m/%d/%Y")
+    endDate = DateField('Pick a Date', format="%m/%d/%Y")

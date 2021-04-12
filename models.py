@@ -13,7 +13,7 @@ import json
 from views.config import page_default
 from utils import paginate, checkTime, checkHoliday
 
-from mainconfig import accessDBPwd, calendarUrl, office365, beginTime, lunchFinishTime, workStatus
+from mainconfig import accessDBPwd, calendarUrl, office365, workTime, workStatus
 
 mongoClient = MongoClient('mongodb://localhost:27017/')
 db = mongoClient['report']
@@ -95,6 +95,8 @@ def get_calendarFromSharePoint():
         if stringList:
             stringList = stringList[0].split('}')
             stringList = json.loads(stringList[0])
+            isOrderEmployee = True
+            # employee - date - employee - employee  상황에 대한 fix
             for i, text in enumerate(stringList):
                 for employee in employees:
                     if employee['name'] in text:
@@ -102,7 +104,10 @@ def get_calendarFromSharePoint():
                         for type in workStatus:
                             if type in text:
                                 status = type
-                        scheduleList.append({'name':employee['name'], 'status':status})
+                        if not isOrderEmployee:
+                            scheduleList[-1]['date'] = scheduleList[-2]['date']
+                        scheduleList.append({'name': employee['name'], 'status': status})
+                        isOrderEmployee = False
 
                 date = re_date.findall(text)
                 if date:
@@ -114,17 +119,19 @@ def get_calendarFromSharePoint():
                             if date == scheduleList[-1]['date']:
                                 pass
                             else:
+                                # employee - date - date 상황
                                 schedule = scheduleList[-1].copy()
                                 schedule['date'] = date
                                 scheduleList.append(schedule)
+                        isOrderEmployee = True
     driver.quit()
     if scheduleList:
         post_schedule(scheduleList)
 
 def saveDB():
-    hour, today, _ = checkTime()
+    hour, today = checkTime()
     isHoliday = checkHoliday(today)
-    if not isHoliday:
+    if not isHoliday and hour > 6:
         accessDay = today[0:4] + today[5:7] + today[8:] # accessDay 형식으로 변환
         cursor.execute("select e_name, e_date, e_time from tenter where e_date = ?", accessDay)
         get_calendarFromSharePoint()
@@ -136,12 +143,12 @@ def saveDB():
             name = employee['name']
             attend[name] = {'date':today, 'name':name, 'begin':None, 'end':None}
             if hour >= 18:
-                attend[name]['workingHours'] = None
-                attend[name]['status'] = ('출근전', 2)
-            elif hour >= beginTime / 10000:
+                attend[name]['workingHours'] = 0
+                attend[name]['status'] = ('미출근', 3)
+            elif hour >= workTime['beginTime'] / 10000:
                 attend[name]['status'] = ('지각', 1)
-
-            print('thread', threading.current_thread(), attend[name])
+            else:
+                attend[name]['status'] = ('출근전', 2)
 
         for name in scheduleDict:
             status = scheduleDict[name]
@@ -165,7 +172,7 @@ def saveDB():
                     attend[name]['begin'] = time
                 if hour >= 18:
                     if name not in scheduleDict:
-                        if int(attend[name]['begin']) > beginTime:
+                        if int(attend[name]['begin']) > workTime['beginTime']:
                             attend[name]['status'] = ('지각', 1)
                         else:
                             attend[name]['status'] = ('정상출근', 0)
@@ -174,7 +181,7 @@ def saveDB():
 
                         workingHours = round(int(attend[name]['end'][0:2]) - int(attend[name]['begin'][0:2]) +
                                              (int(attend[name]['end'][2:4]) - int(attend[name]['begin'][2:4])) / 60, 1)
-                        if int(attend[name]['end']) > lunchFinishTime:
+                        if int(attend[name]['end']) > workTime['lunchFinishTime']:
                             workingHours = workingHours - 1
                         attend[name]['workingHours'] = workingHours
             else:
@@ -184,7 +191,7 @@ def saveDB():
                 else:
                     attend[name]['end'] = None
                 if name not in scheduleDict:
-                    if int(attend[name]['begin']) > beginTime:
+                    if int(attend[name]['begin']) > workTime['beginTime']:
                         attend[name]['status'] = ('지각', 1)
                     else:
                         attend[name]['status'] = ('정상출근', 0)
@@ -242,17 +249,21 @@ def get_employees(page=1):
         return paging, data_list
 
 # report
-def get_attend(page=1):
+def get_attend(page=1, startDate=None, endDate=None):
     per_page = page_default['per_page']
     offset = (page - 1) * per_page
-    _, today, month = checkTime()
+    _, today = checkTime()
     collection = db['report']
-    data_list = collection.find({'date':today}, sort=[('name', 1)]).limit(per_page).skip(offset)
+    if startDate:
+        data_list = collection.find({'date':{"$gte":startDate, "$lte":endDate}}, sort=[('name', 1), ('date', 1)])
+    else:
+        data_list = collection.find({'date':today}, sort=[('name', 1)])
     count = data_list.count()
+    data_list = data_list.limit(per_page).skip(offset)
     paging = paginate(page, per_page, count)
-    return paging, today, month, data_list
+    return paging, today, data_list
 
 # calendar
 def get_calendar():
-    _, today, month = checkTime()
+    _, today = checkTime()
     return today

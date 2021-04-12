@@ -3,7 +3,9 @@
 
 <link href="{{ url_for('static', filename='fullcalendar.min.css') }}" rel='stylesheet' />
 <link href="{{ url_for('static', filename='font-awesome-4.7.0/css/font-awesome.min.css') }}" rel='stylesheet' />
+<!--
 <link href="{{ url_for('static', filename='fullcalendar.print.css') }}" rel='stylesheet' media='print' />
+-->
 <script src="{{ url_for('static', filename='lib/moment.min.js') }}"></script>
 <script src="{{ url_for('static', filename='lib/jquery.min.js') }}"></script>
 <script src="{{ url_for('static', filename='fullcalendar.min.js') }}"></script>
@@ -71,7 +73,8 @@
 <div class="container my-3">
 <div id="Yo">
 	<font color="#2bc493">
-	<div style="width: 100%;overflow: hidden; margin-top: 1px; margin-left: 2px;">
+	<div style="width: 100%; overflow: hidden; margin-top: 1px; margin-left: 2px;">
+		<!--
 		<div id="leftPanel" style="width: 200px; height: 600px; float: left; background-color: #2ed39e; position: absolute;">
 			<font size="20" color="#f8f8f8">
 			<br><br>
@@ -100,7 +103,7 @@
 				startTime();
 			</script>
 			</font>
-			<!--
+
 			<font color="#f8f8f8"> <b> &nbsp; &nbsp; &nbsp; Weather</b> </font>
 			<font size="20" color="#f8f8f8">
 			<div id="WeatherW" style="width: 199px; background-color: #2bc493;" >
@@ -109,7 +112,6 @@
 			</div>
 			</font>
 			<br>
-			-->
 			<font color="#f8f8f8">
 				<b><div id="address" align="center" style="background-color: #2bc493;"></div></b>
 
@@ -124,7 +126,7 @@
 			</script>
 			</font>
 			<br><br>
-		    <!--
+
 			<div id='weather'>
 				<script src="https://query.yahooapis.com/v1/public/yql?q=select wind from weather.forecast where woeid in (select woeid from geo.places(1) where text='Bangalore')&format=json&callback=callbackFunction"></script>
 			</div>
@@ -136,13 +138,17 @@
 					var r3 = prompt("End Date : ", "yyyy-mm-dd");
 				}
 			</script>
-			-->
+
 		</div>
+		-->
+		<!--
 		<div id="rightPanel" style="margin-left: 100px; margin-top: 0px;">
+		-->
 			<div id='loading'>loading...</div>
 			<div id='calendar'></div>
+		<!--
 		</div>
-
+		-->
 	</div>
 	</font>
 </div>

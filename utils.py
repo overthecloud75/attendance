@@ -64,21 +64,27 @@ def checkTime():
     now = datetime.datetime.now()
     hour = now.hour
     today = today.strftime("%Y-%m-%d")
+    '''
     month = now.month
     year = now.year
     firstDay = datetime.datetime(year, month, 1, 0, 0, 0)
     firstDay = firstDay.strftime("%m/%d/%Y")
     lastDay = datetime.datetime(year, month + 1, 1, 0, 0, 0) - datetime.timedelta(seconds=30)
     lastDay = lastDay.strftime("%m/%d/%Y")
-    thisMonth = {'firstDay':firstDay, 'lastDay':lastDay}
-    return hour, today, thisMonth
+    thisMonth = {'firstDay':firstDay, 'lastDay':lastDay}'''
+    return hour, today
 
 def request_get(request_data):
     page = int(request_data.get('page', 1))
     keyword = request_data.get('kw', None)
+    startDate = request_data.get('startDate', None)
+    if startDate:
+        if startDate[4] != '-':
+            startDate = startDate[6:] + '-' + startDate[:2] + '-' + startDate[3:5]
+    endDate = request_data.get('endDate', None)
+    if endDate:
+        if endDate[4] != '-':
+            endDate = endDate[6:] + '-' + endDate[:2] + '-' + endDate[3:5]
     if keyword == '?':
         keyword = '\?'
-    so = request_data.get('so', '1year')
-    if so not in ['6month', '1year', '3year']:
-        so = '1year'
-    return page, keyword, so
+    return page, keyword, startDate, endDate

@@ -4,7 +4,7 @@ from werkzeug.utils import redirect
 import functools
 
 from models import post_signUp, post_login, post_employees, get_employees, get_attend
-from form import UserCreateForm, UserLoginForm, EmployeesSubmitForm
+from form import UserCreateForm, UserLoginForm, EmployeesSubmitForm, DateSubmitForm
 from utils import request_get
 
 # blueprint
@@ -63,14 +63,16 @@ def employees():
     if request.method == 'POST' and form.validate_on_submit():
         request_data = {'name':form.name.data}
         post_employees(request_data)
-    page, keyword, so = request_get(request.args)
+    page, keyword, _, _ = request_get(request.args)
     paging, data_list = get_employees(page=page)
     return render_template('user/employees.html', **locals())
 
-@bp.route('/attend/')
+@bp.route('/attend/', methods=('GET', 'POST'))
 def attend():
-    page, keyword, so = request_get(request.args)
-    paging, today, month, data_list = get_attend(page=page)
+    # https://gist.github.com/doobeh/3e685ef25fac7d03ded7#file-vort-html-L11
+    form = DateSubmitForm()
+    page, keyword, startDate, endDate = request_get(request.args)
+    paging, today, data_list = get_attend(page=page, startDate=startDate, endDate=endDate)
     return render_template('report/attendance.html', **locals())
 
 @bp.before_app_request
