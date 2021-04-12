@@ -13,7 +13,7 @@ import json
 from views.config import page_default
 from utils import paginate, checkTime, checkHoliday
 
-from mainconfig import accessDBPwd, calendarUrl, office365, workTime, workStatus
+from mainconfig import accessDBPwd, calendarUrl, office365, workTime, workStatus, workInStatus
 
 mongoClient = MongoClient('mongodb://localhost:27017/')
 db = mongoClient['report']
@@ -249,19 +249,47 @@ def get_employees(page=1):
         return paging, data_list
 
 # report
-def get_attend(page=1, startDate=None, endDate=None):
+def get_attend(page=1, name=None, startDate=None, endDate=None):
     per_page = page_default['per_page']
     offset = (page - 1) * per_page
     _, today = checkTime()
     collection = db['report']
     if startDate:
-        data_list = collection.find({'date':{"$gte":startDate, "$lte":endDate}}, sort=[('name', 1), ('date', 1)])
+        if name:
+            data_list = collection.find({'date':{"$gte":startDate, "$lte":endDate}, 'name':name}, sort=[('name', 1), ('date', -1)])
+        else:
+            data_list = collection.find({'date':{"$gte":startDate, "$lte":endDate}}, sort=[('name', 1), ('date', -1)])
     else:
-        data_list = collection.find({'date':today}, sort=[('name', 1)])
+        if name:
+            data_list = collection.find({'date':today, 'name':name}, sort=[('date', -1)])
+        else:
+            data_list = collection.find({'date':today}, sort=[('name', 1)])
     count = data_list.count()
     data_list = data_list.limit(per_page).skip(offset)
     paging = paginate(page, per_page, count)
-    return paging, today, data_list
+    summary = {}
+    if name:
+        attend_list = []
+        summary = {}
+        summary['totalWorkingHours'] = 0
+        summary['totalDay'] = 0
+        for status in workInStatus:
+            summary[status] = 0
+        for status in workStatus:
+            summary[status] = 0
+        for data in data_list:
+            summary['totalDay'] = summary['totalDay'] + 1
+            del data['_id']
+            if data['status'][0]:
+                summary[data['status'][0]] = summary[data['status'][0]] + 1
+            if 'reason' in data:
+                summary[data['reason']] = summary[data['reason']] + 1
+            summary['totalWorkingHours'] = summary['totalWorkingHours'] + data['workingHours']
+            attend_list.append(data)
+        summary['totalWorkingHours'] = round(summary['totalWorkingHours'], 2)
+        return paging, today, attend_list, summary
+    else:
+        return paging, today, data_list, summary
 
 # calendar
 def get_calendar():

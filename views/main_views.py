@@ -67,12 +67,20 @@ def employees():
     paging, data_list = get_employees(page=page)
     return render_template('user/employees.html', **locals())
 
-@bp.route('/attend/', methods=('GET', 'POST'))
+@bp.route('/attend/')
 def attend():
     # https://gist.github.com/doobeh/3e685ef25fac7d03ded7#file-vort-html-L11
     form = DateSubmitForm()
     page, keyword, startDate, endDate = request_get(request.args)
-    paging, today, data_list = get_attend(page=page, startDate=startDate, endDate=endDate)
+    paging, today, data_list, summary = get_attend(page=page, startDate=startDate, endDate=endDate)
+    return render_template('report/attendance.html', **locals())
+
+@bp.route('/attend/<name>')
+def attendByName(name):
+    # https://gist.github.com/doobeh/3e685ef25fac7d03ded7#file-vort-html-L11
+    form = DateSubmitForm()
+    page, keyword, startDate, endDate = request_get(request.args)
+    paging, today, data_list, summary = get_attend(page=page, name=name, startDate=startDate, endDate=endDate)
     return render_template('report/attendance.html', **locals())
 
 @bp.before_app_request

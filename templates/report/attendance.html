@@ -11,12 +11,16 @@ $(function() {
 </script>
 
 <div class="container my-3">
+    {% if startDate %}
+    <h1>{{ startDate }} ~ {{ endDate }}</h1>
+    {% else %}
     <h1>{{ today }}</h1>
+    {% endif %}
     <form method="get" action="">
         {% include "form_errors.html" %}
         {{ form.startDate(class="dtpick") }}
         {{ form.endDate(class="dtpick") }}
-        <button type="submit">기간</button>
+        <button type="submit" class="btn btn-primary">기간</button>
     </form>
     <table class="table">
     {% if data_list %}
@@ -34,7 +38,7 @@ $(function() {
         {% for data in data_list %}
         <tr>
             <td>{{ paging.offset + loop.index0 + 1}}</td>
-            <td>{{ data.name }}</td>
+            <td><a href="{{ url_for('main.attendByName', name=data.name) }}">{{ data.name }}</a></td>
             <td>{{ data.date }}</td>
             {% if data.begin %}
                 <td>{{ data.begin[0:2] + ':' + data.begin[2:4] }}</td>
@@ -62,6 +66,38 @@ $(function() {
     {% else %}
         <tr>
             <td colspan="3">attend 정보가 없습니다.</td>
+        </tr>
+    {% endif %}
+    </table>
+    <table class="table">
+    {% if summary %}
+        <h1>summary</h1>
+        <thead>
+        <tr class="thead-dark">
+            <th>기준일</th>
+            <th>총근무시간</th>
+            <th>정상출근</th>
+            <th>지각</th>
+            <th>미출근</th>
+            <th>휴가</th>
+            <th>연차</th>
+            <th>반차</th>
+            <th>출장</th>
+            <th>외근</th>
+            <th>기타</th>
+        </tr>
+        <tr>
+            <td>{{ summary.totalDay }}</td>
+            <td>{{ summary.totalWorkingHours }}</td>
+            <td>{{ summary['정상출근'] }}</td>
+            <td>{{ summary['지각'] }}</td>
+            <td>{{ summary['미출근'] }}</td>
+            <td>{{ summary['휴가'] }}</td>
+            <td>{{ summary['연차'] }}</td>
+            <td>{{ summary['반차'] }}</td>
+            <td>{{ summary['출장'] }}</td>
+            <td>{{ summary['외근'] }}</td>
+            <td>{{ summary['기타'] }}</td>
         </tr>
     {% endif %}
     </table>
