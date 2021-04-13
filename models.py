@@ -2,13 +2,13 @@ from werkzeug.security import check_password_hash
 import datetime
 from pymongo import MongoClient
 import pyodbc
-import threading
 
 import selenium
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import re
 import json
+from collections import OrderedDict
 
 from views.config import page_default
 from utils import paginate, checkTime, checkHoliday
@@ -88,6 +88,7 @@ def get_calendarFromSharePoint():
     re_date = re.compile('\d{4}-\d{2}-\d{2}')
 
     scheduleList = []
+    testList = []
     employees = get_employees(page='all')
 
     for script in script_blocks:
@@ -97,7 +98,7 @@ def get_calendarFromSharePoint():
             stringList = json.loads(stringList[0])
             isOrderEmployee = True
             # employee - date - employee - employee  상황에 대한 fix
-            for i, text in enumerate(stringList):
+            for text in stringList:
                 for employee in employees:
                     if employee['name'] in text:
                         status = '기타'
@@ -108,7 +109,6 @@ def get_calendarFromSharePoint():
                             scheduleList[-1]['date'] = scheduleList[-2]['date']
                         scheduleList.append({'name': employee['name'], 'status': status})
                         isOrderEmployee = False
-
                 date = re_date.findall(text)
                 if date:
                     date = date[0]
@@ -124,6 +124,9 @@ def get_calendarFromSharePoint():
                                 schedule['date'] = date
                                 scheduleList.append(schedule)
                         isOrderEmployee = True
+            if not isOrderEmployee:
+                scheduleList[-1]['date'] = scheduleList[-2]['date']
+
     driver.quit()
     if scheduleList:
         post_schedule(scheduleList)
@@ -134,7 +137,7 @@ def saveDB():
     if not isHoliday and hour > 6:
         accessDay = today[0:4] + today[5:7] + today[8:] # accessDay 형식으로 변환
         cursor.execute("select e_name, e_date, e_time from tenter where e_date = ?", accessDay)
-        get_calendarFromSharePoint()
+        #get_calendarFromSharePoint()
         scheduleDict = get_schedule(date=today)
 
         attend = {}
@@ -142,24 +145,6 @@ def saveDB():
         for employee in employees:
             name = employee['name']
             attend[name] = {'date':today, 'name':name, 'begin':None, 'end':None}
-            if hour >= 18:
-                attend[name]['workingHours'] = 0
-                attend[name]['status'] = ('미출근', 3)
-            elif hour >= workTime['beginTime'] / 10000:
-                attend[name]['status'] = ('지각', 1)
-            else:
-                attend[name]['status'] = ('출근전', 2)
-
-        for name in scheduleDict:
-            status = scheduleDict[name]
-            if name not in attend:
-                attend[name] = {'date':today, 'name':name, 'begin':None, 'end':None}
-            attend[name]['status'] = None
-            attend[name]['reason'] = status
-            if hour >= 18:
-                attend[name]['workingHours'] = workStatus[status]
-            else:
-                attend[name]['workingHours'] = None
 
         for row in cursor.fetchall():
             name = row[0]
@@ -171,33 +156,49 @@ def saveDB():
                 if int(time) < int(attend[name]['begin']):
                     attend[name]['begin'] = time
                 if hour >= 18:
-                    if name not in scheduleDict:
-                        if int(attend[name]['begin']) > workTime['beginTime']:
-                            attend[name]['status'] = ('지각', 1)
-                        else:
-                            attend[name]['status'] = ('정상출근', 0)
-                        if int(time) > int(attend[name]['end']):
-                            attend[name]['end'] = time
-
-                        workingHours = round(int(attend[name]['end'][0:2]) - int(attend[name]['begin'][0:2]) +
-                                             (int(attend[name]['end'][2:4]) - int(attend[name]['begin'][2:4])) / 60, 1)
-                        if int(attend[name]['end']) > workTime['lunchFinishTime']:
-                            workingHours = workingHours - 1
-                        attend[name]['workingHours'] = workingHours
+                    attend[name]['end'] = time
             else:
                 attend[name]['begin'] = time
                 if hour >= 18:
                     attend[name]['end'] = time
                 else:
                     attend[name]['end'] = None
-                if name not in scheduleDict:
-                    if int(attend[name]['begin']) > workTime['beginTime']:
-                        attend[name]['status'] = ('지각', 1)
-                    else:
-                        attend[name]['status'] = ('정상출근', 0)
 
         collection = db['report']
         for name in attend:
+            if name in scheduleDict:
+                status = scheduleDict[name]
+                attend[name]['status'] = (None, 0)
+                attend[name]['reason'] = status
+                if hour >= 18:
+                    attend[name]['workingHours'] = workStatus[status]
+                else:
+                    attend[name]['workingHours'] = None
+            elif attend[name]['begin']:
+                if int(attend[name]['begin']) > workTime['beginTime']:
+                    attend[name]['status'] = ('지각', 1)
+                else:
+                    attend[name]['status'] = ('정상출근', 0)
+                if hour >= 18:
+                    workingHours = round(int(attend[name]['end'][0:2]) - int(attend[name]['begin'][0:2]) +
+                                         (int(attend[name]['end'][2:4]) - int(attend[name]['begin'][2:4])) / 60, 1)
+                    if int(attend[name]['end']) > workTime['lunchFinishTime'] and \
+                            workTime['lunchTime'] > int(attend[name]['begin']):
+                        workingHours = workingHours - 1
+                    attend[name]['workingHours'] = workingHours
+                else:
+                    attend[name]['workingHours'] = None
+            else:
+                if hour >= 18:
+                    attend[name]['status'] = ('미출근', 3)
+                    attend[name]['workingHours'] = 0
+                elif hour >= workTime['beginTime'] / 10000:
+                    attend[name]['workingHours'] = None
+                    attend[name]['status'] = ('지각', 1)
+                else:
+                    attend[name]['status'] = ('출근전', 2)
+                    attend[name]['workingHours'] = None
+
             collection.update_one({'date':today, 'name':name}, {'$set':attend[name]}, upsert=True)
 
 # user
@@ -278,18 +279,67 @@ def get_attend(page=1, name=None, startDate=None, endDate=None):
         for status in workStatus:
             summary[status] = 0
         for data in data_list:
-            summary['totalDay'] = summary['totalDay'] + 1
-            del data['_id']
-            if data['status'][0]:
-                summary[data['status'][0]] = summary[data['status'][0]] + 1
-            if 'reason' in data:
-                summary[data['reason']] = summary[data['reason']] + 1
-            summary['totalWorkingHours'] = summary['totalWorkingHours'] + data['workingHours']
+            if data['workingHours'] is not None:
+                summary['totalDay'] = summary['totalDay'] + 1
+                del data['_id']
+                if 'status' in data:
+                    if data['status'][0]:
+                        summary[data['status'][0]] = summary[data['status'][0]] + 1
+                if 'reason' in data:
+                    summary[data['reason']] = summary[data['reason']] + 1
+                summary['totalWorkingHours'] = summary['totalWorkingHours'] + data['workingHours']
             attend_list.append(data)
         summary['totalWorkingHours'] = round(summary['totalWorkingHours'], 2)
         return paging, today, attend_list, summary
     else:
         return paging, today, data_list, summary
+
+def get_summary(page=1, startDate=None, endDate=None):
+    per_page = page_default['per_page']
+    offset = (page - 1) * per_page
+    _, today = checkTime()
+    collection = db['report']
+    data_list = None
+    summary_list = []
+    if startDate:
+        data_list = collection.find({'date':{"$gte":startDate, "$lte":endDate}}, sort=[('name', 1), ('date', -1)])
+    if data_list:
+        summary = OrderedDict()
+        for data in data_list:
+            if data['workingHours'] is not None:
+                name = data['name']
+                if name not in summary:
+                    summary[name] = {'name':name}
+                if 'totalWorkingHours' not in summary[name]:
+                    summary[name]['totalWorkingHours'] = 0
+                if 'totalDay' not in summary[name]:
+                    summary[name]['totalDay'] = 0
+                for status in workInStatus:
+                    if status not in summary[name]:
+                        summary[name][status] = 0
+                for status in workStatus:
+                    if status not in summary[name]:
+                        summary[name][status] = 0
+
+                summary[name]['totalDay'] = summary[name]['totalDay'] + 1
+                if 'status' in data:
+                    if data['status'][0]:
+                        summary[name][data['status'][0]] = summary[name][data['status'][0]] + 1
+                if 'reason' in data:
+                    summary[name][data['reason']] = summary[name][data['reason']] + 1
+                summary[name]['totalWorkingHours'] = summary[name]['totalWorkingHours'] + data['workingHours']
+        for name in summary:
+            summary[name]['totalWorkingHours'] = round(summary[name]['totalWorkingHours'], 2)
+            summary_list.append(summary[name])
+        count = len(summary_list)
+        paging = paginate(page, per_page, count)
+
+        summary_list = summary_list[offset:offset + per_page]
+        return paging, summary_list
+    else:
+        count = len(summary_list)
+        paging = paginate(page, per_page, count)
+        return paging, summary_list
 
 # calendar
 def get_calendar():

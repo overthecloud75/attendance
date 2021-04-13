@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash
 from werkzeug.utils import redirect
 import functools
 
-from models import post_signUp, post_login, post_employees, get_employees, get_attend
+from models import post_signUp, post_login, post_employees, get_employees, get_attend, get_summary
 from form import UserCreateForm, UserLoginForm, EmployeesSubmitForm, DateSubmitForm
 from utils import request_get
 
@@ -82,6 +82,13 @@ def attendByName(name):
     page, keyword, startDate, endDate = request_get(request.args)
     paging, today, data_list, summary = get_attend(page=page, name=name, startDate=startDate, endDate=endDate)
     return render_template('report/attendance.html', **locals())
+
+@bp.route('/summary/')
+def summary():
+    form = DateSubmitForm()
+    page, keyword, startDate, endDate = request_get(request.args)
+    paging, data_list = get_summary(page=page, startDate=startDate, endDate=endDate)
+    return render_template('report/summary.html', **locals())
 
 @bp.before_app_request
 def load_logged_in_user():

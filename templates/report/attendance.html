@@ -55,7 +55,9 @@ $(function() {
             {% else %}
                 <td></td>
             {% endif %}
-            {% if data.status[1] == 0 %}
+            {% if not data.status[0] %}
+                <td></td>
+            {% elif data.status[1] == 0 %}
                 <td>{{ data.status[0] }}</td>
             {% else %}
                 <td style='color:red'>{{ data.status[0] }}</td>
