@@ -1,0 +1,14 @@
+<div class="row justify-content-between my-3">  <!-- 양쪽정렬 justify-content-between로 변경 -->
+    <button class="btn btn-outline-secondary" type="button" id="btn_search">csv download</button>
+</div>
+<form id="postForm" method="post">
+    <input type="hidden" id="startDate1" name="startDate" value="{{ startDate or ''}}">
+    <input type="hidden" id="endDate1" name="endDate" value="{{ endDate or '' }}">
+</form>
+<script type='text/javascript'>
+$(document).ready(function(){
+    $("#btn_search").on('click', function() {
+        $("#postForm").submit();
+    });
+});
+</script>

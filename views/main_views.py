@@ -63,7 +63,7 @@ def employees():
     if request.method == 'POST' and form.validate_on_submit():
         request_data = {'name':form.name.data}
         post_employees(request_data)
-    page, keyword, _, _ = request_get(request.args)
+    page, name, _, _ = request_get(request.args)
     paging, data_list = get_employees(page=page)
     return render_template('user/employees.html', **locals())
 
@@ -71,22 +71,26 @@ def employees():
 def attend():
     # https://gist.github.com/doobeh/3e685ef25fac7d03ded7#file-vort-html-L11
     form = DateSubmitForm()
-    page, keyword, startDate, endDate = request_get(request.args)
-    paging, today, data_list, summary = get_attend(page=page, startDate=startDate, endDate=endDate)
-    return render_template('report/attendance.html', **locals())
-
-@bp.route('/attend/<name>')
-def attendByName(name):
-    # https://gist.github.com/doobeh/3e685ef25fac7d03ded7#file-vort-html-L11
-    form = DateSubmitForm()
-    page, keyword, startDate, endDate = request_get(request.args)
+    page, name, startDate, endDate = request_get(request.args)
     paging, today, data_list, summary = get_attend(page=page, name=name, startDate=startDate, endDate=endDate)
     return render_template('report/attendance.html', **locals())
 
-@bp.route('/summary/')
+@bp.route('/summary/', methods=('GET', 'POST'))
 def summary():
+    if request.method == 'POST':
+        startDate = request.form['startDate']
+        endDate = request.form['endDate']
+        paging, data_list = get_summary(startDate=startDate, endDate=endDate)
+        return jsonify(data_list)
     form = DateSubmitForm()
-    page, keyword, startDate, endDate = request_get(request.args)
+    page, _, startDate, endDate = request_get(request.args)
+    paging, data_list = get_summary(page=page, startDate=startDate, endDate=endDate)
+    return render_template('report/summary.html', **locals())
+
+@bp.route('/csvdownload/', methods=('POST',))
+def csvDownload():
+    print(request.form)
+    page, _, startDate, endDate = request_get(request.args)
     paging, data_list = get_summary(page=page, startDate=startDate, endDate=endDate)
     return render_template('report/summary.html', **locals())
 

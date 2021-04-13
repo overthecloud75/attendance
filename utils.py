@@ -76,7 +76,7 @@ def checkTime():
 
 def request_get(request_data):
     page = int(request_data.get('page', 1))
-    keyword = request_data.get('kw', None)
+    name = request_data.get('name', None)
     startDate = request_data.get('startDate', None)
     if startDate:
         if startDate[4] != '-':
@@ -85,6 +85,4 @@ def request_get(request_data):
     if endDate:
         if endDate[4] != '-':
             endDate = endDate[6:] + '-' + endDate[:2] + '-' + endDate[3:5]
-    if keyword == '?':
-        keyword = '\?'
-    return page, keyword, startDate, endDate
+    return page, name, startDate, endDate
