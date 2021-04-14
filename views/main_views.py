@@ -1,4 +1,6 @@
-from flask import Blueprint, request, render_template, url_for, current_app, session, g, flash, jsonify
+from flask import Blueprint, request, render_template, url_for, current_app, session, g, flash, jsonify, send_file
+from io import BytesIO, StringIO
+from csvalidate import ValidatedWriter
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import redirect
 import functools
@@ -81,15 +83,19 @@ def summary():
         startDate = request.form['startDate']
         endDate = request.form['endDate']
         paging, data_list = get_summary(startDate=startDate, endDate=endDate)
-        return jsonify(data_list)
+        # https://github.com/Shir0kamii/Flask-CSV
+        if data_list:
+            encoding = 'utf-8-sig'
+            filename = startDate + '_' + endDate + '.csv'
+            buf = StringIO()
+            writer = ValidatedWriter(buf, fieldnames=data_list[0].keys())
+            writer.writeheader()
+            for data in data_list:
+                writer.writerow(data)
+            buf.seek(0)
+            buf = BytesIO(buf.read().encode(encoding))
+            return send_file(buf, attachment_filename=filename, as_attachment=True, mimetype='text/csv')
     form = DateSubmitForm()
-    page, _, startDate, endDate = request_get(request.args)
-    paging, data_list = get_summary(page=page, startDate=startDate, endDate=endDate)
-    return render_template('report/summary.html', **locals())
-
-@bp.route('/csvdownload/', methods=('POST',))
-def csvDownload():
-    print(request.form)
     page, _, startDate, endDate = request_get(request.args)
     paging, data_list = get_summary(page=page, startDate=startDate, endDate=endDate)
     return render_template('report/summary.html', **locals())
