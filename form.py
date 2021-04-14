@@ -18,5 +18,5 @@ class EmployeesSubmitForm(FlaskForm):
     name = StringField('name', validators=[DataRequired(), Length(min=2, max=5)])
 
 class DateSubmitForm(FlaskForm):
-    startDate = DateField('Pick a Date', format="%m/%d/%Y")
-    endDate = DateField('Pick a Date', format="%m/%d/%Y")
+    start = DateField('Pick a Date', format="%m/%d/%Y")
+    end = DateField('Pick a Date', format="%m/%d/%Y")

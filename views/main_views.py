@@ -73,20 +73,20 @@ def employees():
 def attend():
     # https://gist.github.com/doobeh/3e685ef25fac7d03ded7#file-vort-html-L11
     form = DateSubmitForm()
-    page, name, startDate, endDate = request_get(request.args)
-    paging, today, data_list, summary = get_attend(page=page, name=name, startDate=startDate, endDate=endDate)
+    page, name, start, end = request_get(request.args)
+    paging, today, data_list, summary = get_attend(page=page, name=name, start=start, end=end)
     return render_template('report/attendance.html', **locals())
 
 @bp.route('/summary/', methods=('GET', 'POST'))
 def summary():
     if request.method == 'POST':
-        startDate = request.form['startDate']
-        endDate = request.form['endDate']
-        paging, data_list = get_summary(startDate=startDate, endDate=endDate)
+        start = request.form['start']
+        end = request.form['end']
+        paging, data_list = get_summary(start=start, end=end)
         # https://github.com/Shir0kamii/Flask-CSV
         if data_list:
             encoding = 'utf-8-sig'
-            filename = startDate + '_' + endDate + '.csv'
+            filename = start + '_' + end + '.csv'
             buf = StringIO()
             writer = ValidatedWriter(buf, fieldnames=data_list[0].keys())
             writer.writeheader()
@@ -96,8 +96,8 @@ def summary():
             buf = BytesIO(buf.read().encode(encoding))
             return send_file(buf, attachment_filename=filename, as_attachment=True, mimetype='text/csv')
     form = DateSubmitForm()
-    page, _, startDate, endDate = request_get(request.args)
-    paging, data_list = get_summary(page=page, startDate=startDate, endDate=endDate)
+    page, _, start, end = request_get(request.args)
+    paging, data_list = get_summary(page=page, start=start, end=end)
     return render_template('report/summary.html', **locals())
 
 @bp.before_app_request

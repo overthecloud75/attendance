@@ -76,15 +76,15 @@ def checkTime():
 def request_get(request_data):
     page = int(request_data.get('page', 1))
     name = request_data.get('name', None)
-    startDate = request_data.get('startDate', None)
-    if startDate:
-        if startDate[4] != '-':
-            startDate = startDate[6:] + '-' + startDate[:2] + '-' + startDate[3:5]
-    endDate = request_data.get('endDate', None)
-    if endDate:
-        if endDate[4] != '-':
-            endDate = endDate[6:] + '-' + endDate[:2] + '-' + endDate[3:5]
-    return page, name, startDate, endDate
+    start = request_data.get('start', None)
+    if start:
+        if start[4] != '-':
+            start = start[6:] + '-' + start[:2] + '-' + start[3:5]
+    end = request_data.get('end', None)
+    if end:
+        if end[4] != '-':
+            end = end[6:] + '-' + end[:2] + '-' + end[3:5]
+    return page, name, start, end
 
 def request_event(request_data):
     title = request_data.get('title', None)

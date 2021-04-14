@@ -12,15 +12,15 @@ $(function() {
 
 <div class="container my-3">
     {% include 'search.html' %}
-    {% if startDate %}
-    <h1>{{ startDate }} ~ {{ endDate }}</h1>
+    {% if start %}
+    <h1>{{ start }} ~ {{ end }}</h1>
     {% else %}
     <h1>{{ today }}</h1>
     {% endif %}
     <form method="get" action="">
         {% include "form_errors.html" %}
-        {{ form.startDate(class="dtpick") }}
-        {{ form.endDate(class="dtpick") }}
+        {{ form.start(class="dtpick") }}
+        {{ form.end(class="dtpick") }}
         <button type="submit" class="btn btn-primary">기간</button>
     </form>
     <table class="table">
@@ -39,8 +39,8 @@ $(function() {
         {% for data in data_list %}
         <tr>
             <td>{{ paging.offset + loop.index0 + 1}}</td>
-            {% if startDate %}
-            <td><a href="{{ url_for('main.attend', name=data.name, startDate=startDate, endDate=endDate) }}">{{ data.name }}</a></td>
+            {% if start %}
+            <td><a href="{{ url_for('main.attend', name=data.name, start=start, end=end) }}">{{ data.name }}</a></td>
             {% else %}
              <td>{{ data.name }}</td>
             {% endif %}

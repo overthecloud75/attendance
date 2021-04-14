@@ -2,12 +2,6 @@ from werkzeug.security import check_password_hash
 import datetime
 from pymongo import MongoClient
 import pyodbc
-
-import selenium
-from selenium import webdriver
-from bs4 import BeautifulSoup
-import re
-import json
 from collections import OrderedDict
 
 from views.config import page_default
@@ -52,91 +46,12 @@ def get_schedule(date=None):
         scheduleDict[name] = status
     return scheduleDict
 
-def get_calendarFromSharePoint():
-    driver = webdriver.Chrome(executable_path='chromedriver')
-    driver.get(url=calendarUrl)
-
-    driver.implicitly_wait(time_to_wait=10)
-
-    email = driver.find_element_by_xpath('//*[@id="i0116"]')
-    email.send_keys(office365['email'])
-
-    button1 = driver.find_element_by_xpath('//*[@id="idSIButton9"]')
-    button1.click()
-
-    password = driver.find_element_by_xpath('//*[@id="i0118"]')
-    password.send_keys(office365['password'])
-    driver.implicitly_wait(time_to_wait=10)
-
-    btn_click = 0
-    while btn_click < 2:
-        try:
-            button2 = driver.find_element_by_xpath('//*[@id="idSIButton9"]')
-            button2.click()
-        except selenium.common.exceptions.StaleElementReferenceException as e:
-            pass
-        else:
-            btn_click = btn_click + 1
-
-    driver.implicitly_wait(time_to_wait=15)
-    html = driver.page_source
-
-    soup = BeautifulSoup(html, 'html.parser')
-    script_blocks = soup.find_all('script', {'type': 'text/javascript'})
-
-    re_string = re.compile('"Strings":(.*)}')
-    re_date = re.compile('\d{4}-\d{2}-\d{2}')
-
-    scheduleList = []
-    employees = get_employees(page='all')
-
-    for script in script_blocks:
-        stringList = re_string.findall(str(script))
-        if stringList:
-            stringList = stringList[0].split('}')
-            stringList = json.loads(stringList[0])
-            isOrderEmployee = True
-            # employee - date - employee - employee  상황에 대한 fix
-            for text in stringList:
-                for employee in employees:
-                    if employee['name'] in text:
-                        status = '기타'
-                        for type in workStatus:
-                            if type in text:
-                                status = type
-                        if not isOrderEmployee:
-                            scheduleList[-1]['date'] = scheduleList[-2]['date']
-                        scheduleList.append({'name': employee['name'], 'status': status})
-                        isOrderEmployee = False
-                date = re_date.findall(text)
-                if date:
-                    date = date[0]
-                    if text == date:
-                        if 'date' not in scheduleList[-1]:
-                            scheduleList[-1]['date'] = date
-                        else:
-                            if date == scheduleList[-1]['date']:
-                                pass
-                            else:
-                                # employee - date - date 상황
-                                schedule = scheduleList[-1].copy()
-                                schedule['date'] = date
-                                scheduleList.append(schedule)
-                        isOrderEmployee = True
-            if not isOrderEmployee:
-                scheduleList[-1]['date'] = scheduleList[-2]['date']
-
-    driver.quit()
-    if scheduleList:
-        post_schedule(scheduleList)
-
 def saveDB():
     hour, today, _ = checkTime()
     isHoliday = checkHoliday(today)
     if not isHoliday and hour > 6:
         accessDay = today[0:4] + today[5:7] + today[8:] # accessDay 형식으로 변환
         cursor.execute("select e_name, e_date, e_time from tenter where e_date = ?", accessDay)
-        #get_calendarFromSharePoint()
         scheduleDict = get_schedule(date=today)
 
         attend = {}
@@ -249,16 +164,16 @@ def get_employees(page=1):
         return paging, data_list
 
 # report
-def get_attend(page=1, name=None, startDate=None, endDate=None):
+def get_attend(page=1, name=None, start=None, end=None):
     per_page = page_default['per_page']
     offset = (page - 1) * per_page
     _, today, _ = checkTime()
     collection = db['report']
-    if startDate:
+    if start:
         if name:
-            data_list = collection.find({'date':{"$gte":startDate, "$lte":endDate}, 'name':name}, sort=[('name', 1), ('date', -1)])
+            data_list = collection.find({'date':{"$gte":start, "$lte":end}, 'name':name}, sort=[('name', 1), ('date', -1)])
         else:
-            data_list = collection.find({'date':{"$gte":startDate, "$lte":endDate}}, sort=[('name', 1), ('date', -1)])
+            data_list = collection.find({'date':{"$gte":start, "$lte":end}}, sort=[('name', 1), ('date', -1)])
     else:
         if name:
             data_list = collection.find({'date':today, 'name':name}, sort=[('date', -1)])
@@ -293,15 +208,15 @@ def get_attend(page=1, name=None, startDate=None, endDate=None):
     else:
         return paging, today, data_list, summary
 
-def get_summary(page=1, startDate=None, endDate=None):
+def get_summary(page=1, start=None, end=None):
     per_page = page_default['per_page']
     offset = (page - 1) * per_page
     _, today, _ = checkTime()
     collection = db['report']
     data_list = None
     summary_list = []
-    if startDate:
-        data_list = collection.find({'date':{"$gte":startDate, "$lte":endDate}}, sort=[('name', 1), ('date', -1)])
+    if start:
+        data_list = collection.find({'date':{"$gte":start, "$lte":end}}, sort=[('name', 1), ('date', -1)])
     if data_list:
         summary = OrderedDict()
         for data in data_list:

@@ -17,5 +17,6 @@ def calendar():
 @bp.route('/add_event/')
 def add_event():
     title, start, end, id = request_event(request.args)
-    update_event({'title':title, 'start':start, 'end':end, 'id':id})
-    return redirect(url_for('calendar.calendar'))
+    event = {'title':title, 'start':start, 'end':end, 'id':id}
+    update_event(event)
+    return jsonify(event)
