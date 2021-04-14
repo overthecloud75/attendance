@@ -1,18 +1,21 @@
 from flask import Blueprint, request, render_template, url_for, current_app, session, g, flash, jsonify
-from models import get_calendar, get_schedule
+from models import get_calendar, get_schedule, get_events, update_event
+from werkzeug.utils import redirect
+
+from utils import request_event
 
 # blueprint
 bp = Blueprint('calendar', __name__, url_prefix='/calendar')
 
-@bp.route('/')
+@bp.route('/', methods=('GET', 'POST'))
 def calendar():
-    today = get_calendar()
+    # https://stackoverflow.com/questions/39902405/fullcalendar-in-django
+    today, thisMonth = get_calendar()
+    events = get_events(start=thisMonth['start'], end=thisMonth['end'])
     return render_template('report/calendar.html', **locals())
 
-@bp.route('/data/')
-def calendarData():
-    startDate = request.args.get('start', '')
-    endDate = request.args.get('end', '')
-
-    schedule = get_schedule(startDate=startDate, endDate=endDate)
-    return jsonify(schedule)
+@bp.route('/add_event/')
+def add_event():
+    title, start, end, id = request_event(request.args)
+    update_event({'title':title, 'start':start, 'end':end, 'id':id})
+    return redirect(url_for('calendar.calendar'))

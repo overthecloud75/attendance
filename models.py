@@ -35,22 +35,22 @@ def post_schedule(scheduleList):
             collection.update_one({'date':schedule['date'], 'name':schedule['name']}, {'$set':schedule}, upsert=True)
     return scheduleDict
 
-def get_schedule(date=None, startDate=None, endDate=None):
-    collection = db['schedule']
-    if startDate is None:
-        scheduleDict = {}
-        data_list = collection.find({'date':date})
-        for data in data_list:
-            scheduleDict[data['name']] = data['status']
-        return scheduleDict
-    else:
-        schedule = []
-        data_list = collection.find({'date':{"$gte":startDate, "$lte":endDate}})
-        for data in data_list:
-            title = data['name'] + ' / ' + data['status']
-            start = data['date']
-            schedule.append({'title':title, 'start':start})
-        return schedule
+def get_schedule(date=None):
+    collection = db['event']
+    employees = get_employees(page='all')
+    scheduleDict = {}
+    data_list = collection.find({'start':{"$lte":date}, 'end':{"$gt":date}})
+    for data in data_list:
+        name = None
+        status = None
+        for employee in employees:
+            if employee['name'] in data['title']:
+                name = employee['name']
+        for type in workStatus:
+            if type in data['title']:
+                status = type
+        scheduleDict[name] = status
+    return scheduleDict
 
 def get_calendarFromSharePoint():
     driver = webdriver.Chrome(executable_path='chromedriver')
@@ -88,7 +88,6 @@ def get_calendarFromSharePoint():
     re_date = re.compile('\d{4}-\d{2}-\d{2}')
 
     scheduleList = []
-    testList = []
     employees = get_employees(page='all')
 
     for script in script_blocks:
@@ -132,7 +131,7 @@ def get_calendarFromSharePoint():
         post_schedule(scheduleList)
 
 def saveDB():
-    hour, today = checkTime()
+    hour, today, _ = checkTime()
     isHoliday = checkHoliday(today)
     if not isHoliday and hour > 6:
         accessDay = today[0:4] + today[5:7] + today[8:] # accessDay 형식으로 변환
@@ -253,7 +252,7 @@ def get_employees(page=1):
 def get_attend(page=1, name=None, startDate=None, endDate=None):
     per_page = page_default['per_page']
     offset = (page - 1) * per_page
-    _, today = checkTime()
+    _, today, _ = checkTime()
     collection = db['report']
     if startDate:
         if name:
@@ -297,7 +296,7 @@ def get_attend(page=1, name=None, startDate=None, endDate=None):
 def get_summary(page=1, startDate=None, endDate=None):
     per_page = page_default['per_page']
     offset = (page - 1) * per_page
-    _, today = checkTime()
+    _, today, _ = checkTime()
     collection = db['report']
     data_list = None
     summary_list = []
@@ -341,7 +340,25 @@ def get_summary(page=1, startDate=None, endDate=None):
         paging = paginate(page, per_page, count)
         return paging, summary_list
 
+def get_events(start=None, end=None):
+    collection = db['event']
+    data_list = []
+    if start is not None and end is not None:
+        data_list = collection.find({'start':{"$gte":start, "$lt":end}}, sort=[('id', 1)])
+    return data_list
+
+def update_event(request_data):
+    collection = db['event']
+    if request_data['id'] is None:
+        data = collection.find_one(sort=[('id', -1)])
+        if data:
+            id = data['id'] + 1
+        else:
+            id = 1
+        request_data['id'] = id
+        collection.insert_one(request_data)
+
 # calendar
 def get_calendar():
-    _, today = checkTime()
-    return today
+    _, today, thisMonth = checkTime()
+    return today, thisMonth

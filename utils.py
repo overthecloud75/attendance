@@ -64,15 +64,14 @@ def checkTime():
     now = datetime.datetime.now()
     hour = now.hour
     today = today.strftime("%Y-%m-%d")
-    '''
     month = now.month
     year = now.year
-    firstDay = datetime.datetime(year, month, 1, 0, 0, 0)
-    firstDay = firstDay.strftime("%m/%d/%Y")
-    lastDay = datetime.datetime(year, month + 1, 1, 0, 0, 0) - datetime.timedelta(seconds=30)
-    lastDay = lastDay.strftime("%m/%d/%Y")
-    thisMonth = {'firstDay':firstDay, 'lastDay':lastDay}'''
-    return hour, today
+    start = datetime.datetime(year, month, 1, 0, 0, 0)
+    start = start.strftime("%Y-%m-%d")
+    end = datetime.datetime(year, month + 1, 1, 0, 0, 0)
+    end = end.strftime("%Y-%m-%d")
+    thisMonth = {'start':start, 'end':end}
+    return hour, today, thisMonth
 
 def request_get(request_data):
     page = int(request_data.get('page', 1))
@@ -86,3 +85,11 @@ def request_get(request_data):
         if endDate[4] != '-':
             endDate = endDate[6:] + '-' + endDate[:2] + '-' + endDate[3:5]
     return page, name, startDate, endDate
+
+def request_event(request_data):
+    title = request_data.get('title', None)
+    start = request_data.get('start', None)
+    end = request_data.get('end', None)
+    id = request_data.get('id', None)
+    return title, start, end, id
+
