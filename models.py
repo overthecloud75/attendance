@@ -7,7 +7,7 @@ from collections import OrderedDict
 from views.config import page_default
 from utils import paginate, checkTime, checkHoliday
 
-from mainconfig import accessDBPwd, calendarUrl, office365, workTime, workStatus, workInStatus
+from mainconfig import accessDBPwd, workTime, workStatus, workInStatus
 
 mongoClient = MongoClient('mongodb://localhost:27017/')
 db = mongoClient['report']
@@ -20,15 +20,6 @@ conn = pyodbc.connect(r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=c:
 cursor = conn.cursor()
 
 # db
-def post_schedule(scheduleList):
-    collection = db['schedule']
-    scheduleDict = {}
-    for schedule in scheduleList:
-        isHoliday = checkHoliday(schedule['date'])
-        if not isHoliday:
-            collection.update_one({'date':schedule['date'], 'name':schedule['name']}, {'$set':schedule}, upsert=True)
-    return scheduleDict
-
 def get_schedule(date=None):
     collection = db['event']
     employees = get_employees(page='all')
@@ -262,9 +253,9 @@ def get_events(start=None, end=None):
         data_list = collection.find({'start':{"$gte":start, "$lt":end}}, sort=[('id', 1)])
     return data_list
 
-def update_event(request_data):
+def update_event(request_data, type='insert'):
     collection = db['event']
-    if request_data['id'] is None:
+    if request_data['id'] is None and type == 'insert':
         data = collection.find_one(sort=[('id', -1)])
         if data:
             id = data['id'] + 1
@@ -272,6 +263,10 @@ def update_event(request_data):
             id = 1
         request_data['id'] = id
         collection.insert_one(request_data)
+    elif type == 'update':
+        collection.update_one({'id':request_data['id']}, {'$set':request_data})
+    elif type == 'delete':
+        collection.delete_one({'id':request_data['id']})
 
 # calendar
 def get_calendar():

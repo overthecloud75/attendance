@@ -1,5 +1,6 @@
 # ATTENDANCE
 ### 1. Result
+![attendance](https://user-images.githubusercontent.com/30888482/114798899-6c8f7a00-9dd1-11eb-87ce-b51c11469fce.PNG)
 ### 2. Usage
 py -3.7 main.py <br>
 http://127.0.0.1:5000

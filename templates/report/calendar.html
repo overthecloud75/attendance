@@ -56,7 +56,7 @@
                     var id = event.id;
                     $.ajax({
                         type: "GET",
-                        url: '/update',
+                        url: '/calendar/update_event',
                         data: {'title': title, 'start': start, 'end': end, 'id': id},
                         dataType: "json",
                         success: function (data) {
@@ -76,7 +76,7 @@
                     var id = event.id;
                     $.ajax({
                         type: "GET",
-                        url: '/update',
+                        url: '/calendar/update_event',
                         data: {'title': title, 'start': start, 'end': end, 'id': id},
                         dataType: "json",
                         success: function (data) {
@@ -94,7 +94,7 @@
                         var id = event.id;
                         $.ajax({
                             type: "GET",
-                            url: '/remove',
+                            url: '/calendar/delete_event',
                             data: {'id': id},
                             dataType: "json",
                             success: function (data) {

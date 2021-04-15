@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template, url_for, current_app, session, g, flash, jsonify
-from models import get_calendar, get_schedule, get_events, update_event
+from models import get_calendar, get_events, update_event
 from werkzeug.utils import redirect
 
 from utils import request_event
@@ -18,5 +18,20 @@ def calendar():
 def add_event():
     title, start, end, id = request_event(request.args)
     event = {'title':title, 'start':start, 'end':end, 'id':id}
-    update_event(event)
-    return jsonify(event)
+    update_event(event, type='insert')
+    return jsonify({})
+
+@bp.route('/update_event/')
+def update():
+    title, start, end, id = request_event(request.args)
+    event = {'title':title, 'start':start, 'end':end, 'id':id}
+    update_event(event, type='update')
+    return jsonify({})
+
+@bp.route('/delete_event/')
+def delete():
+    title, start, end, id = request_event(request.args)
+    event = {'title':title, 'start':start, 'end':end, 'id':id}
+    update_event(event, type='delete')
+    return jsonify({})
+
