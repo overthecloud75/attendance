@@ -9,5 +9,6 @@ To connect 32bit Access file, this implementation has been tested with 32bit Pyt
 ### 4. References
 https://wikidocs.net/book/4542 (flask)<br>
 https://pypi.org/project/pyodbc/ (to connect Access file of ADT ADserver) <br>
+https://pypi.org/project/Office365-REST-Python-Client/ (to get sharepoint callendar data) <br>
 https://stackoverflow.com/questions/39902405/fullcalendar-in-django (fullcalendar.js with flask) <br>
 https://gist.github.com/doobeh/3e685ef25fac7d03ded7 (datepicker with flask)

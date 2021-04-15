@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template, url_for, current_app, session, g, flash, jsonify
-from models import get_calendar, get_events, update_event
+from models import get_calendar, get_events, update_event, get_sharepoint
 from werkzeug.utils import redirect
 
 from utils import request_event
@@ -34,4 +34,10 @@ def delete():
     event = {'title':title, 'start':start, 'end':end, 'id':id}
     update_event(event, type='delete')
     return jsonify({})
+
+@bp.route('/sharepoint/')
+def sharepoint():
+    today, thisMonth = get_calendar()
+    events = get_sharepoint(start=thisMonth['start'], end=thisMonth['end'])
+    return render_template('report/sharepoint.html', **locals())
 

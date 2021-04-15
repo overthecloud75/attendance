@@ -3,11 +3,15 @@ import datetime
 from pymongo import MongoClient
 import pyodbc
 from collections import OrderedDict
+import json
+
+from office365.runtime.auth.user_credential import UserCredential
+from office365.runtime.http.request_options import RequestOptions
+from office365.sharepoint.client_context import ClientContext
 
 from views.config import page_default
 from utils import paginate, checkTime, checkHoliday
-
-from mainconfig import accessDBPwd, workTime, workStatus, workInStatus
+from mainconfig import accessDBPwd, calendar_url, office365_account, workTime, workStatus, workInStatus
 
 mongoClient = MongoClient('mongodb://localhost:27017/')
 db = mongoClient['report']
@@ -37,10 +41,32 @@ def get_schedule(date=None):
         scheduleDict[name] = status
     return scheduleDict
 
+def eventFromSharePoint():
+    collection = db['callendar']
+
+    ctx = ClientContext(calendar_url).with_credentials(UserCredential(office365_account['email'], office365_account['password']))
+    request = RequestOptions(calendar_url)
+    response = ctx.execute_request_direct(request)
+    json_data = json.loads(response.content)
+
+    for i, data in enumerate(json_data['d']['results']):
+        event = {}
+        event['title'] = data['Title']
+        event['start'] = data['EventDate']
+        event['end'] = data['EndDate']
+        event['id'] = data['ID']
+        event['allday'] = data['fAllDayEvent']
+        event['every'] = data['fRecurrence']
+        if data['fRecurrence']:
+            collection.update_one({'id':event['id']}, {'$set':event}, upsert=True)
+        else:
+            collection.update_one({'id':event['id']}, {'$set':event}, upsert=True)
+
 def saveDB():
     hour, today, _ = checkTime()
     isHoliday = checkHoliday(today)
     if not isHoliday and hour > 6:
+        eventFromSharePoint()
         accessDay = today[0:4] + today[5:7] + today[8:] # accessDay 형식으로 변환
         cursor.execute("select e_name, e_date, e_time from tenter where e_date = ?", accessDay)
         scheduleDict = get_schedule(date=today)
@@ -268,7 +294,11 @@ def update_event(request_data, type='insert'):
     elif type == 'delete':
         collection.delete_one({'id':request_data['id']})
 
+def get_sharepoint(start=None, end=None):
+    collection = db['callendar']
+
 # calendar
 def get_calendar():
     _, today, thisMonth = checkTime()
     return today, thisMonth
+
