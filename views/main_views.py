@@ -5,8 +5,8 @@ from werkzeug.security import generate_password_hash
 from werkzeug.utils import redirect
 import functools
 
-from models import post_signUp, post_login, post_employees, get_employees, get_attend, get_summary
-from form import UserCreateForm, UserLoginForm, EmployeesSubmitForm, DateSubmitForm
+from models import post_signUp, post_login, post_employee, get_employee, get_attend, get_summary
+from form import UserCreateForm, UserLoginForm, EmployeesSubmitForm, EmployeeSubmitForm, DateSubmitForm
 from utils import request_get
 
 # blueprint
@@ -60,17 +60,46 @@ def logout():
     return redirect(url_for('main.index'))
 
 @bp.route('/employees/', methods=('GET', 'POST'))
+@login_required
 def employees():
     form = EmployeesSubmitForm()
     if request.method == 'POST' and form.validate_on_submit():
         request_data = {'name':form.name.data}
-        post_employees(request_data)
+        post_employee(request_data)
     page, name, _, _ = request_get(request.args)
-    paging, data_list = get_employees(page=page)
+    paging, data_list = get_employee(page=page)
     return render_template('user/employees.html', **locals())
 
-@bp.route('/attend/')
+@bp.route('/updateEmployee/', methods=('GET', 'POST'))
+@login_required
+def updateEmployee():
+    form = EmployeeSubmitForm()
+    _, name, _, _ = request_get(request.args)
+    if request.method == 'POST' and form.validate_on_submit():
+        request_data = {'name':form.name.data, 'department':form.department.data, 'rank':form.rank.data, 'employeeId':int(form.employeeId.data)}
+        post_employee(request_data)
+        return redirect(url_for('main.employees'))
+    data = get_employee(name=name)
+    return render_template('user/update_employee.html', **locals())
+
+@bp.route('/attend/', methods=('GET', 'POST'))
 def attend():
+    if request.method == 'POST':
+        start = request.form['start']
+        end = request.form['end']
+        name = request.form['name']
+        data_list = get_attend(page='all', name=name, start=start, end=end)
+        if data_list:
+            encoding = 'utf-8-sig'
+            filename = start + '_' + end + '.csv'
+            buf = StringIO()
+            writer = ValidatedWriter(buf, fieldnames=data_list[0].keys())
+            writer.writeheader()
+            for data in data_list:
+                writer.writerow(data)
+            buf.seek(0)
+            buf = BytesIO(buf.read().encode(encoding))
+            return send_file(buf, attachment_filename=filename, as_attachment=True, mimetype='text/csv')
     # https://gist.github.com/doobeh/3e685ef25fac7d03ded7#file-vort-html-L11
     form = DateSubmitForm()
     page, name, start, end = request_get(request.args)

@@ -26,7 +26,7 @@ cursor = conn.cursor()
 # db
 def get_schedule(date=None):
     collection = db['event']
-    employees = get_employees(page='all')
+    employees = get_employee(page='all')
     scheduleDict = {}
     data_list = collection.find({'start':{"$lte":date}, 'end':{"$gt":date}})
     for data in data_list:
@@ -72,7 +72,7 @@ def saveDB():
         scheduleDict = get_schedule(date=today)
 
         attend = {}
-        employees = get_employees(page='all')
+        employees = get_employee(page='all')
         for employee in employees:
             name = employee['name']
             attend[name] = {'date':today, 'name':name, 'begin':None, 'end':None}
@@ -160,13 +160,16 @@ def post_login(request_data):
         error = "비밀번호가 올바르지 않습니다."
     return error, user_data
 
-def post_employees(request_data):
+def post_employee(request_data):
     collection = db['employees']
-    collection.update_one({'name':request_data}, {'$set':request_data}, upsert=True)
+    collection.update_one({'name':request_data['name']}, {'$set':request_data}, upsert=True)
 
-def get_employees(page=1):
+def get_employee(page=1, name=None):
     collection = db['employees']
-    if page == 'all':
+    if name:
+        employee = collection.find_one({'name':name})
+        return employee
+    elif page == 'all':
         data_list = []
         employees = collection.find(sort=[('name', 1)])
         for employee in employees:
@@ -175,55 +178,77 @@ def get_employees(page=1):
     else:
         per_page = page_default['per_page']
         offset = (page - 1) * per_page
-        data_list = collection.find(sort=[('name', 1)]).limit(per_page).skip(offset)
+        data_list = collection.find(sort=[('department', 1), ('name', 1)]).limit(per_page).skip(offset)
         count = data_list.count()
         paging = paginate(page, per_page, count)
         return paging, data_list
 
 # report
 def get_attend(page=1, name=None, start=None, end=None):
-    per_page = page_default['per_page']
-    offset = (page - 1) * per_page
-    _, today, _ = checkTime()
     collection = db['report']
-    if start:
-        if name:
-            data_list = collection.find({'date':{"$gte":start, "$lte":end}, 'name':name}, sort=[('name', 1), ('date', -1)])
-        else:
-            data_list = collection.find({'date':{"$gte":start, "$lte":end}}, sort=[('name', 1), ('date', -1)])
-    else:
-        if name:
-            data_list = collection.find({'date':today, 'name':name}, sort=[('date', -1)])
-        else:
-            data_list = collection.find({'date':today}, sort=[('name', 1)])
-    count = data_list.count()
-    data_list = data_list.limit(per_page).skip(offset)
-    paging = paginate(page, per_page, count)
-    summary = {}
-    if name:
+    if page == 'all':
+        employee = get_employee(name=name)
+        data_list = collection.find({'name':name}, sort=[('date', 1)])
         attend_list = []
-        summary = {}
-        summary['totalWorkingHours'] = 0
-        summary['totalDay'] = 0
-        for status in workInStatus:
-            summary[status] = 0
-        for status in workStatus:
-            summary[status] = 0
         for data in data_list:
-            if data['workingHours'] is not None:
-                summary['totalDay'] = summary['totalDay'] + 1
-                del data['_id']
-                if 'status' in data:
-                    if data['status'][0]:
-                        summary[data['status'][0]] = summary[data['status'][0]] + 1
-                if 'reason' in data:
-                    summary[data['reason']] = summary[data['reason']] + 1
-                summary['totalWorkingHours'] = summary['totalWorkingHours'] + data['workingHours']
-            attend_list.append(data)
-        summary['totalWorkingHours'] = round(summary['totalWorkingHours'], 2)
-        return paging, today, attend_list, summary
+
+            if data['begin']:
+                begin = data['begin'][0:2] + ':' + data['begin'][2:4]
+            else:
+                begin = ''
+            if data['end']:
+                end = data['end'][0:2] + ':' + data['end'][2:4]
+            else:
+                end = ''
+            if 'reason' in data:
+                reason = data['reason']
+            else:
+                reason = ''
+            attend_list.append({'name':data['name'], 'rank':employee['rank'], 'department':employee['department'],
+                                'date':data['date'], 'begin':begin, 'end':end, 'reason':reason})
+        return attend_list
     else:
-        return paging, today, data_list, summary
+        per_page = page_default['per_page']
+        offset = (page - 1) * per_page
+        _, today, _ = checkTime()
+        if start:
+            if name:
+                data_list = collection.find({'date':{"$gte":start, "$lte":end}, 'name':name}, sort=[('name', 1), ('date', -1)])
+            else:
+                data_list = collection.find({'date':{"$gte":start, "$lte":end}}, sort=[('name', 1), ('date', -1)])
+        else:
+            if name:
+                data_list = collection.find({'date':today, 'name':name}, sort=[('date', -1)])
+            else:
+                data_list = collection.find({'date':today}, sort=[('name', 1)])
+        count = data_list.count()
+        data_list = data_list.limit(per_page).skip(offset)
+        paging = paginate(page, per_page, count)
+        summary = {}
+        if name:
+            attend_list = []
+            summary = {}
+            summary['totalWorkingHours'] = 0
+            summary['totalDay'] = 0
+            for status in workInStatus:
+                summary[status] = 0
+            for status in workStatus:
+                summary[status] = 0
+            for data in data_list:
+                if data['workingHours'] is not None:
+                    summary['totalDay'] = summary['totalDay'] + 1
+                    del data['_id']
+                    if 'status' in data:
+                        if data['status'][0]:
+                            summary[data['status'][0]] = summary[data['status'][0]] + 1
+                    if 'reason' in data:
+                        summary[data['reason']] = summary[data['reason']] + 1
+                    summary['totalWorkingHours'] = summary['totalWorkingHours'] + data['workingHours']
+                attend_list.append(data)
+            summary['totalWorkingHours'] = round(summary['totalWorkingHours'], 2)
+            return paging, today, attend_list, summary
+        else:
+            return paging, today, data_list, summary
 
 def get_summary(page=1, start=None, end=None):
     per_page = page_default['per_page']

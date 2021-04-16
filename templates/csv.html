@@ -1,13 +1,14 @@
 <div class="row justify-content-between my-3">  <!-- 양쪽정렬 justify-content-between로 변경 -->
-    <button class="btn btn-outline-secondary" type="button" id="btn_search">csv download</button>
+    <button class="btn btn-outline-secondary" type="button" id="btn_search2">csv download</button>
 </div>
 <form id="postForm" method="post">
-    <input type="hidden" id="start1" name="start" value="{{ start or ''}}">
-    <input type="hidden" id="end1" name="end" value="{{ end or '' }}">
+    <input type="hidden" id="start2" name="start" value="{{ start or ''}}">
+    <input type="hidden" id="end2" name="end" value="{{ end or '' }}">
+    <input type="hidden" id="name2" name="name" value="{{ name or '' }}">
 </form>
 <script type='text/javascript'>
 $(document).ready(function(){
-    $("#btn_search").on('click', function() {
+    $("#btn_search2").on('click', function() {
         $("#postForm").submit();
     });
 });

@@ -11,7 +11,6 @@ $(function() {
 </script>
 
 <div class="container my-3">
-    {% include 'csv.html' %}
     {% if start %}
     <h1>{{ start }} ~ {{ end }}</h1>
     {% else %}
@@ -66,6 +65,9 @@ $(function() {
         </tr>
     {% endif %}
     </table>
+    {% if start %}
+    {% include 'csv.html' %}
+    {% endif %}
 </div>
 {% include 'paging.html' %}
 {% endblock %}

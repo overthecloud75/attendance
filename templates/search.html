@@ -2,19 +2,19 @@
     <div class="col-4 input-group" style="max-width:500px;">
         <input type="text" class="form-control kw" value="{{ name or '' }}">
         <div class="input-group-append">
-            <button class="btn btn-outline-secondary" type="button" id="btn_search">찾기</button>
+            <button class="btn btn-outline-secondary" type="button" id="btn_search1">찾기</button>
         </div>
     </div>
 </div>
 <form id="searchForm" method="get">
-    <input type="hidden" id="name" name="name" value="{{ name or '' }}">
+    <input type="hidden" id="name1" name="name" value="{{ name or '' }}">
     <input type="hidden" id="start1" name="start" value="{{ start or ''}}">
     <input type="hidden" id="end1" name="end" value="{{ end or '' }}">
 </form>
 <script type='text/javascript'>
 $(document).ready(function(){
-    $("#btn_search").on('click', function() {
-        $("#name").val($(".kw").val());
+    $("#btn_search1").on('click', function() {
+        $("#name1").val($(".kw").val());
         $("#page").val(1);  // 검색버튼을 클릭할 경우 1페이지부터 조회한다.
         $("#searchForm").submit();
     });

@@ -108,6 +108,9 @@ $(function() {
         </tr>
     {% endif %}
     </table>
+    {% if start and name%}
+    {% include 'csv.html' %}
+    {% endif %}
 </div>
 {% include 'paging.html' %}
 {% endblock %}

@@ -17,6 +17,12 @@ class UserLoginForm(FlaskForm):
 class EmployeesSubmitForm(FlaskForm):
     name = StringField('name', validators=[DataRequired(), Length(min=2, max=5)])
 
+class EmployeeSubmitForm(FlaskForm):
+    name = StringField('name', validators=[DataRequired(), Length(min=2, max=5)])
+    department = StringField('department', validators=[DataRequired(), Length(min=2, max=10)])
+    rank = StringField('rank', validators=[DataRequired(), Length(min=2, max=10)])
+    employeeId = StringField('employeeId', validators=[DataRequired(), Length(min=1, max=4)])
+
 class DateSubmitForm(FlaskForm):
     start = DateField('Pick a Date', format="%m/%d/%Y")
     end = DateField('Pick a Date', format="%m/%d/%Y")

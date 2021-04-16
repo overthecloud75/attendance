@@ -3,15 +3,7 @@
 
 <div class="container my-3">
     {% if g.user %}
-    <form method="post">
-        {{ form.csrf_token }}
-        {% include "form_errors.html" %}
-        <div class="form-group">
-            <label for="name">name</label>
-            <input type="text" class="form-control" name="name" id="name">
-        </div>
-        <button type="submit" class="btn btn-primary">등록</button>
-    </form>
+    <button type="submit" onclick="location.href={{ url_for('main.updateEmployee') }}" class="btn btn-primary">등록</button>
     {% endif %}
     <table class="table">
     {% if data_list %}
@@ -19,13 +11,17 @@
         <tr class="thead-dark">
             <th>번호</th>
             <th>이름</th>
-            <th>status</th>
+            <th>소속</th>
+            <th>직급</th>
+            <th>사원번호</th>
         </tr>
         {% for data in data_list %}
         <tr>
             <td>{{ paging.offset + loop.index0 + 1}}</td>
-            <td>{{ data.name }}</td>
-            <td></td>
+            <td><a href="{{ url_for('main.updateEmployee', name=data.name) }}">{{ data.name }}</a></td>
+            <td>{{ data.department }}</td>
+            <td>{{ data.rank }}</td>
+            <td>{{ data.employeeId }}</td>
         </tr>
         {% endfor %}
     {% else %}
