@@ -1,5 +1,5 @@
 import datetime
-from mainconfig import holidays
+from mainconfig import working
 
 def paginate(page, per_page, count):
     offset = (page - 1) * per_page
@@ -52,7 +52,7 @@ def checkHoliday(date):
     month = date[5:7]
     day = date[8:]
     monthDay = month + day
-    if monthDay in holidays:
+    if monthDay in working['holidays']:
         isHoliday = True
     date = datetime.datetime(int(date[0:4]), int(month), int(day), 1, 0, 0)  # str -> datetime으로 변환
     if date.weekday() == 5 or date.weekday() == 6:

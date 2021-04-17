@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container my-3">
+    <table class="table">
+        <thead>
+        <tr class="thead-dark">
+            <th>항목</th>
+            <th>특성</th>
+        </tr>
+        <tr>
+            <td>callendar 연결</td>
+            <td>isCallendarConnected</td>
+        </tr>
+        {% for key in office365_account %}
+        <tr>
+            <td>{{ key }}</td>
+            <td>{{ office365_account[key] }}</td>
+        </tr>
+        {% endfor %}
+
+        {% for key in working %}
+        <tr>
+            <td>{{ key }}</td>
+            <td>{{ working[key] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

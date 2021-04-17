@@ -11,7 +11,7 @@ from office365.sharepoint.client_context import ClientContext
 
 from views.config import page_default
 from utils import paginate, checkTime, checkHoliday
-from mainconfig import accessDBPwd, calendar_url, office365_account, workTime, workStatus, workInStatus
+from mainconfig import accessDBPwd, isCallendarConnected, office365_account, working
 
 mongoClient = MongoClient('mongodb://localhost:27017/')
 db = mongoClient['report']
@@ -35,7 +35,7 @@ def get_schedule(date=None):
         for employee in employees:
             if employee['name'] in data['title']:
                 name = employee['name']
-        for type in workStatus:
+        for type in working['status']:
             if type in data['title']:
                 status = type
         scheduleDict[name] = status
@@ -43,6 +43,8 @@ def get_schedule(date=None):
 
 def eventFromSharePoint():
     collection = db['callendar']
+
+    calendar_url = "https://mirageworks.sharepoint.com/sites/msteams_a0f4c8/_api/web/lists(guid'%s')/items" %(office365_account['guid'])
 
     ctx = ClientContext(calendar_url).with_credentials(UserCredential(office365_account['email'], office365_account['password']))
     request = RequestOptions(calendar_url)
@@ -62,11 +64,15 @@ def eventFromSharePoint():
         else:
             collection.update_one({'id':event['id']}, {'$set':event}, upsert=True)
 
-def saveDB():
-    hour, today, _ = checkTime()
+def saveDB(today=None):
+    if today is None:
+        hour, today, _ = checkTime()
+    else:
+        hour = 23
     isHoliday = checkHoliday(today)
     if not isHoliday and hour > 6:
-        eventFromSharePoint()
+        if isCallendarConnected:
+            eventFromSharePoint()
         accessDay = today[0:4] + today[5:7] + today[8:] # accessDay 형식으로 변환
         cursor.execute("select e_name, e_date, e_time from tenter where e_date = ?", accessDay)
         scheduleDict = get_schedule(date=today)
@@ -102,20 +108,21 @@ def saveDB():
                 attend[name]['status'] = (None, 0)
                 attend[name]['reason'] = status
                 if hour >= 18:
-                    attend[name]['workingHours'] = workStatus[status]
+                    attend[name]['workingHours'] = working['status'][status]
                 else:
                     attend[name]['workingHours'] = None
             elif attend[name]['begin']:
-                if int(attend[name]['begin']) > workTime['beginTime']:
+                if int(attend[name]['begin']) > working['time']['beginTime']:
                     attend[name]['status'] = ('지각', 1)
                 else:
                     attend[name]['status'] = ('정상출근', 0)
                 if hour >= 18:
-                    workingHours = round(int(attend[name]['end'][0:2]) - int(attend[name]['begin'][0:2]) +
-                                         (int(attend[name]['end'][2:4]) - int(attend[name]['begin'][2:4])) / 60, 1)
-                    if int(attend[name]['end']) > workTime['lunchFinishTime'] and \
-                            workTime['lunchTime'] > int(attend[name]['begin']):
+                    workingHours = int(attend[name]['end'][0:2]) - int(attend[name]['begin'][0:2]) + \
+                                   (int(attend[name]['end'][2:4]) - int(attend[name]['begin'][2:4])) / 60
+                    if int(attend[name]['end']) > working['time']['lunchFinishTime'] and \
+                            working['time']['lunchTime'] > int(attend[name]['begin']):
                         workingHours = workingHours - 1
+                    workingHours = round(workingHours, 1)
                     attend[name]['workingHours'] = workingHours
                 else:
                     attend[name]['workingHours'] = None
@@ -123,7 +130,7 @@ def saveDB():
                 if hour >= 18:
                     attend[name]['status'] = ('미출근', 3)
                     attend[name]['workingHours'] = 0
-                elif hour >= workTime['beginTime'] / 10000:
+                elif hour >= working['time']['beginTime'] / 10000:
                     attend[name]['workingHours'] = None
                     attend[name]['status'] = ('지각', 1)
                 else:
@@ -131,6 +138,9 @@ def saveDB():
                     attend[name]['workingHours'] = None
 
             collection.update_one({'date':today, 'name':name}, {'$set':attend[name]}, upsert=True)
+
+def get_setting():
+    return isCallendarConnected, office365_account, working
 
 # user
 def post_signUp(request_data):
@@ -191,7 +201,6 @@ def get_attend(page=1, name=None, start=None, end=None):
         data_list = collection.find({'name':name}, sort=[('date', 1)])
         attend_list = []
         for data in data_list:
-
             if data['begin']:
                 begin = data['begin'][0:2] + ':' + data['begin'][2:4]
             else:
@@ -230,9 +239,9 @@ def get_attend(page=1, name=None, start=None, end=None):
             summary = {}
             summary['totalWorkingHours'] = 0
             summary['totalDay'] = 0
-            for status in workInStatus:
+            for status in working['inStatus']:
                 summary[status] = 0
-            for status in workStatus:
+            for status in working['status']:
                 summary[status] = 0
             for data in data_list:
                 if data['workingHours'] is not None:
@@ -270,10 +279,10 @@ def get_summary(page=1, start=None, end=None):
                     summary[name]['totalWorkingHours'] = 0
                 if 'totalDay' not in summary[name]:
                     summary[name]['totalDay'] = 0
-                for status in workInStatus:
+                for status in working['inStatus']:
                     if status not in summary[name]:
                         summary[name][status] = 0
-                for status in workStatus:
+                for status in working['status']:
                     if status not in summary[name]:
                         summary[name][status] = 0
 
@@ -306,8 +315,12 @@ def get_events(start=None, end=None):
 
 def update_event(request_data, type='insert'):
     collection = db['event']
+    start = None
+    end = None
     if request_data['id'] is None and type == 'insert':
         data = collection.find_one(sort=[('id', -1)])
+        start = request_data['start']
+        end = request_data['end']
         if data:
             id = data['id'] + 1
         else:
@@ -315,9 +328,25 @@ def update_event(request_data, type='insert'):
         request_data['id'] = id
         collection.insert_one(request_data)
     elif type == 'update':
+        start = request_data['start']
+        end = request_data['end']
         collection.update_one({'id':request_data['id']}, {'$set':request_data})
     elif type == 'delete':
+        data = collection.find_one({'id':request_data['id']})
+        start = data['start']
+        end = data['end']
         collection.delete_one({'id':request_data['id']})
+
+    # calledar에 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
+    if start is not None and end is not None:
+        collection = db['report']
+        data_list = collection.find({'date':{"$gte":start, "$lt":end}})
+        date_list = []
+        for data in data_list:
+            if data['date'] not in date_list:
+                date_list.append(data['date'])
+        for date in date_list:
+            saveDB(today=date)
 
 def get_sharepoint(start=None, end=None):
     collection = db['callendar']

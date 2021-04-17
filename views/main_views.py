@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash
 from werkzeug.utils import redirect
 import functools
 
-from models import post_signUp, post_login, post_employee, get_employee, get_attend, get_summary
+from models import post_signUp, post_login, get_setting, post_employee, get_employee, get_attend, get_summary
 from form import UserCreateForm, UserLoginForm, EmployeesSubmitForm, EmployeeSubmitForm, DateSubmitForm
 from utils import request_get
 
@@ -58,6 +58,13 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('main.index'))
+
+@bp.route('/setting/', methods=('GET', 'POST'))
+@login_required
+def setting():
+    isCallendarConnected, office365_account, working = get_setting()
+    return render_template('user/setting.html', **locals())
+
 
 @bp.route('/employees/', methods=('GET', 'POST'))
 @login_required

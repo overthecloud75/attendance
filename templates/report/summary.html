@@ -39,6 +39,7 @@ $(function() {
             <th>출장</th>
             <th>외근</th>
             <th>재택</th>
+            <th>정기점검</th>
             <th>기타</th>
         </tr>
         {% for data in data_list %}
@@ -56,6 +57,7 @@ $(function() {
             <td>{{ data['출장'] }}</td>
             <td>{{ data['외근'] }}</td>
             <td>{{ data['재택'] }}</td>
+            <td>{{ data['정기점검'] }}</td>
             <td>{{ data['기타'] }}</td>
         </tr>
         {% endfor %}
