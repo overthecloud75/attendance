@@ -11,7 +11,7 @@ from office365.sharepoint.client_context import ClientContext
 
 from views.config import page_default
 from utils import paginate, checkTime, checkHoliday
-from mainconfig import accessDBPwd, isCallendarConnected, office365_account, working
+from mainconfig import accessDBPwd, isCalendarConnected, office365_account, working
 
 mongoClient = MongoClient('mongodb://localhost:27017/')
 db = mongoClient['report']
@@ -42,7 +42,7 @@ def get_schedule(date=None):
     return scheduleDict
 
 def eventFromSharePoint():
-    collection = db['callendar']
+    collection = db['calendar']
 
     calendar_url = "https://mirageworks.sharepoint.com/sites/msteams_a0f4c8/_api/web/lists(guid'%s')/items" %(office365_account['guid'])
 
@@ -71,7 +71,7 @@ def saveDB(today=None):
         hour = 23
     isHoliday = checkHoliday(today)
     if not isHoliday and hour > 6:
-        if isCallendarConnected:
+        if isCalendarConnected:
             eventFromSharePoint()
         accessDay = today[0:4] + today[5:7] + today[8:] # accessDay 형식으로 변환
         cursor.execute("select e_name, e_date, e_time from tenter where e_date = ?", accessDay)
@@ -140,7 +140,7 @@ def saveDB(today=None):
             collection.update_one({'date':today, 'name':name}, {'$set':attend[name]}, upsert=True)
 
 def get_setting():
-    return isCallendarConnected, office365_account, working
+    return isCalendarConnected, office365_account, working
 
 # user
 def post_signUp(request_data):
@@ -349,7 +349,7 @@ def update_event(request_data, type='insert'):
             saveDB(today=date)
 
 def get_sharepoint(start=None, end=None):
-    collection = db['callendar']
+    collection = db['calendar']
 
 # calendar
 def get_calendar():

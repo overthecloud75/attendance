@@ -62,7 +62,7 @@ def logout():
 @bp.route('/setting/', methods=('GET', 'POST'))
 @login_required
 def setting():
-    isCallendarConnected, office365_account, working = get_setting()
+    isCalendarConnected, office365_account, working = get_setting()
     return render_template('user/setting.html', **locals())
 
 
