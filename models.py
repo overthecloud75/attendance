@@ -68,7 +68,9 @@ def saveDB(today=None):
     if today is None:
         hour, today, _ = checkTime()
     else:
-        hour = 23
+        hour, thisday, _ = checkTime()
+        if today != thisday:
+            hour = 23
     isHoliday = checkHoliday(today)
     if not isHoliday and hour > 6:
         if isCalendarConnected:
@@ -339,7 +341,7 @@ def update_event(request_data, type='insert'):
 
     # calledar에 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
     if start is not None and end is not None:
-        collection = db['report']
+        collection = db['report']  # report에는 오늘까지만 기록이 되어 있어 제일 큰 날짜가 오늘이 됨 
         data_list = collection.find({'date':{"$gte":start, "$lt":end}})
         date_list = []
         for data in data_list:
