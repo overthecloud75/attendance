@@ -190,8 +190,9 @@ def get_employee(page=1, name=None):
     else:
         per_page = page_default['per_page']
         offset = (page - 1) * per_page
-        data_list = collection.find(sort=[('department', 1), ('name', 1)]).limit(per_page).skip(offset)
+        data_list = collection.find(sort=[('department', 1), ('name', 1)])
         count = data_list.count()
+        data_list = data_list.limit(per_page).skip(offset)
         paging = paginate(page, per_page, count)
         return paging, data_list
 
