@@ -36,6 +36,7 @@ $(function() {
             <th>상태</th>
             <th>사유</th>
         </tr>
+        </thead>
         {% for data in data_list %}
         <tr>
             <td>{{ paging.offset + loop.index0 + 1}}</td>
@@ -94,6 +95,7 @@ $(function() {
             <th>정기점검</th>
             <th>기타</th>
         </tr>
+        </thead>
         <tr>
             <td>{{ summary.totalDay }}</td>
             <td>{{ summary.totalWorkingHours }}</td>
