@@ -83,14 +83,14 @@ def saveDB(today=None):
         employees = get_employee(page='all')
         for employee in employees:
             name = employee['name']
-            attend[name] = {'date':today, 'name':name, 'begin':None, 'end':None}
+            attend[name] = {'date':today, 'name':name, 'begin':None, 'end':None, 'reason':None}
 
         for row in cursor.fetchall():
             name = row[0]
             date = row[1]
             time = row[2]
             if name not in attend:
-                attend[name] = {'date':today, 'name':name, 'begin':None, 'end':None}
+                attend[name] = {'date':today, 'name':name, 'begin':None, 'end':None, 'reason':None}
             if attend[name]['begin']:
                 if int(time) < int(attend[name]['begin']):
                     attend[name]['begin'] = time
@@ -339,6 +339,7 @@ def update_event(request_data, type='insert'):
         start = data['start']
         end = data['end']
         collection.delete_one({'id':request_data['id']})
+        print(start, end)
 
     # calledar에 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
     if start is not None and end is not None:

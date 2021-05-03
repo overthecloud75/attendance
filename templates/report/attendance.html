@@ -68,7 +68,11 @@ $(function() {
             {% else %}
                 <td style='color:red'>{{ data.status[0] }}</td>
             {% endif %}
-            <td>{{ data.reason }}</td>
+            {% if 'reason' in data and data.reason %}
+                <td>{{ data.reason }}</td>
+            {% else %}
+                <td></td>
+            {% endif %}
         </tr>
         {% endfor %}
     {% else %}
