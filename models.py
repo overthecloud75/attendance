@@ -253,7 +253,7 @@ def get_attend(page=1, name=None, start=None, end=None):
                     if 'status' in data:
                         if data['status'][0]:
                             summary[data['status'][0]] = summary[data['status'][0]] + 1
-                    if 'reason' in data:
+                    if 'reason' in data and data['reason']:
                         summary[data['reason']] = summary[data['reason']] + 1
                     summary['totalWorkingHours'] = summary['totalWorkingHours'] + data['workingHours']
                 attend_list.append(data)
