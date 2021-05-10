@@ -293,7 +293,7 @@ def get_summary(page=1, start=None, end=None):
                 if 'status' in data:
                     if data['status'][0]:
                         summary[name][data['status'][0]] = summary[name][data['status'][0]] + 1
-                if 'reason' in data:
+                if 'reason' in data and data['reason']:
                     summary[name][data['reason']] = summary[name][data['reason']] + 1
                 summary[name]['totalWorkingHours'] = summary[name]['totalWorkingHours'] + data['workingHours']
         for name in summary:
