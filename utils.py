@@ -1,5 +1,6 @@
 import datetime
-from mainconfig import working
+from korean_lunar_calendar import KoreanLunarCalendar
+from workingconfig import working
 
 def paginate(page, per_page, count):
     offset = (page - 1) * per_page
@@ -49,12 +50,19 @@ def paginate(page, per_page, count):
 
 def checkHoliday(date):
     isHoliday = False
+    year = date[0:4]
     month = date[5:7]
     day = date[8:]
     monthDay = month + day
+    calendar = KoreanLunarCalendar()
+    calendar.setSolarDate(int(year), int(month), int(day))
+    lunarMonthDay = calendar.LunarIsoFormat()
+    lunarMonthDay = lunarMonthDay[5:7] + lunarMonthDay[8:]
     if monthDay in working['holidays']:
         isHoliday = True
-    date = datetime.datetime(int(date[0:4]), int(month), int(day), 1, 0, 0)  # str -> datetime으로 변환
+    if lunarMonthDay in working['holidays']:
+        isHoliday = True
+    date = datetime.datetime(int(year), int(month), int(day), 1, 0, 0)  # str -> datetime으로 변환
     if date.weekday() == 5 or date.weekday() == 6:
         isHoliday = True
     return isHoliday

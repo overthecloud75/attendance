@@ -11,7 +11,8 @@ from office365.sharepoint.client_context import ClientContext
 
 from views.config import page_default
 from utils import paginate, checkTime, checkHoliday
-from mainconfig import accessDBPwd, isCalendarConnected, office365_account, working
+from mainconfig import accessDBPwd, isCalendarConnected, office365_account
+from workingconfig import working
 
 mongoClient = MongoClient('mongodb://localhost:27017/')
 db = mongoClient['report']
