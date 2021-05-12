@@ -60,7 +60,7 @@ def checkHoliday(date):
     lunarMonthDay = lunarMonthDay[5:7] + lunarMonthDay[8:]
     if monthDay in working['holidays']:
         isHoliday = True
-    if lunarMonthDay in working['holidays']:
+    if lunarMonthDay in working['lunarholidays']:
         isHoliday = True
     date = datetime.datetime(int(year), int(month), int(day), 1, 0, 0)  # str -> datetime으로 변환
     if date.weekday() == 5 or date.weekday() == 6:
