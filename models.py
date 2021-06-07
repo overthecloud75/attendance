@@ -109,6 +109,8 @@ def saveDB(today=None):
             if name in scheduleDict:
                 status = scheduleDict[name]
                 attend[name]['status'] = (None, 0)
+                if status == '월차':
+                    status = '연차'
                 attend[name]['reason'] = status
                 if hour >= 18:
                     attend[name]['workingHours'] = working['status'][status]
