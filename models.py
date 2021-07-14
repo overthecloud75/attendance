@@ -32,7 +32,7 @@ def get_schedule(date=None):
     data_list = collection.find({'start':{"$lte":date}, 'end':{"$gt":date}})
     for data in data_list:
         name = None
-        status = None
+        status = '기타'
         for employee in employees:
             if employee['name'] in data['title']:
                 name = employee['name']
