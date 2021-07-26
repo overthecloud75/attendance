@@ -90,19 +90,21 @@ def saveDB(today=None):
             name = row[0]
             date = row[1]
             time = row[2]
-            if name not in attend:
-                attend[name] = {'date':today, 'name':name, 'begin':None, 'end':None, 'reason':None}
-            if attend[name]['begin']:
-                if int(time) < int(attend[name]['begin']):
-                    attend[name]['begin'] = time
-                if hour >= 18:
-                    attend[name]['end'] = time
-            else:
-                attend[name]['begin'] = time
-                if hour >= 18:
-                    attend[name]['end'] = time
+            # card 출근자 name = ''
+            if name != '':
+                if name not in attend:
+                    attend[name] = {'date':today, 'name':name, 'begin':None, 'end':None, 'reason':None}
+                if attend[name]['begin']:
+                    if int(time) < int(attend[name]['begin']):
+                        attend[name]['begin'] = time
+                    if hour >= 18:
+                        attend[name]['end'] = time
                 else:
-                    attend[name]['end'] = None
+                    attend[name]['begin'] = time
+                    if hour >= 18:
+                        attend[name]['end'] = time
+                    else:
+                        attend[name]['end'] = None
 
         collection = db['report']
         for name in attend:
