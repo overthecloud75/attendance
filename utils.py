@@ -1,4 +1,5 @@
 import datetime
+from datetime import timedelta
 from korean_lunar_calendar import KoreanLunarCalendar
 from workingconfig import working
 
@@ -54,18 +55,41 @@ def checkHoliday(date):
     month = date[5:7]
     day = date[8:]
     monthDay = month + day
+
     calendar = KoreanLunarCalendar()
     calendar.setSolarDate(int(year), int(month), int(day))
     lunarMonthDay = calendar.LunarIsoFormat()
     lunarMonthDay = lunarMonthDay[5:7] + lunarMonthDay[8:]
     if monthDay in working['holidays']:
         isHoliday = True
-    if lunarMonthDay in working['lunarholidays']:
+    if lunarMonthDay in working['lunarHolidays']:
         isHoliday = True
     date = datetime.datetime(int(year), int(month), int(day), 1, 0, 0)  # str -> datetime으로 변환
     if date.weekday() == 5 or date.weekday() == 6:
         isHoliday = True
+    elif date.weekday() == 0:
+        # 대체공휴일 적용
+        yesterday = date.today() - timedelta(1)
+        yesterday = datetimeToDate(yesterday)
+        twodaysago = date.today() - timedelta(2)
+        twodaysago = datetimeToDate(twodaysago)
+        if yesterday in working['alternativeVacation'] or twodaysago in working['alternativeVacation']:
+            isHoliday = True
     return isHoliday
+
+def datetimeToDate(date):
+    thisMonth = date.month
+    thisDay = date.day
+    if thisMonth < 10:
+        thisMonth = '0' + str(thisMonth)
+    else:
+        thisMonth = str(thisMonth)
+    if thisDay < 10:
+        thisDay = '0' + str(thisDay)
+    else:
+        thisDay = str(thisDay )
+    date = thisMonth + thisDay
+    return date
 
 def checkTime():
     today = datetime.date.today()
