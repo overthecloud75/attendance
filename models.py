@@ -11,8 +11,8 @@ from office365.sharepoint.client_context import ClientContext
 
 from views.config import page_default
 from utils import paginate, checkTime, checkHoliday
-from mainconfig import accessDBPwd, isCalendarConnected, office365_account
-from workingconfig import working
+from mainconfig import ACCESS_DB_PWD, IS_CALENDAR_CONNECTED, OFFICE365_ACCOUNT
+from workingconfig import WORKING
 
 mongoClient = MongoClient('mongodb://localhost:27017/')
 db = mongoClient['report']
@@ -21,8 +21,9 @@ db = mongoClient['report']
 # https://stackoverflow.com/questions/50757873/connect-to-ms-access-in-python
 # You probably have 32-bit Access (Office) and 64-bit Python. As you know, 32-bit and 64-bit are completely incompatible.
 # You need to install 32-bit Python, or upgrade Access (Office) to 64-bit
-conn = pyodbc.connect(r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=c:/caps/acserver/access.mdb;PWD=%s' %accessDBPwd)
+conn = pyodbc.connect(r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=c:/caps/acserver/access.mdb;PWD=%s' %ACCESS_DB_PWD)
 cursor = conn.cursor()
+
 
 # db
 def get_schedule(date=None):
@@ -36,18 +37,19 @@ def get_schedule(date=None):
         for employee in employees:
             if employee['name'] in data['title']:
                 name = employee['name']
-        for type in working['status']:
+        for type in WORKING['status']:
             if type in data['title']:
                 status = type
         scheduleDict[name] = status
     return scheduleDict
 
+
 def eventFromSharePoint():
     collection = db['calendar']
 
-    calendar_url = "https://mirageworks.sharepoint.com/sites/msteams_a0f4c8/_api/web/lists(guid'%s')/items" %(office365_account['guid'])
+    calendar_url = "https://mirageworks.sharepoint.com/sites/msteams_a0f4c8/_api/web/lists(guid'%s')/items" %(OFFICE365_ACCOUNT['guid'])
 
-    ctx = ClientContext(calendar_url).with_credentials(UserCredential(office365_account['email'], office365_account['password']))
+    ctx = ClientContext(calendar_url).with_credentials(UserCredential(OFFICE365_ACCOUNT['email'], OFFICE365_ACCOUNT['password']))
     request = RequestOptions(calendar_url)
     response = ctx.execute_request_direct(request)
     json_data = json.loads(response.content)
@@ -65,6 +67,7 @@ def eventFromSharePoint():
         else:
             collection.update_one({'id':event['id']}, {'$set':event}, upsert=True)
 
+
 def saveDB(today=None):
     if today is None:
         hour, today, _ = checkTime()
@@ -74,7 +77,7 @@ def saveDB(today=None):
             hour = 23
     isHoliday = checkHoliday(today)
     if not isHoliday and hour > 6:
-        if isCalendarConnected:
+        if IS_CALENDAR_CONNECTED:
             eventFromSharePoint()
         accessDay = today[0:4] + today[5:7] + today[8:] # accessDay 형식으로 변환
         cursor.execute("select e_name, e_date, e_time from tenter where e_date = ?", accessDay)
@@ -115,19 +118,19 @@ def saveDB(today=None):
                     status = '연차'
                 attend[name]['reason'] = status
                 if hour >= 18:
-                    attend[name]['workingHours'] = working['status'][status]
+                    attend[name]['workingHours'] = WORKING['status'][status]
                 else:
                     attend[name]['workingHours'] = None
             elif attend[name]['begin']:
-                if int(attend[name]['begin']) > working['time']['beginTime']:
+                if int(attend[name]['begin']) > WORKING['time']['beginTime']:
                     attend[name]['status'] = ('지각', 1)
                 else:
                     attend[name]['status'] = ('정상출근', 0)
                 if hour >= 18:
                     workingHours = int(attend[name]['end'][0:2]) - int(attend[name]['begin'][0:2]) + \
                                    (int(attend[name]['end'][2:4]) - int(attend[name]['begin'][2:4])) / 60
-                    if int(attend[name]['end']) > working['time']['lunchFinishTime'] and \
-                            working['time']['lunchTime'] > int(attend[name]['begin']):
+                    if int(attend[name]['end']) > WORKING['time']['lunchFinishTime'] and \
+                            WORKING['time']['lunchTime'] > int(attend[name]['begin']):
                         workingHours = workingHours - 1
                     workingHours = round(workingHours, 1)
                     attend[name]['workingHours'] = workingHours
@@ -137,7 +140,7 @@ def saveDB(today=None):
                 if hour >= 18:
                     attend[name]['status'] = ('미출근', 3)
                     attend[name]['workingHours'] = 0
-                elif hour >= working['time']['beginTime'] / 10000:
+                elif hour >= WORKING['time']['beginTime'] / 10000:
                     attend[name]['workingHours'] = None
                     attend[name]['status'] = ('지각', 1)
                 else:
@@ -146,8 +149,10 @@ def saveDB(today=None):
 
             collection.update_one({'date':today, 'name':name}, {'$set':attend[name]}, upsert=True)
 
+
 def get_setting():
-    return isCalendarConnected, office365_account, working
+    return IS_CALENDAR_CONNECTED, OFFICE365_ACCOUNT, WORKING
+
 
 # user
 def post_signUp(request_data):
@@ -167,6 +172,7 @@ def post_signUp(request_data):
         collection.insert(request_data)
     return error
 
+
 def post_login(request_data):
     collection = db['user']
     error = None
@@ -177,9 +183,11 @@ def post_login(request_data):
         error = "비밀번호가 올바르지 않습니다."
     return error, user_data
 
+
 def post_employee(request_data):
     collection = db['employees']
     collection.update_one({'name':request_data['name']}, {'$set':request_data}, upsert=True)
+
 
 def get_employee(page=1, name=None):
     collection = db['employees']
@@ -200,6 +208,7 @@ def get_employee(page=1, name=None):
         data_list = data_list.limit(per_page).skip(offset)
         paging = paginate(page, per_page, count)
         return paging, data_list
+
 
 # report
 def get_attend(page=1, name=None, start=None, end=None):
@@ -247,9 +256,9 @@ def get_attend(page=1, name=None, start=None, end=None):
             summary = {}
             summary['totalWorkingHours'] = 0
             summary['totalDay'] = 0
-            for status in working['inStatus']:
+            for status in WORKING['inStatus']:
                 summary[status] = 0
-            for status in working['status']:
+            for status in WORKING['status']:
                 summary[status] = 0
             for data in data_list:
                 if data['workingHours'] is not None:
@@ -266,6 +275,7 @@ def get_attend(page=1, name=None, start=None, end=None):
             return paging, today, attend_list, summary
         else:
             return paging, today, data_list, summary
+
 
 def get_summary(page=1, start=None, end=None):
     per_page = page_default['per_page']
@@ -287,10 +297,10 @@ def get_summary(page=1, start=None, end=None):
                     summary[name]['totalWorkingHours'] = 0
                 if 'totalDay' not in summary[name]:
                     summary[name]['totalDay'] = 0
-                for status in working['inStatus']:
+                for status in WORKING['inStatus']:
                     if status not in summary[name]:
                         summary[name][status] = 0
-                for status in working['status']:
+                for status in WORKING['status']:
                     if status not in summary[name]:
                         summary[name][status] = 0
 
@@ -314,12 +324,14 @@ def get_summary(page=1, start=None, end=None):
         paging = paginate(page, per_page, count)
         return paging, summary_list
 
+
 def get_events(start=None, end=None):
     collection = db['event']
     data_list = []
     if start is not None and end is not None:
         data_list = collection.find({'start':{"$gte":start, "$lt":end}}, sort=[('id', 1)])
     return data_list
+
 
 def update_event(request_data, type='insert'):
     collection = db['event']
@@ -357,11 +369,36 @@ def update_event(request_data, type='insert'):
         for date in date_list:
             saveDB(today=date)
 
+
 def get_sharepoint(start=None, end=None):
     collection = db['calendar']
+
 
 # calendar
 def get_calendar():
     _, today, thisMonth = checkTime()
     return today, thisMonth
+
+
+# mac
+def get_macs(page=1):
+    collection = db['mac']
+    data_list = collection.find()
+    if page == 'all':
+        return data_list
+    else:
+        per_page = page_default['per_page']
+        offset = (page - 1) * per_page
+        data_list = data_list.limit(per_page).skip(offset)
+        count = data_list.count()
+        paging = paginate(page, per_page, count)
+        return paging, data_list
+
+
+def post_mac(request_data):
+    collection = db['mac']
+    if not 'owner' in request_data:
+        request_data = {'mac': request_data['mac'], 'owner': None, 'device': None}
+    collection.update_one({'mac': request_data['mac']}, {'$set': request_data}, upsert=True)
+
 

@@ -5,12 +5,13 @@ from werkzeug.security import generate_password_hash
 from werkzeug.utils import redirect
 import functools
 
-from models import post_signUp, post_login, get_setting, post_employee, get_employee, get_attend, get_summary
-from form import UserCreateForm, UserLoginForm, EmployeesSubmitForm, EmployeeSubmitForm, DateSubmitForm
+from models import post_signUp, post_login, get_setting, post_employee, get_employee, get_attend, get_summary, get_macs, post_mac
+from form import UserCreateForm, UserLoginForm, EmployeesSubmitForm, EmployeeSubmitForm, DateSubmitForm, MacSubmitForm
 from utils import request_get
 
 # blueprint
 bp = Blueprint('main', __name__, url_prefix='/')
+
 
 def login_required(view):
     @functools.wraps(view)
@@ -20,15 +21,17 @@ def login_required(view):
         return view(**kwargs)
     return wrapped_view
 
+
 @bp.route('/')
 def index():
     return render_template('base.html')
+
 
 @bp.route('/signup/', methods=('GET', 'POST'))
 def signup():
     form = UserCreateForm()
     if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'name':form.name.data, 'email':form.email.data, 'password':generate_password_hash(form.password1.data)}
+        request_data = {'name': form.name.data, 'email': form.email.data, 'password': generate_password_hash(form.password1.data)}
         error = post_signUp(request_data)
         if error:
             flash('이미 존재하는 사용자입니다.')
@@ -36,11 +39,12 @@ def signup():
             return redirect(url_for('main.index'))
     return render_template('user/signup.html', form=form)
 
+
 @bp.route('/login/', methods=('GET', 'POST'))
 def login():
     form = UserLoginForm()
     if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'email':form.email.data, 'password':form.password.data}
+        request_data = {'email': form.email.data, 'password': form.password.data}
         error, user_data = post_login(request_data)
         if error is None:
             del user_data['_id']
@@ -53,11 +57,13 @@ def login():
         flash(error)
     return render_template('user/login.html', form=form)
 
+
 @bp.route('/logout/')
 @login_required
 def logout():
     session.clear()
     return redirect(url_for('main.index'))
+
 
 @bp.route('/setting/', methods=('GET', 'POST'))
 @login_required
@@ -71,11 +77,24 @@ def setting():
 def employees():
     form = EmployeesSubmitForm()
     if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'name':form.name.data}
+        request_data = {'name': form.name.data}
         post_employee(request_data)
     page, name, _, _ = request_get(request.args)
     paging, data_list = get_employee(page=page)
     return render_template('user/employees.html', **locals())
+
+
+@bp.route('/macs/', methods=('GET', 'POST'))
+@login_required
+def macs():
+    form = MacSubmitForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        request_data = {'mac': form.mac.data, 'owner': form.owner.data, 'device': form.device.data}
+        post_mac(request_data)
+    page, name, _, _ = request_get(request.args)
+    paging, data_list = get_macs(page=page)
+    return render_template('user/macs.html', **locals())
+
 
 @bp.route('/updateEmployee/', methods=('GET', 'POST'))
 @login_required
@@ -83,11 +102,12 @@ def updateEmployee():
     form = EmployeeSubmitForm()
     _, name, _, _ = request_get(request.args)
     if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'name':form.name.data, 'department':form.department.data, 'rank':form.rank.data, 'employeeId':int(form.employeeId.data)}
+        request_data = {'name': form.name.data, 'department': form.department.data, 'rank': form.rank.data, 'employeeId': int(form.employeeId.data)}
         post_employee(request_data)
         return redirect(url_for('main.employees'))
     data = get_employee(name=name)
     return render_template('user/update_employee.html', **locals())
+
 
 @bp.route('/attend/', methods=('GET', 'POST'))
 def attend():
@@ -113,6 +133,7 @@ def attend():
     paging, today, data_list, summary = get_attend(page=page, name=name, start=start, end=end)
     return render_template('report/attendance.html', **locals())
 
+
 @bp.route('/summary/', methods=('GET', 'POST'))
 def summary():
     if request.method == 'POST':
@@ -135,6 +156,7 @@ def summary():
     page, _, start, end = request_get(request.args)
     paging, data_list = get_summary(page=page, start=start, end=end)
     return render_template('report/summary.html', **locals())
+
 
 @bp.before_app_request
 def load_logged_in_user():

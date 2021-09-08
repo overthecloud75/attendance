@@ -1,8 +1,12 @@
 import os
 from logging.config import dictConfig
-from flask import Flask
 import threading
+
+from flask import Flask
+
 import models
+import utils
+
 
 def create_app():
     dictConfig({
@@ -29,13 +33,36 @@ def create_app():
     app.register_blueprint(calendar_views.bp)
     return app
 
+
 def saveDB():
     t = threading.Timer(1800, saveDB)
     models.saveDB()
+    t.daemon = True
     t.start()
+
+
+def checkMac():
+    t = threading.Timer(30, checkMac)
+    networks = utils.detect_network()
+    global macs
+    for network in networks:
+        mac = network['mac']
+        if network['mac'] not in macs:
+            macs.append(mac)
+            models.post_mac({'mac': mac})
+            print(mac)
+    t.daemon = True
+    t.start()
+
 
 if __name__ == '__main__':
     app = create_app()
     saveDB()
-    app.run(host='0.0.0.0', debug=False, threaded=True)
+    macs = []
+    data_list = models.get_macs(page='all')
+    for data in data_list:
+        macs.append(data['mac'])
+    print(macs)
+    checkMac()
+    app.run(host='0.0.0.0', debug=True, threaded=True)
 

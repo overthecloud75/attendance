@@ -1,11 +1,12 @@
 from flask import Blueprint, request, render_template, url_for, current_app, session, g, flash, jsonify
-from models import get_calendar, get_events, update_event, get_sharepoint
 from werkzeug.utils import redirect
 
+from models import get_calendar, get_events, update_event, get_sharepoint
 from utils import request_event
 
 # blueprint
 bp = Blueprint('calendar', __name__, url_prefix='/calendar')
+
 
 @bp.route('/', methods=('GET', 'POST'))
 def calendar():
@@ -14,12 +15,14 @@ def calendar():
     events = get_events(start=thisMonth['start'], end=thisMonth['end'])
     return render_template('report/calendar.html', **locals())
 
+
 @bp.route('/add_event/')
 def add_event():
     title, start, end, id = request_event(request.args)
     event = {'title':title, 'start':start, 'end':end, 'id':id}
     update_event(event, type='insert')
     return jsonify({})
+
 
 @bp.route('/update_event/')
 def update():
@@ -28,12 +31,14 @@ def update():
     update_event(event, type='update')
     return jsonify({})
 
+
 @bp.route('/delete_event/')
 def delete():
     title, start, end, id = request_event(request.args)
     event = {'title':title, 'start':start, 'end':end, 'id':id}
     update_event(event, type='delete')
     return jsonify({})
+
 
 @bp.route('/sharepoint/')
 def sharepoint():

@@ -1,7 +1,10 @@
 import datetime
 from datetime import timedelta
 from korean_lunar_calendar import KoreanLunarCalendar
-from workingconfig import working
+import scapy.layers.l2
+
+from workingconfig import WORKING, NET
+
 
 def paginate(page, per_page, count):
     offset = (page - 1) * per_page
@@ -60,9 +63,9 @@ def checkHoliday(date):
     calendar.setSolarDate(int(year), int(month), int(day))
     lunarMonthDay = calendar.LunarIsoFormat()
     lunarMonthDay = lunarMonthDay[5:7] + lunarMonthDay[8:]
-    if monthDay in working['holidays']:
+    if monthDay in WORKING['holidays']:
         isHoliday = True
-    if lunarMonthDay in working['lunarHolidays']:
+    if lunarMonthDay in WORKING['lunarHolidays']:
         isHoliday = True
     date = datetime.datetime(int(year), int(month), int(day), 1, 0, 0)  # str -> datetime으로 변환
     if date.weekday() == 5 or date.weekday() == 6:
@@ -73,7 +76,7 @@ def checkHoliday(date):
         yesterday = datetimeToDate(yesterday)
         twodaysago = date.today() - timedelta(2)
         twodaysago = datetimeToDate(twodaysago)
-        if yesterday in working['alternativeVacation'] or twodaysago in working['alternativeVacation']:
+        if yesterday in WORKING['alternativeVacation'] or twodaysago in WORKING['alternativeVacation']:
             isHoliday = True
     return isHoliday
 
@@ -126,4 +129,13 @@ def request_event(request_data):
     if id is not None:
         id = int(id)
     return title, start, end, id
+
+def detect_network():
+    networks = []
+    ans, noans = scapy.layers.l2.arping(NET, timeout=2, verbose=False)
+    for sent, received in ans.res:
+        ip = received.psrc
+        mac = received.hwsrc
+        networks.append({'ip':ip, 'mac':mac})
+    return networks
 
