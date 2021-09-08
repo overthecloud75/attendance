@@ -2,3 +2,7 @@
 __pycache__/
 chromedriver.exe
 mainconfig.py
+
+.venv/
+venv
+
