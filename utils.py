@@ -3,73 +3,88 @@ from datetime import timedelta
 from korean_lunar_calendar import KoreanLunarCalendar
 import scapy.layers.l2
 
+from views.config import page_default
 from workingconfig import WORKING, NET
 
 
-def paginate(page, per_page, count):
-    offset = (page - 1) * per_page
-    total_pages = int(count / per_page) + 1
-    screen_pages = 10
+class Page:
+    def __init__(self, page):
+        self.page = page
+        self.per_page = page_default['per_page']
+        self.offset = (page - 1) * self.per_page
 
-    if page < 1:
-        page = 1
-    elif page > total_pages:
-        page = total_pages
+    def paginate(self, data_list):
+        if type(data_list) == list:
+            count = len(data_list)
+            data_list = data_list[self.offset:self.offset + self.per_page]
+        else:
+            count = data_list.count()
+            data_list = data_list.limit(self.per_page).skip(self.offset)
 
-    start_page = (page - 1) // screen_pages * screen_pages + 1
+        total_pages = int(count / self.per_page) + 1
+        screen_pages = 10
 
-    pages = []
-    prev_num = start_page - screen_pages
-    next_num = start_page + screen_pages
+        if self.page < 1:
+            self.page = 1
+        elif self.page > total_pages:
+            self.page = total_pages
 
-    if start_page - screen_pages > 0:
-        has_prev = True
-    else:
-        has_prev = False
-    if start_page + screen_pages > total_pages:
-        has_next = False
-    else:
-        has_next = True
-    if total_pages > screen_pages + start_page:
-        for i in range(screen_pages):
-            pages.append(i + start_page)
-    elif total_pages < screen_pages:
-        for i in range(total_pages):
-            pages.append(i + start_page)
-    else:
-        for i in range(total_pages - start_page + 1):
-            pages.append(i + start_page)
-    paging = {'page':page,
-              'has_prev':has_prev,
-              'has_next':has_next,
-              'prev_num':prev_num,
-              'next_num':next_num,
-              'count':count,
-              'offset':offset,
-              'pages':pages,
-              'screen_pages':screen_pages,
-              'total_pages':total_pages
-              }
-    return paging
+        start_page = (self.page - 1) // screen_pages * screen_pages + 1
+
+        pages = []
+        prev_num = start_page - screen_pages
+        next_num = start_page + screen_pages
+
+        if start_page - screen_pages > 0:
+            has_prev = True
+        else:
+            has_prev = False
+        if start_page + screen_pages > total_pages:
+            has_next = False
+        else:
+            has_next = True
+        if total_pages > screen_pages + start_page:
+            for i in range(screen_pages):
+                pages.append(i + start_page)
+        elif total_pages < screen_pages:
+            for i in range(total_pages):
+                pages.append(i + start_page)
+        else:
+            for i in range(total_pages - start_page + 1):
+                pages.append(i + start_page)
+
+        paging = {'page': self.page,
+                  'has_prev': has_prev,
+                  'has_next': has_next,
+                  'prev_num': prev_num,
+                  'next_num': next_num,
+                  'count': count,
+                  'offset': self.offset,
+                  'pages': pages,
+                  'screen_pages': screen_pages,
+                  'total_pages': total_pages
+                  }
+        return paging, data_list
+
 
 def checkHoliday(date):
-    isHoliday = False
+    is_holiday = False
     year = date[0:4]
     month = date[5:7]
     day = date[8:]
-    monthDay = month + day
+    month_day = month + day
 
     calendar = KoreanLunarCalendar()
     calendar.setSolarDate(int(year), int(month), int(day))
-    lunarMonthDay = calendar.LunarIsoFormat()
-    lunarMonthDay = lunarMonthDay[5:7] + lunarMonthDay[8:]
-    if monthDay in WORKING['holidays']:
-        isHoliday = True
-    if lunarMonthDay in WORKING['lunarHolidays']:
-        isHoliday = True
+    lunar_month_day = calendar.LunarIsoFormat()
+    lunar_month_day = lunar_month_day[5:7] + lunar_month_day[8:]
+    if month_day in WORKING['holidays']:
+        is_holiday = True
+    if lunar_month_day in WORKING['lunarHolidays']:
+        is_holiday = True
     date = datetime.datetime(int(year), int(month), int(day), 1, 0, 0)  # str -> datetime으로 변환
     if date.weekday() == 5 or date.weekday() == 6:
-        isHoliday = True
+        is_holiday = True
     elif date.weekday() == 0:
         # 대체공휴일 적용
         yesterday = date.today() - timedelta(1)
@@ -77,22 +92,24 @@ def checkHoliday(date):
         twodaysago = date.today() - timedelta(2)
         twodaysago = datetimeToDate(twodaysago)
         if yesterday in WORKING['alternativeVacation'] or twodaysago in WORKING['alternativeVacation']:
-            isHoliday = True
-    return isHoliday
+            is_holiday = True
+    return is_holiday
+
 
 def datetimeToDate(date):
-    thisMonth = date.month
-    thisDay = date.day
-    if thisMonth < 10:
-        thisMonth = '0' + str(thisMonth)
+    this_month = date.month
+    this_day = date.day
+    if this_month < 10:
+        this_month = '0' + str(this_month)
     else:
-        thisMonth = str(thisMonth)
-    if thisDay < 10:
-        thisDay = '0' + str(thisDay)
+        this_month = str(this_month)
+    if this_day < 10:
+        this_day = '0' + str(this_day)
     else:
-        thisDay = str(thisDay )
-    date = thisMonth + thisDay
+        this_day = str(this_day)
+    date = this_month + this_day
     return date
+
 
 def checkTime():
     today = datetime.date.today()
@@ -105,8 +122,9 @@ def checkTime():
     start = start.strftime("%Y-%m-%d")
     end = datetime.datetime(year, month + 1, 1, 0, 0, 0)
     end = end.strftime("%Y-%m-%d")
-    thisMonth = {'start':start, 'end':end}
-    return hour, today, thisMonth
+    this_month = {'start': start, 'end': end}
+    return hour, today, this_month
+
 
 def request_get(request_data):
     page = int(request_data.get('page', 1))
@@ -121,6 +139,7 @@ def request_get(request_data):
             end = end[6:] + '-' + end[:2] + '-' + end[3:5]
     return page, name, start, end
 
+
 def request_event(request_data):
     title = request_data.get('title', None)
     start = request_data.get('start', None)
@@ -130,12 +149,13 @@ def request_event(request_data):
         id = int(id)
     return title, start, end, id
 
+
 def detect_network():
     networks = []
     ans, noans = scapy.layers.l2.arping(NET, timeout=2, verbose=False)
     for sent, received in ans.res:
         ip = received.psrc
         mac = received.hwsrc
-        networks.append({'ip':ip, 'mac':mac})
+        networks.append({'ip': ip, 'mac': mac})
     return networks
 

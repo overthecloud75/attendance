@@ -5,6 +5,7 @@ import threading
 from flask import Flask
 
 import models
+from models import Device
 import utils
 
 
@@ -49,7 +50,7 @@ def checkMac():
         mac = network['mac']
         if network['mac'] not in macs:
             macs.append(mac)
-            models.post_mac({'mac': mac})
+            device.post({'mac': mac})
             print(mac)
     t.daemon = True
     t.start()
@@ -59,10 +60,11 @@ if __name__ == '__main__':
     app = create_app()
     saveDB()
     macs = []
-    data_list = models.get_macs(page='all')
+    device = Device()
+    data_list = device.get(page='all')
     for data in data_list:
         macs.append(data['mac'])
     print(macs)
     checkMac()
-    app.run(host='0.0.0.0', debug=True, threaded=True)
+    app.run(host='0.0.0.0', debug=False, threaded=True)
 

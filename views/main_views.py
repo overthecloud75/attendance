@@ -5,8 +5,8 @@ from werkzeug.security import generate_password_hash
 from werkzeug.utils import redirect
 import functools
 
-from models import post_signUp, post_login, get_setting, post_employee, get_employee, get_attend, get_summary, get_macs, post_mac
-from form import UserCreateForm, UserLoginForm, EmployeesSubmitForm, EmployeeSubmitForm, DateSubmitForm, MacSubmitForm
+from models import get_setting, User, Employee, Report, Device
+from form import UserCreateForm, UserLoginForm, EmployeeSubmitForm, DateSubmitForm, DeviceSubmitForm
 from utils import request_get
 
 # blueprint
@@ -30,9 +30,10 @@ def index():
 @bp.route('/signup/', methods=('GET', 'POST'))
 def signup():
     form = UserCreateForm()
+    user = User()
     if request.method == 'POST' and form.validate_on_submit():
         request_data = {'name': form.name.data, 'email': form.email.data, 'password': generate_password_hash(form.password1.data)}
-        error = post_signUp(request_data)
+        error = user.signup(request_data)
         if error:
             flash('이미 존재하는 사용자입니다.')
         else:
@@ -43,9 +44,10 @@ def signup():
 @bp.route('/login/', methods=('GET', 'POST'))
 def login():
     form = UserLoginForm()
+    user = User()
     if request.method == 'POST' and form.validate_on_submit():
         request_data = {'email': form.email.data, 'password': form.password.data}
-        error, user_data = post_login(request_data)
+        error, user_data = user.login(request_data)
         if error is None:
             del user_data['_id']
             del user_data['password']
@@ -72,41 +74,40 @@ def setting():
     return render_template('user/setting.html', **locals())
 
 
-@bp.route('/employees/', methods=('GET', 'POST'))
+@bp.route('/employees/', methods=('GET',))
 @login_required
 def employees():
-    form = EmployeesSubmitForm()
-    if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'name': form.name.data}
-        post_employee(request_data)
+    employee = Employee()
     page, name, _, _ = request_get(request.args)
-    paging, data_list = get_employee(page=page)
+    paging, data_list = employee.get(page=page)
     return render_template('user/employees.html', **locals())
-
-
-@bp.route('/macs/', methods=('GET', 'POST'))
-@login_required
-def macs():
-    form = MacSubmitForm()
-    if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'mac': form.mac.data, 'owner': form.owner.data, 'device': form.device.data}
-        post_mac(request_data)
-    page, name, _, _ = request_get(request.args)
-    paging, data_list = get_macs(page=page)
-    return render_template('user/macs.html', **locals())
 
 
 @bp.route('/updateEmployee/', methods=('GET', 'POST'))
 @login_required
 def updateEmployee():
     form = EmployeeSubmitForm()
+    employee = Employee()
     _, name, _, _ = request_get(request.args)
     if request.method == 'POST' and form.validate_on_submit():
         request_data = {'name': form.name.data, 'department': form.department.data, 'rank': form.rank.data, 'employeeId': int(form.employeeId.data)}
-        post_employee(request_data)
+        employee.post(request_data)
         return redirect(url_for('main.employees'))
-    data = get_employee(name=name)
+    data = employee.get(name=name)
     return render_template('user/update_employee.html', **locals())
+
+
+@bp.route('/macs/', methods=('GET', 'POST'))
+@login_required
+def macs():
+    form = DeviceSubmitForm()
+    device = Device()
+    if request.method == 'POST' and form.validate_on_submit():
+        request_data = {'mac': form.mac.data, 'owner': form.owner.data, 'device': form.device.data}
+        device.post(request_data)
+    page, name, _, _ = request_get(request.args)
+    paging, data_list = device.get(page=page)
+    return render_template('user/macs.html', **locals())
 
 
 @bp.route('/attend/', methods=('GET', 'POST'))
@@ -130,16 +131,18 @@ def attend():
     # https://gist.github.com/doobeh/3e685ef25fac7d03ded7#file-vort-html-L11
     form = DateSubmitForm()
     page, name, start, end = request_get(request.args)
-    paging, today, data_list, summary = get_attend(page=page, name=name, start=start, end=end)
+    report = Report()
+    paging, today, data_list, summary = report.attend(page=page, name=name, start=start, end=end)
     return render_template('report/attendance.html', **locals())
 
 
 @bp.route('/summary/', methods=('GET', 'POST'))
 def summary():
+    report = Report()
     if request.method == 'POST':
         start = request.form['start']
         end = request.form['end']
-        paging, data_list = get_summary(start=start, end=end)
+        paging, data_list = report.summary(start=start, end=end)
         # https://github.com/Shir0kamii/Flask-CSV
         if data_list:
             encoding = 'utf-8-sig'
@@ -154,7 +157,7 @@ def summary():
             return send_file(buf, attachment_filename=filename, as_attachment=True, mimetype='text/csv')
     form = DateSubmitForm()
     page, _, start, end = request_get(request.args)
-    paging, data_list = get_summary(page=page, start=start, end=end)
+    paging, data_list = report.summary(page=page, start=start, end=end)
     return render_template('report/summary.html', **locals())
 
 

@@ -17,10 +17,6 @@ class UserLoginForm(FlaskForm):
     password = PasswordField('비밀번호', validators=[DataRequired()])
 
 
-class EmployeesSubmitForm(FlaskForm):
-    name = StringField('name', validators=[DataRequired(), Length(min=2, max=5)])
-
-
 class EmployeeSubmitForm(FlaskForm):
     name = StringField('name', validators=[DataRequired(), Length(min=2, max=5)])
     department = StringField('department', validators=[DataRequired(), Length(min=2, max=10)])
@@ -33,7 +29,7 @@ class DateSubmitForm(FlaskForm):
     end = DateField('Pick a Date', format="%m/%d/%Y")
 
 
-class MacSubmitForm(FlaskForm):
+class DeviceSubmitForm(FlaskForm):
     mac = StringField('mac', validators=[DataRequired(), Length(min=2, max=30)])
     owner = StringField('owner', validators=[])
     device = StringField('device', validators=[])
