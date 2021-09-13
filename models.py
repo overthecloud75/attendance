@@ -112,9 +112,48 @@ class Employee:
         self.collection.update_one({'name': request_data['name']}, {'$set': request_data}, upsert=True)
 
 
+# Device
+class Device:
+    collection = db['device']
+
+    def get(self, page=1):
+        data_list = self.collection.find()
+        if page == 'all':
+            return data_list
+        else:
+            get_page = Page(page)
+            return get_page.paginate(data_list)
+
+    def post(self, request_data):
+        if 'owner' not in request_data:
+            request_data = {'mac': request_data['mac'], 'owner': None, 'device': None}
+        elif request_data['owner'] == 'None':
+            request_data['owner'] = None 
+        self.collection.update_one({'mac': request_data['mac']}, {'$set': request_data}, upsert=True)
+
+
+class Mac:
+    collection = db['mac']
+
+    def get(self, mac, date):
+        begin = None
+        end = None
+        data = self.collection.find_one({'date': date, 'mac': mac}, sort=[('time', 1)])
+        if data:
+            begin = data['time']
+        data = self.collection.find_one({'date': date, 'mac': mac}, sort=[('time', -1)])
+        if data:
+            end = data['time']
+        return begin, end
+
+    def post(self, request_data):
+        self.collection.insert_one(request_data)
+
+
 class Report:
     collection = db['report']
     employee = Employee()
+    mac = Mac()
 
     def __init__(self):
         self.hour, self.today, self.this_month = check_time()
@@ -237,6 +276,15 @@ class Report:
             employees = self.employee.get(page='all')
             event = Event()
             schedule_dict = event.schedule(employees, date=self.today)
+
+            device = Device()
+            device_list = device.get(page='all')
+            device_dict = {}
+            for device in device_list:
+                if 'owner' in device:
+                    if device['owner']:
+                        device_dict[device['owner']] = device['mac']
+
             for employee in employees:
                 name = employee['name']
                 attend[name] = {'date': self.today, 'name': name, 'begin': None, 'end': None, 'reason': None}
@@ -260,6 +308,25 @@ class Report:
                             attend[name]['end'] = time
                         else:
                             attend[name]['end'] = None
+
+            # wifi 와 지문 인식기 근태 비교
+            for name in device_dict:
+                begin, end = self.mac.get(device_dict[name], self.today)
+                print(name, begin, end)
+                if begin:
+                    if name in attend:
+                        if attend[name]['begin']:
+                            if int(begin) < int(attend[name]['begin']):
+                                attend[name]['begin'] = begin
+                        else:
+                            attend[name]['begin'] = begin
+                        if attend[name]['end']:
+                            if int(end) > int(attend[name]['end']):
+                                attend[name]['end'] = end
+                        else:
+                            attend[name]['end'] = end
+                    else:
+                        attend[name] = {'date': self.today, 'name': name, 'begin': begin, 'end': end, 'reason': None}
 
             for name in attend:
                 if name in schedule_dict:
@@ -340,7 +407,10 @@ class Event:
         elif type == 'update':
             self.collection.update_one({'id': event_id}, {'$set': request_data})
         elif type == 'delete':
-            self.collection.delete_one({'id': request_data['id']})
+            data = self.collection.find_one({'id': event_id})
+            self.start = data['start']
+            self.end = data['end']
+            self.collection.delete_one({'id': event_id})
 
         # calendar 에 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
         if self.start is not None and self.end is not None:
@@ -363,29 +433,7 @@ class Event:
         return schedule_dict
 
 
-# Device
-class Device:
-    collection = db['device']
 
-    def get(self, page=1):
-        data_list = self.collection.find()
-        if page == 'all':
-            return data_list
-        else:
-            get_page = Page(page)
-            return get_page.paginate(data_list)
-
-    def post(self, request_data):
-        if 'owner' not in request_data:
-            request_data = {'mac': request_data['mac'], 'owner': None, 'device': None}
-        self.collection.update_one({'mac': request_data['mac']}, {'$set': request_data}, upsert=True)
-
-
-class Mac:
-    collection = db['mac']
-
-    def post(self, request_data):
-        self.collection.insert_one(request_data)
 
 
 
