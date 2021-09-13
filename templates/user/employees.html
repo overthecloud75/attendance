@@ -3,7 +3,7 @@
 
 <div class="container my-3">
     {% if g.user %}
-    <button type="submit" onclick="location.href={{ url_for('main.updateEmployee') }}" class="btn btn-primary">등록</button>
+    <button type="submit" onclick="location.href={{ url_for('main.update_employee') }}" class="btn btn-primary">등록</button>
     {% endif %}
     <table class="table">
     {% if data_list %}
@@ -19,7 +19,7 @@
         {% for data in data_list %}
         <tr>
             <td>{{ paging.offset + loop.index0 + 1}}</td>
-            <td><a href="{{ url_for('main.updateEmployee', name=data.name) }}">{{ data.name }}</a></td>
+            <td><a href="{{ url_for('main.update_employee', name=data.name) }}">{{ data.name }}</a></td>
             <td>{{ data.department }}</td>
             <td>{{ data.rank }}</td>
             <td>{{ data.employeeId }}</td>

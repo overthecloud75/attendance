@@ -48,97 +48,14 @@ def eventFromSharePoint():
             collection.update_one({'id': event['id']}, {'$set': event}, upsert=True)
 
 
-def saveDB(today=None):
-    if today is None:
-        hour, today, _ = checkTime()
-    else:
-        hour, this_day, _ = checkTime()
-        if today != this_day:
-            hour = 23
-    is_holiday = checkHoliday(today)
-    if not is_holiday and hour > 6:
-        if IS_CALENDAR_CONNECTED:
-            eventFromSharePoint()
-        access_day = today[0:4] + today[5:7] + today[8: ] # access_day 형식으로 변환
-        cursor.execute("select e_name, e_date, e_time from tenter where e_date = ?", access_day)
-        event = Event()
-        schedule_dict = event.schedule(date=today)
-        employees = event.emloyeees
-
-        attend = {}
-        for employee in employees:
-            name = employee['name']
-            attend[name] = {'date': today, 'name': name, 'begin': None, 'end': None, 'reason': None}
-
-        for row in cursor.fetchall():
-            name = row[0]
-            date = row[1]
-            time = row[2]
-            # card 출근자 name = ''
-            if name != '':
-                if name not in attend:
-                    attend[name] = {'date': today, 'name': name, 'begin': None, 'end': None, 'reason': None}
-                if attend[name]['begin']:
-                    if int(time) < int(attend[name]['begin']):
-                        attend[name]['begin'] = time
-                    if hour >= 18:
-                        attend[name]['end'] = time
-                else:
-                    attend[name]['begin'] = time
-                    if hour >= 18:
-                        attend[name]['end'] = time
-                    else:
-                        attend[name]['end'] = None
-
-        collection = db['report']
-        for name in attend:
-            if name in schedule_dict:
-                status = schedule_dict[name]
-                attend[name]['status'] = (None, 0)
-                if status == '월차':
-                    status = '연차'
-                attend[name]['reason'] = status
-                if hour >= 18:
-                    attend[name]['workingHours'] = WORKING['status'][status]
-                else:
-                    attend[name]['workingHours'] = None
-            elif attend[name]['begin']:
-                if int(attend[name]['begin']) > WORKING['time']['beginTime']:
-                    attend[name]['status'] = ('지각', 1)
-                else:
-                    attend[name]['status'] = ('정상출근', 0)
-                if hour >= 18:
-                    working_hours = int(attend[name]['end'][0:2]) - int(attend[name]['begin'][0:2]) + \
-                                   (int(attend[name]['end'][2:4]) - int(attend[name]['begin'][2:4])) / 60
-                    if int(attend[name]['end']) > WORKING['time']['lunchFinishTime'] and \
-                            WORKING['time']['lunchTime'] > int(attend[name]['begin']):
-                        working_hours = working_hours - 1
-                    working_hours = round(working_hours, 1)
-                    attend[name]['workingHours'] = working_hours
-                else:
-                    attend[name]['workingHours'] = None
-            else:
-                if hour >= 18:
-                    attend[name]['status'] = ('미출근', 3)
-                    attend[name]['workingHours'] = 0
-                elif hour >= WORKING['time']['beginTime'] / 10000:
-                    attend[name]['workingHours'] = None
-                    attend[name]['status'] = ('지각', 1)
-                else:
-                    attend[name]['status'] = ('출근전', 2)
-                    attend[name]['workingHours'] = None
-
-            collection.update_one({'date': today, 'name': name}, {'$set': attend[name]}, upsert=True)
-
-
 def get_setting():
     return IS_CALENDAR_CONNECTED, OFFICE365_ACCOUNT, WORKING
 
 
 def get_sharepoint():
-    _, today, thisMonth = checkTime()
-    start = thisMonth['start']
-    end = thisMonth['end']
+    _, today, this_month = checkTime()
+    start = this_month['start']
+    end = this_month['end']
     collection = db['calendar']
 
 
@@ -146,9 +63,11 @@ class User:
     collection = db['user']
     error = None
 
-    # user
+    def get_user(self, request_data):
+        return self.collection.find_one(filter={'email': request_data['email']})
+
     def signup(self, request_data):
-        user_data = self.collection.find_one(filter={'email': request_data['email']})
+        user_data = self.get_user(request_data)
         if user_data:
             self.error = '이미 존재하는 사용자입니다.'
         else:
@@ -163,7 +82,7 @@ class User:
         return self.error
 
     def login(self, request_data):
-        user_data = self.collection.find_one(filter={'email': request_data['email']})
+        user_data = self.get_user(request_data)
         if not user_data:
             self.error = "존재하지 않는 사용자입니다."
         elif not check_password_hash(user_data['password'], request_data['password']):
@@ -195,11 +114,14 @@ class Employee:
 
 class Report:
     collection = db['report']
+    employee = Employee()
+
+    def __init__(self):
+        self.hour, self.today, self.this_month = checkTime()
 
     def attend(self, page=None, name=None, start=None, end=None):
         if page == 'all':
-            employee = Employee()
-            employee = employee.get(name=name)
+            employee = self.employee.get(name=name)
             data_list = self.collection.find({'name': name}, sort=[('date', 1)])
             attend_list = []
             for data in data_list:
@@ -220,7 +142,6 @@ class Report:
                      'date': data['date'], 'begin': begin, 'end': end, 'reason': reason})
             return attend_list
         else:
-            _, today, _ = checkTime()
             if start:
                 if name:
                     data_list = self.collection.find({'date': {"$gte": start, "$lte": end}, 'name': name},
@@ -230,9 +151,9 @@ class Report:
                                                      sort=[('name', 1), ('date', -1)])
             else:
                 if name:
-                    data_list = self.collection.find({'date': today, 'name': name}, sort=[('date', -1)])
+                    data_list = self.collection.find({'date': self.today, 'name': name}, sort=[('date', -1)])
                 else:
-                    data_list = self.collection.find({'date': today}, sort=[('name', 1)])
+                    data_list = self.collection.find({'date': self.today}, sort=[('name', 1)])
 
             get_page = Page(page)
             paging, data_list = get_page.paginate(data_list)
@@ -258,9 +179,9 @@ class Report:
                         summary['totalWorkingHours'] = summary['totalWorkingHours'] + data['workingHours']
                     attend_list.append(data)
                 summary['totalWorkingHours'] = round(summary['totalWorkingHours'], 2)
-                return paging, today, attend_list, summary
+                return paging, self.today, attend_list, summary
             else:
-                return paging, today, data_list, summary
+                return paging, self.today, data_list, summary
 
     def summary(self, page=1, start=None, end=None):
 
@@ -300,12 +221,99 @@ class Report:
         get_page = Page(page)
         return get_page.paginate(summary_list)
 
+    def update(self, date=None):
+        if date is not None:
+            if date != self.today:
+                self.hour = 23
+            self.today = date
+        is_holiday = checkHoliday(self.today)
+        if not is_holiday and self.hour > 6:
+            if IS_CALENDAR_CONNECTED:
+                eventFromSharePoint()
+            access_day = self.today[0:4] + self.today[5:7] + self.today[8:]  # access_day 형식으로 변환
+            cursor.execute("select e_name, e_date, e_time from tenter where e_date = ?", access_day)
+
+            attend = {}
+            employees = self.employee.get(page='all')
+            event = Event()
+            schedule_dict = event.schedule(employees, date=self.today)
+            for employee in employees:
+                name = employee['name']
+                attend[name] = {'date': self.today, 'name': name, 'begin': None, 'end': None, 'reason': None}
+
+            for row in cursor.fetchall():
+                name = row[0]
+                date = row[1]
+                time = row[2]
+                # card 출근자 name = ''
+                if name != '':
+                    if name not in attend:
+                        attend[name] = {'date': self.today, 'name': name, 'begin': None, 'end': None, 'reason': None}
+                    if attend[name]['begin']:
+                        if int(time) < int(attend[name]['begin']):
+                            attend[name]['begin'] = time
+                        if self.hour >= 18:
+                            attend[name]['end'] = time
+                    else:
+                        attend[name]['begin'] = time
+                        if self.hour >= 18:
+                            attend[name]['end'] = time
+                        else:
+                            attend[name]['end'] = None
+
+            for name in attend:
+                if name in schedule_dict:
+                    status = schedule_dict[name]
+                    attend[name]['status'] = (None, 0)
+                    if status == '월차':
+                        status = '연차'
+                    attend[name]['reason'] = status
+                    if self.hour >= 18:
+                        attend[name]['workingHours'] = WORKING['status'][status]
+                    else:
+                        attend[name]['workingHours'] = None
+                elif attend[name]['begin']:
+                    if int(attend[name]['begin']) > WORKING['time']['beginTime']:
+                        attend[name]['status'] = ('지각', 1)
+                    else:
+                        attend[name]['status'] = ('정상출근', 0)
+                    if self.hour >= 18:
+                        working_hours = int(attend[name]['end'][0:2]) - int(attend[name]['begin'][0:2]) + \
+                                        (int(attend[name]['end'][2:4]) - int(attend[name]['begin'][2:4])) / 60
+                        if int(attend[name]['end']) > WORKING['time']['lunchFinishTime'] and \
+                                WORKING['time']['lunchTime'] > int(attend[name]['begin']):
+                            working_hours = working_hours - 1
+                        working_hours = round(working_hours, 1)
+                        attend[name]['workingHours'] = working_hours
+                    else:
+                        attend[name]['workingHours'] = None
+                else:
+                    if self.hour >= 18:
+                        attend[name]['status'] = ('미출근', 3)
+                        attend[name]['workingHours'] = 0
+                    elif self.hour >= WORKING['time']['beginTime'] / 10000:
+                        attend[name]['workingHours'] = None
+                        attend[name]['status'] = ('지각', 1)
+                    else:
+                        attend[name]['status'] = ('출근전', 2)
+                        attend[name]['workingHours'] = None
+
+                self.collection.update_one({'date': self.today, 'name': name}, {'$set': attend[name]}, upsert=True)
+
+    def update_date(self, start=None, end=None):
+        data_list = self.collection.find({'date': {"$gte": start, "$lt": end}})
+        date_list = []
+        for data in data_list:
+            if data['date'] not in date_list:
+                date_list.append(data['date'])
+        for date in date_list:
+            self.update(date=date)
+
 
 class Event:
     collection = db['event']
     start = None
     end = None
-    employees = []
 
     def get(self):
         _, today, this_month = checkTime()
@@ -318,45 +326,34 @@ class Event:
 
     def post(self, args, type='insert'):
 
-        title, self.start, self.end, id = request_event(args)
-        request_data = {'title': title, 'start': self.start, 'end': self.end, 'id': id}
+        title, self.start, self.end, event_id = request_event(args)
+        request_data = {'title': title, 'start': self.start, 'end': self.end, 'id': event_id}
 
-        if id is None and type == 'insert':
+        if event_id is None and type == 'insert':
             data = self.collection.find_one(sort=[('id', -1)])
             if data:
-                id = data['id'] + 1
+                event_id = data['id'] + 1
             else:
-                id = 1
-            request_data['id'] = id
+                event_id = 1
+            request_data['id'] = event_id
             self.collection.insert_one(request_data)
         elif type == 'update':
-            self.collection.update_one({'id': id}, {'$set': request_data})
+            self.collection.update_one({'id': event_id}, {'$set': request_data})
         elif type == 'delete':
             self.collection.delete_one({'id': request_data['id']})
 
         # calendar 에 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
         if self.start is not None and self.end is not None:
-            self.report()
+            report = Report()
+            report.update_date(start=self.start, end=self.end)
 
-    def report(self):
-        collection = db['report']  # report 에는 오늘까지만 기록이 되어 있어 제일 큰 날짜가 오늘이 됨
-        data_list = collection.find({'date': {"$gte": self.start, "$lt": self.end}})
-        date_list = []
-        for data in data_list:
-            if data['date'] not in date_list:
-                date_list.append(data['date'])
-        for date in date_list:
-            saveDB(today=date)
-
-    def schedule(self, date=None):
-        employee = Employee()
-        self.employees = employee.get(page='all')
+    def schedule(self, employees, date=None):
         schedule_dict = {}
         data_list = self.collection.find({'start': {"$lte": date}, 'end': {"$gt": date}})
         for data in data_list:
             name = None
             status = '기타'
-            for employee in self.employees:
+            for employee in employees:
                 if employee['name'] in data['title']:
                     name = employee['name']
             for type in WORKING['status']:

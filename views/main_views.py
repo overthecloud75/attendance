@@ -83,9 +83,9 @@ def employees():
     return render_template('user/employees.html', **locals())
 
 
-@bp.route('/updateEmployee/', methods=('GET', 'POST'))
+@bp.route('/update_employee/', methods=('GET', 'POST'))
 @login_required
-def updateEmployee():
+def update_employee():
     form = EmployeeSubmitForm()
     employee = Employee()
     _, name, _, _ = request_get(request.args)
@@ -97,9 +97,9 @@ def updateEmployee():
     return render_template('user/update_employee.html', **locals())
 
 
-@bp.route('/macs/', methods=('GET', 'POST'))
+@bp.route('/device/', methods=('GET', 'POST'))
 @login_required
-def macs():
+def get_device():
     form = DeviceSubmitForm()
     device = Device()
     if request.method == 'POST' and form.validate_on_submit():
@@ -107,16 +107,17 @@ def macs():
         device.post(request_data)
     page, name, _, _ = request_get(request.args)
     paging, data_list = device.get(page=page)
-    return render_template('user/macs.html', **locals())
+    return render_template('user/device.html', **locals())
 
 
 @bp.route('/attend/', methods=('GET', 'POST'))
 def attend():
+    report = Report()
     if request.method == 'POST':
         start = request.form['start']
         end = request.form['end']
         name = request.form['name']
-        data_list = get_attend(page='all', name=name, start=start, end=end)
+        data_list = report.attend(page='all', name=name, start=start, end=end)
         if data_list:
             encoding = 'utf-8-sig'
             filename = start + '_' + end + '.csv'
@@ -131,7 +132,6 @@ def attend():
     # https://gist.github.com/doobeh/3e685ef25fac7d03ded7#file-vort-html-L11
     form = DateSubmitForm()
     page, name, start, end = request_get(request.args)
-    report = Report()
     paging, today, data_list, summary = report.attend(page=page, name=name, start=start, end=end)
     return render_template('report/attendance.html', **locals())
 

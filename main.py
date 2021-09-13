@@ -5,7 +5,7 @@ import threading
 from flask import Flask
 
 import models
-from models import Device
+from models import Report, Device
 import utils
 
 
@@ -37,7 +37,8 @@ def create_app():
 
 def saveDB():
     t = threading.Timer(1800, saveDB)
-    models.saveDB()
+    report = Report()
+    report.update()
     t.daemon = True
     t.start()
 
