@@ -128,7 +128,7 @@ class Device:
         if 'owner' not in request_data:
             request_data = {'mac': request_data['mac'], 'owner': None, 'device': None}
         elif request_data['owner'] == 'None':
-            request_data['owner'] = None 
+            request_data['owner'] = None
         self.collection.update_one({'mac': request_data['mac']}, {'$set': request_data}, upsert=True)
 
 
