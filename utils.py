@@ -1,10 +1,12 @@
+import scapy.layers.l2
+from scapy.all import *
 import datetime
 from datetime import timedelta
+import socket
 from korean_lunar_calendar import KoreanLunarCalendar
-import scapy.layers.l2
 
 from views.config import page_default
-from workingconfig import WORKING, NET
+from workingconfig import WORKING, NET, PDST, PSRC
 
 
 class Page:
@@ -67,7 +69,7 @@ class Page:
         return paging, data_list
 
 
-def checkHoliday(date):
+def check_holiday(date):
     is_holiday = False
     year = date[0:4]
     month = date[5:7]
@@ -111,7 +113,7 @@ def datetimeToDate(date):
     return date
 
 
-def checkTime():
+def check_time():
     today = datetime.date.today()
     now = datetime.datetime.now()
     hour = now.hour
@@ -124,6 +126,24 @@ def checkTime():
     end = end.strftime("%Y-%m-%d")
     this_month = {'start': start, 'end': end}
     return hour, today, this_month
+
+
+def check_hour():
+    today = datetime.date.today()
+    today = today.strftime("%Y-%m-%d")
+    now = datetime.datetime.now()
+    hour = correct_time(now.hour)
+    minute = correct_time(now.minute)
+    second = correct_time(now.second)
+    return today, hour + minute + second
+
+
+def correct_time(time):
+    if int(time) < 10:
+        time = '0' + str(time)
+    else:
+        time = str(time)
+    return time
 
 
 def request_get(request_data):
@@ -151,11 +171,34 @@ def request_event(request_data):
 
 
 def detect_network():
-    networks = []
+    network_list = []
+    for ip in range(128):
+        if ip not in [0, 1, 255]:
+            data = check_arp(ip)
+            if data:
+                network_list.append(data)
+    # network_list = check_net()
+    return network_list
+
+
+def check_arp(ip):
+    answers = sr1(ARP(op='who-has', psrc=PSRC, pdst=PDST + str(ip)), timeout=1, verbose=False)
+    data = {}
+    if answers:
+        ans = answers[0]
+        date, time = check_hour()
+        data = {'mac': ans.hwsrc, 'ip': ans.psrc, 'date': date, 'time': time}
+    return data
+
+
+def check_net():
+    network_list = []
     ans, noans = scapy.layers.l2.arping(NET, timeout=2, verbose=False)
     for sent, received in ans.res:
-        ip = received.psrc
         mac = received.hwsrc
-        networks.append({'ip': ip, 'mac': mac})
-    return networks
+        ip = received.psrc
+        date, time = check_hour()
+        network_list.append({'mac': mac, 'ip': ip, 'date': date, 'time': time})
+    return network_list
+
 

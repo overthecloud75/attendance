@@ -9,7 +9,7 @@ from office365.runtime.auth.user_credential import UserCredential
 from office365.runtime.http.request_options import RequestOptions
 from office365.sharepoint.client_context import ClientContext
 
-from utils import checkTime, checkHoliday, request_event, request_get, Page
+from utils import check_time, check_holiday, request_event, request_get, Page
 from mainconfig import ACCESS_DB_PWD, IS_CALENDAR_CONNECTED, OFFICE365_ACCOUNT
 from workingconfig import WORKING
 
@@ -53,7 +53,7 @@ def get_setting():
 
 
 def get_sharepoint():
-    _, today, this_month = checkTime()
+    _, today, this_month = check_time()
     start = this_month['start']
     end = this_month['end']
     collection = db['calendar']
@@ -117,7 +117,7 @@ class Report:
     employee = Employee()
 
     def __init__(self):
-        self.hour, self.today, self.this_month = checkTime()
+        self.hour, self.today, self.this_month = check_time()
 
     def attend(self, page=None, name=None, start=None, end=None):
         if page == 'all':
@@ -226,7 +226,7 @@ class Report:
             if date != self.today:
                 self.hour = 23
             self.today = date
-        is_holiday = checkHoliday(self.today)
+        is_holiday = check_holiday(self.today)
         if not is_holiday and self.hour > 6:
             if IS_CALENDAR_CONNECTED:
                 eventFromSharePoint()
@@ -316,7 +316,7 @@ class Event:
     end = None
 
     def get(self):
-        _, today, this_month = checkTime()
+        _, today, this_month = check_time()
         self.start = this_month['start']
         self.end = this_month['end']
         data_list = []
@@ -365,7 +365,7 @@ class Event:
 
 # Device
 class Device:
-    collection = db['mac']
+    collection = db['device']
 
     def get(self, page=1):
         data_list = self.collection.find()
@@ -379,6 +379,13 @@ class Device:
         if 'owner' not in request_data:
             request_data = {'mac': request_data['mac'], 'owner': None, 'device': None}
         self.collection.update_one({'mac': request_data['mac']}, {'$set': request_data}, upsert=True)
+
+
+class Mac:
+    collection = db['mac']
+
+    def post(self, request_data):
+        self.collection.insert_one(request_data)
 
 
 

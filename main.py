@@ -1,11 +1,11 @@
 import os
 from logging.config import dictConfig
 import threading
+import time
 
 from flask import Flask
 
-import models
-from models import Report, Device
+from models import Report, Device, Mac
 import utils
 
 
@@ -35,37 +35,40 @@ def create_app():
     return app
 
 
-def saveDB():
-    t = threading.Timer(1800, saveDB)
+def save_db():
     report = Report()
     report.update()
+    t = threading.Timer(1800, save_db)
     t.daemon = True
     t.start()
 
 
-def checkMac():
-    t = threading.Timer(30, checkMac)
-    networks = utils.detect_network()
-    global macs
-    for network in networks:
-        mac = network['mac']
-        if network['mac'] not in macs:
-            macs.append(mac)
-            device.post({'mac': mac})
-            print(mac)
-    t.daemon = True
-    t.start()
+def check_mac():
+    device = Device()
+    mac = Mac()
+    macs = []
+    data_list = device.get(page='all')
+    for data in data_list:
+        macs.append(data['mac'])
+    while True:
+        for ip in range(128):
+            if ip not in [0, 1, 5, 255]:
+                network = utils.check_arp(ip)
+                if network:
+                    mac.post(network)
+                    if network['mac'] not in macs:
+                        macs.append(network['mac'])
+                        device.post({'mac': network['mac']})
+        time.sleep(5)
 
 
 if __name__ == '__main__':
     app = create_app()
-    saveDB()
-    macs = []
-    device = Device()
-    data_list = device.get(page='all')
-    for data in data_list:
-        macs.append(data['mac'])
-    print(macs)
-    checkMac()
+    save_db()
+
+    th = threading.Thread(target=check_mac)
+    th.daemon = True
+    th.start()
+
     app.run(host='0.0.0.0', debug=False, threaded=True)
 
