@@ -1,12 +1,15 @@
+import os
+import subprocess
+import locale
 import scapy.layers.l2
 from scapy.all import *
 import datetime
 from datetime import timedelta
-import socket
 from korean_lunar_calendar import KoreanLunarCalendar
 
 from views.config import page_default
-from workingconfig import WORKING, NET, PDST, PSRC
+from workingconfig import WORKING
+from mainconfig import NET, PDST, PSRC, NAME_OF_ROUTER
 
 
 class Page:
@@ -200,5 +203,36 @@ def check_net():
         date, time = check_hour()
         network_list.append({'mac': mac, 'ip': ip, 'date': date, 'time': time})
     return network_list
+
+
+def check_wifi_connected():
+    os_encoding = locale.getpreferredencoding()
+    cmd = 'netsh interface show interface'
+    cmd = cmd.split()
+    fd_popen = subprocess.Popen(cmd, stdout=subprocess.PIPE).stdout
+    data_list = fd_popen.read().decode(os_encoding).strip().split()
+    fd_popen.close()
+
+    status_list = []
+    interface_list = []
+    for data in data_list:
+        if '연결' in data or 'connected' in data.lower():
+            status_list.append(data.lower())
+        if '이더넷' in data or 'ethernet' in data.lower() or 'wi-fi' in data.lower():
+            interface_list.append(data.lower())
+
+    connected = False
+    for status, interface in zip(status_list, interface_list):
+        if interface == 'wi-fi':
+            if status == '연결됨' or status == 'connected':
+                connected = True
+
+    return connected
+
+
+def connect_wifi():
+    os.system(f'''cmd /c "netsh wlan connect name={NAME_OF_ROUTER}"''')
+
+
 
 
