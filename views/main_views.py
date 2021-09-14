@@ -105,9 +105,18 @@ def get_device():
     if request.method == 'POST' and form.validate_on_submit():
         request_data = {'mac': form.mac.data, 'owner': form.owner.data, 'device': form.device.data}
         device.post(request_data)
-    page, name, _, _ = request_get(request.args)
+    page, _, _, _ = request_get(request.args)
     paging, data_list = device.get(page=page)
     return render_template('user/device.html', **locals())
+
+
+@bp.route('/wifi_attend/', methods=('GET', ))
+@login_required
+def wifi_attend():
+    report = Report()
+    page, _, _, _ = request_get(request.args)
+    paging, data_list = report.wifi_attend(page=page)
+    return render_template('user/wifi_attend.html', **locals())
 
 
 @bp.route('/attend/', methods=('GET', 'POST'))
