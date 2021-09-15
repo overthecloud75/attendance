@@ -11,6 +11,7 @@
             <th>begin</th>
             <th>end</th>
             <th>owner</th>
+            <th>device</th>
         </tr>
         </thead>
         {% for data in data_list %}
@@ -20,12 +21,13 @@
             <td>{{ data.begin }}</td>
             <td>{{ data.end }}</td>
             <td>{{ data.owner }}</td>
+            <td>{{ data.device }}</td>
             <td></td>
         </tr>
         {% endfor %}
     {% else %}
         <tr>
-            <td colspan="3">근태 정보가 없습니다.</td>
+            <td colspan="3">Device 정보가 없습니다.</td>
         </tr>
     {% endif %}
     </table>

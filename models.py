@@ -378,13 +378,13 @@ class Report:
 
     def wifi_attend(self, page=1):
         device = Device()
-        _, device_list = device.get(page=page)
+        paging, device_list = device.get(page=page)
         wifi_list = []
         for device in device_list:
             begin, end = self.mac.get(device['mac'], self.today)
-            wifi_list.append({'mac': device['mac'], 'begin': begin, 'end': end, 'owner': device['owner']})
+            wifi_list.append({'mac': device['mac'], 'begin': begin, 'end': end, 'owner': device['owner'], 'device': device['device']})
         get_page = Page(page)
-        return get_page.paginate(wifi_list)
+        return get_page.paginate(wifi_list, count=paging.count)
 
 
 class Event:

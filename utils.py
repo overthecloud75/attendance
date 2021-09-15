@@ -18,15 +18,24 @@ class Page:
         self.per_page = page_default['per_page']
         self.offset = (page - 1) * self.per_page
 
-    def paginate(self, data_list):
-        if type(data_list) == list:
-            count = len(data_list)
-            data_list = data_list[self.offset:self.offset + self.per_page]
+    def paginate(self, data_list, count=None):
+        if count:
+            pass
         else:
-            count = data_list.count()
-            data_list = data_list.limit(self.per_page).skip(self.offset)
+            if type(data_list) == list:
+                count = len(data_list)
+                data_list = data_list[self.offset:self.offset + self.per_page]
+            else:
+                count = data_list.count()
+                data_list = data_list.limit(self.per_page).skip(self.offset)
 
-        total_pages = int(count / self.per_page) + 1
+        if count != 0:
+            if count // self.per_page == 0:
+                total_pages = int(count / self.per_page)
+            else:
+                total_pages = int(count / self.per_page) + 1
+        else:
+            total_pages = 1
         screen_pages = 10
 
         if self.page < 1:

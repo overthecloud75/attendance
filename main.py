@@ -55,7 +55,7 @@ def check_mac():
         print('wifi', wifi_connected)
         if not wifi_connected:
             utils.connect_wifi()
-        for ip in range(128):
+        for ip in range(200):
             if ip not in [0, 1, 5, 255]:
                 network = utils.check_arp(ip)
                 if network:
