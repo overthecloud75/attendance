@@ -384,7 +384,7 @@ class Report:
             begin, end = self.mac.get(device['mac'], self.today)
             wifi_list.append({'mac': device['mac'], 'begin': begin, 'end': end, 'owner': device['owner'], 'device': device['device']})
         get_page = Page(page)
-        return get_page.paginate(wifi_list, count=paging.count)
+        return get_page.paginate(wifi_list, count=paging['count'])
 
 
 class Event:
