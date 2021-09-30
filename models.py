@@ -161,7 +161,11 @@ class Report:
     def attend(self, page=None, name=None, start=None, end=None):
         if page == 'all':
             employee = self.employee.get(name=name)
-            data_list = self.collection.find({'name': name}, sort=[('date', 1)])
+            if start:
+                data_list = self.collection.find({'date': {"$gte": start, "$lte": end}, 'name': name},
+                                                 sort=[('name', 1), ('date', 1)])
+            else:
+                data_list = self.collection.find({'name': name}, sort=[('date', 1)])
             attend_list = []
             for data in data_list:
                 if data['begin']:
@@ -312,7 +316,6 @@ class Report:
             # wifi 와 지문 인식기 근태 비교
             for name in device_dict:
                 begin, end = self.mac.get(device_dict[name], self.today)
-                print(name, begin, end)
                 if begin:
                     if name in attend:
                         if attend[name]['begin']:
