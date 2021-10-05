@@ -270,28 +270,25 @@ class Report:
                 self.hour = 23
             self.today = date
         is_holiday = check_holiday(self.today)
-        if not is_holiday and self.hour > 6:
+
+        if self.hour > 6:
             if IS_CALENDAR_CONNECTED:
                 eventFromSharePoint()
+
+            # attend 초기화
+            attend = {}
+            schedule_dict = {}
+            if not is_holiday:
+                employees = self.employee.get(page='all')
+                event = Event()
+                schedule_dict = event.schedule(employees, date=self.today)
+                for employee in employees:
+                    name = employee['name']
+                    attend[name] = {'date': self.today, 'name': name, 'begin': None, 'end': None, 'reason': None}
+
+            # 지문 인식 출퇴근 기록
             access_day = self.today[0:4] + self.today[5:7] + self.today[8:]  # access_day 형식으로 변환
             cursor.execute("select e_name, e_date, e_time from tenter where e_date = ?", access_day)
-
-            attend = {}
-            employees = self.employee.get(page='all')
-            event = Event()
-            schedule_dict = event.schedule(employees, date=self.today)
-
-            device = Device()
-            device_list = device.get(page='all')
-            device_dict = {}
-            for device in device_list:
-                if 'owner' in device:
-                    if device['owner']:
-                        device_dict[device['owner']] = device['mac']
-
-            for employee in employees:
-                name = employee['name']
-                attend[name] = {'date': self.today, 'name': name, 'begin': None, 'end': None, 'reason': None}
 
             for row in cursor.fetchall():
                 name = row[0]
@@ -312,6 +309,15 @@ class Report:
                             attend[name]['end'] = time
                         else:
                             attend[name]['end'] = None
+
+            # wifi device
+            device = Device()
+            device_list = device.get(page='all')
+            device_dict = {}
+            for device in device_list:
+                if 'owner' in device:
+                    if device['owner']:
+                        device_dict[device['owner']] = device['mac']
 
             # wifi 와 지문 인식기 근태 비교
             for name in device_dict:
@@ -343,8 +349,11 @@ class Report:
                     else:
                         attend[name]['workingHours'] = None
                 elif attend[name]['begin']:
-                    if int(attend[name]['begin']) > WORKING['time']['beginTime']:
-                        attend[name]['status'] = ('지각', 1)
+                    if not is_holiday:
+                        if int(attend[name]['begin']) > WORKING['time']['beginTime']:
+                            attend[name]['status'] = ('지각', 1)
+                        else:
+                            attend[name]['status'] = ('정상출근', 0)
                     else:
                         attend[name]['status'] = ('정상출근', 0)
                     if self.hour >= 18:
@@ -358,15 +367,18 @@ class Report:
                     else:
                         attend[name]['workingHours'] = None
                 else:
-                    if self.hour >= 18:
-                        attend[name]['status'] = ('미출근', 3)
-                        attend[name]['workingHours'] = 0
-                    elif self.hour >= WORKING['time']['beginTime'] / 10000:
-                        attend[name]['workingHours'] = None
-                        attend[name]['status'] = ('지각', 1)
+                    if not is_holiday:
+                        if self.hour >= 18:
+                            attend[name]['status'] = ('미출근', 3)
+                            attend[name]['workingHours'] = 0
+                        elif self.hour >= WORKING['time']['beginTime'] / 10000:
+                            attend[name]['workingHours'] = None
+                            attend[name]['status'] = ('지각', 1)
+                        else:
+                            attend[name]['status'] = ('출근전', 2)
+                            attend[name]['workingHours'] = None
                     else:
-                        attend[name]['status'] = ('출근전', 2)
-                        attend[name]['workingHours'] = None
+                        attend[name]['status'] = ('정상출근', 0)
 
                 self.collection.update_one({'date': self.today, 'name': name}, {'$set': attend[name]}, upsert=True)
 
