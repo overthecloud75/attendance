@@ -135,15 +135,23 @@ class Device:
 class Mac:
     collection = db['mac']
 
-    def get(self, mac, date):
+    def get(self, mac_list, date):
         begin = None
         end = None
-        data = self.collection.find_one({'date': date, 'mac': mac}, sort=[('time', 1)])
-        if data:
-            begin = data['time']
-        data = self.collection.find_one({'date': date, 'mac': mac}, sort=[('time', -1)])
-        if data:
-            end = data['time']
+        # if users have devices
+        for mac in mac_list:
+            data = self.collection.find_one({'date': date, 'mac': mac}, sort=[('time', 1)])
+            if data:
+                if begin and int(begin) > int(data['time']):
+                    begin = data['time']
+                elif not begin:
+                    begin = data['time']
+            data = self.collection.find_one({'date': date, 'mac': mac}, sort=[('time', -1)])
+            if data:
+                if end and int(end) < int(data['time']):
+                    end = data['time']
+                elif not end:
+                    end = data['time']
         return begin, end
 
     def post(self, request_data):
@@ -317,7 +325,11 @@ class Report:
             for device in device_list:
                 if 'owner' in device:
                     if device['owner']:
-                        device_dict[device['owner']] = device['mac']
+                        # device가 여러개 있는 경우
+                        if device['owner'] in device_dict:
+                            device_dict[device['owner']].append(device['mac'])
+                        else:
+                            device_dict[device['owner']] = [device['mac']]
 
             # wifi 와 지문 인식기 근태 비교
             for name in device_dict:
@@ -396,7 +408,7 @@ class Report:
         paging, device_list = device.get(page=page)
         wifi_list = []
         for device in device_list:
-            begin, end = self.mac.get(device['mac'], self.today)
+            begin, end = self.mac.get([device['mac']], self.today)
             wifi_list.append({'mac': device['mac'], 'begin': begin, 'end': end, 'owner': device['owner'], 'device': device['device']})
         get_page = Page(page)
         return get_page.paginate(wifi_list, count=paging['count'])
