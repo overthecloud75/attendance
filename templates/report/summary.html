@@ -34,7 +34,6 @@ $(function() {
             <th>지각</th>
             <th>미출근</th>
             <th>휴가</th>
-            <th>연차</th>
             <th>반차</th>
             <th>출장</th>
             <th>외근</th>
@@ -49,17 +48,16 @@ $(function() {
             <td><a href="{{ url_for('main.attend', name=data.name, start=start, end=end) }}">{{ data.name }}</a></td>
             <td>{{ data.totalDay }}</td>
             <td>{{ data.totalWorkingHours }}</td>
-            <td>{{ data['정상출근'] }}</td>
+            <td>{{ data['정상출근'] + data['출장'] + data['외근'] + data['재택'] + data['정기점검'] }}</td>
             <td>{{ data['지각'] }}</td>
             <td>{{ data['미출근'] }}</td>
-            <td>{{ data['휴가'] }}</td>
-            <td>{{ data['연차'] }}</td>
+            <td>{{ data['휴가'] + data['연차'] }}</td>
             <td>{{ data['반차'] }}</td>
             <td>{{ data['출장'] }}</td>
             <td>{{ data['외근'] }}</td>
             <td>{{ data['재택'] }}</td>
             <td>{{ data['정기점검'] }}</td>
-            <td>{{ data['기타'] }}</td>
+            <td>{{ data['백신'] + data['기타'] }}</td>
         </tr>
         {% endfor %}
     {% else %}

@@ -39,6 +39,7 @@ def save_db():
     report = Report()
     report.update()
     t = threading.Timer(1800, save_db)
+    print('save_db')
     t.daemon = True
     t.start()
 

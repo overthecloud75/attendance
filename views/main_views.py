@@ -24,7 +24,7 @@ def login_required(view):
 
 @bp.route('/')
 def index():
-    return render_template('base.html')
+    return redirect(url_for('main.attend'))
 
 
 @bp.route('/signup/', methods=('GET', 'POST'))
@@ -37,7 +37,7 @@ def signup():
         if error:
             flash('이미 존재하는 사용자입니다.')
         else:
-            return redirect(url_for('main.index'))
+            return redirect(url_for('main.attend'))
     return render_template('user/signup.html', form=form)
 
 
@@ -55,7 +55,7 @@ def login():
             session.clear()
             for key in user_data:
                 session[key] = user_data[key]
-            return redirect(url_for('main.index'))
+            return redirect(url_for('main.attend'))
         flash(error)
     return render_template('user/login.html', form=form)
 
