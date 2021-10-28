@@ -357,6 +357,9 @@ class Report:
                         status = '연차'
                     attend[name]['reason'] = status
                     if self.hour >= 18:
+                        if '반차' in status:  # status가 2개 이상으로 표시된 경우 ex) 반차, 정기점검
+                            status = '반차'
+                            attend[name]['reason'] = status
                         attend[name]['workingHours'] = WORKING['status'][status]
                     else:
                         attend[name]['workingHours'] = None
@@ -463,10 +466,14 @@ class Event:
             for employee in employees:
                 if employee['name'] in data['title']:
                     name = employee['name']
-            for type in WORKING['status']:
-                if type in data['title']:
-                    status = type
-            schedule_dict[name] = status
+            for status_type in WORKING['status']:
+                if status_type in data['title']:
+                    status = status_type
+            if name is not None:
+                if name in schedule_dict:
+                    schedule_dict[name] = schedule_dict[name] + ', ' + status
+                else:
+                    schedule_dict[name] = status
         return schedule_dict
 
 
