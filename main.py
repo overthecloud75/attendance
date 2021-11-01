@@ -38,6 +38,7 @@ def create_app():
 def save_db():
     report = Report()
     report.update()
+    # report.update(date='2021-10-11')
     t = threading.Timer(1800, save_db)
     print('save_db')
     t.daemon = True

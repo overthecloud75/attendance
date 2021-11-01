@@ -277,8 +277,8 @@ class Report:
             if date != self.today:
                 self.hour = 23
             self.today = date
-        is_holiday = check_holiday(self.today)
 
+        is_holiday = check_holiday(self.today)
         if self.hour > 6:
             if IS_CALENDAR_CONNECTED:
                 eventFromSharePoint()
@@ -348,7 +348,6 @@ class Report:
                             attend[name]['end'] = end
                     else:
                         attend[name] = {'date': self.today, 'name': name, 'begin': begin, 'end': end, 'reason': None}
-
             for name in attend:
                 if name in schedule_dict:
                     status = schedule_dict[name]

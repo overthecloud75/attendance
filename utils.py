@@ -101,10 +101,11 @@ def check_holiday(date):
         is_holiday = True
     elif date.weekday() == 0:
         # 대체공휴일 적용
-        yesterday = date.today() - timedelta(1)
+        yesterday = date - timedelta(1)
         yesterday = datetimeToDate(yesterday)
-        twodaysago = date.today() - timedelta(2)
+        twodaysago = date - timedelta(2)
         twodaysago = datetimeToDate(twodaysago)
+
         if yesterday in WORKING['alternativeVacation'] or twodaysago in WORKING['alternativeVacation']:
             is_holiday = True
     return is_holiday
