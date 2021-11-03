@@ -10,6 +10,7 @@ import utils
 
 
 def create_app():
+    # https://flask.palletsprojects.com/en/2.0.x/logging/
     dictConfig({
         'version': 1,
         'formatters': {'default': {
@@ -40,7 +41,7 @@ def save_db():
     report.update()
     # report.update(date='2021-10-11')
     t = threading.Timer(1800, save_db)
-    print('save_db')
+    app.logger.info('save_db')
     t.daemon = True
     t.start()
 
@@ -56,12 +57,12 @@ def check_mac():
         wifi_connected = utils.check_wifi_connected()
         if not wifi_connected:
             utils.connect_wifi()
-        for ip in range(200):
+        for ip in range(155):
             if ip not in [0, 1, 2, 5, 255]:
                 network = utils.check_arp(ip)
                 if network:
+                    app.logger.info(network)
                     print(network)
-                    mac.post(network)
                     if network['mac'] not in macs:
                         macs.append(network['mac'])
                         device.post({'mac': network['mac']})
