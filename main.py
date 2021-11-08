@@ -61,7 +61,7 @@ def check_mac():
             if ip not in [0, 1, 2, 5, 255]:
                 network = utils.check_arp(ip)
                 if network:
-                    app.logger.info(network)
+                    # app.logger.info(network)
                     mac.post(network)
                     if network['mac'] not in macs:
                         macs.append(network['mac'])

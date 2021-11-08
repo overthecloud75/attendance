@@ -1,3 +1,4 @@
+from flask import current_app
 from werkzeug.security import check_password_hash
 import datetime
 from pymongo import MongoClient
@@ -281,7 +282,10 @@ class Report:
         is_holiday = check_holiday(self.today)
         if self.hour > 6:
             if IS_CALENDAR_CONNECTED:
-                eventFromSharePoint()
+                try:
+                    eventFromSharePoint()
+                except Exception as e:
+                    current_app.logger.info(e)
 
             # attend 초기화
             attend = {}
