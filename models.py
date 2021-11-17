@@ -285,6 +285,7 @@ class Report:
                 try:
                     eventFromSharePoint()
                 except Exception as e:
+                    # https://wikidocs.net/81081
                     current_app.logger.info(e)
 
             # attend 초기화

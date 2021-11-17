@@ -2,6 +2,7 @@ from flask import Blueprint, request, render_template, url_for, current_app, ses
 from werkzeug.utils import redirect
 
 from models import Event, get_sharepoint
+from mainconfig import OFFICE365_CALENDAR_URL
 
 # blueprint
 bp = Blueprint('calendar', __name__, url_prefix='/calendar')
@@ -12,6 +13,7 @@ def calendar():
     # https://stackoverflow.com/questions/39902405/fullcalendar-in-django
     event = Event()
     events = event.get()
+    calendar_url = OFFICE365_CALENDAR_URL
     return render_template('report/calendar.html', **locals())
 
 
