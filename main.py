@@ -33,10 +33,9 @@ def create_app():
     from views import main_views, calendar_views
     app.register_blueprint(main_views.bp)
     app.register_blueprint(calendar_views.bp)
-    # Manually Push a Contex https://flask.palletsprojects.com/en/2.0.x/appcontext/
-    # https://stackoverflow.com/questions/39476889/use-flask-current-app-logger-inside-threading
-    with app.app_context():
-        save_db()
+    # Manually Push a Context https://flask.palletsprojects.com/en/2.0.x/appcontext/
+    # with app.app_context():
+    #    save_db()
     return app
 
 
@@ -45,7 +44,7 @@ def save_db():
     report.update()
     # report.update(date='2021-10-11')
     t = threading.Timer(1800, save_db)
-    current_app.logger.info('save_db')
+    app.logger.info('save_db')
     t.daemon = True
     t.start()
 
@@ -75,7 +74,7 @@ def check_mac():
 
 if __name__ == '__main__':
     app = create_app()
-    # save_db()
+    save_db()
 
     th = threading.Thread(target=check_mac)
     th.daemon = True

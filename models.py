@@ -285,8 +285,10 @@ class Report:
                 try:
                     eventFromSharePoint()
                 except Exception as e:
+                    # current_app.logger.info(e)
+                    print(e)
                     # https://wikidocs.net/81081
-                    current_app.logger.info(e)
+                    # https://stackoverflow.com/questions/39476889/use-flask-current-app-logger-inside-threading
 
             # attend 초기화
             attend = {}
