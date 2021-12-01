@@ -135,7 +135,11 @@ def check_time():
     year = now.year
     start = datetime.datetime(year, month, 1, 0, 0, 0)
     start = start.strftime("%Y-%m-%d")
-    end = datetime.datetime(year, month + 1, 1, 0, 0, 0)
+    month = month + 1
+    if month == 13:
+        month = 1
+        year = year + 1
+    end = datetime.datetime(year, month, 1, 0, 0, 0)
     end = end.strftime("%Y-%m-%d")
     this_month = {'start': start, 'end': end}
     return hour, today, this_month

@@ -432,6 +432,7 @@ class Event:
         _, today, this_month = check_time()
         self.start = this_month['start']
         self.end = this_month['end']
+        print(self.start, self.end)
         data_list = []
         if self.start is not None and self.end is not None:
             data_list = self.collection.find({'start': {"$gte": self.start, "$lt": self.end}}, sort=[('id', 1)])
