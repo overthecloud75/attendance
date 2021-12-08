@@ -99,11 +99,8 @@ class Employee:
             employee = self.collection.find_one({'name': name})
             return employee
         elif page == 'all':
-            data_list = []
             employees = self.collection.find(sort=[('name', 1)])
-            for employee in employees:
-                data_list.append({'name': employee['name']})
-            return data_list
+            return employees
         else:
             data_list = self.collection.find(sort=[('department', 1), ('name', 1)])
             get_page = Page(page)
@@ -299,7 +296,9 @@ class Report:
                 schedule_dict = event.schedule(employees, date=self.today)
                 for employee in employees:
                     name = employee['name']
-                    attend[name] = {'date': self.today, 'name': name, 'begin': None, 'end': None, 'reason': None}
+                    employee_id = employee['employeeId']
+                    # 같은 employee_id 인데 이름이 바뀌는 경우 발생
+                    attend[name] = {'date': self.today, 'name': name, 'employId': employee_id, 'begin': None, 'end': None, 'reason': None}
 
             # 지문 인식 출퇴근 기록
             access_day = self.today[0:4] + self.today[5:7] + self.today[8:]  # access_day 형식으로 변환
