@@ -100,7 +100,10 @@ class Employee:
             return employee
         elif page == 'all':
             employees = self.collection.find(sort=[('name', 1)])
-            return employees
+            employees_list = []
+            for employee in employees:
+                employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId']})
+            return employees_list
         else:
             data_list = self.collection.find(sort=[('department', 1), ('name', 1)])
             get_page = Page(page)
@@ -129,8 +132,8 @@ class Device:
         elif request_data['owner'] == 'None':
             request_data['owner'] = None
         else:
-            employees = self.employee.get(page='all')
-            for employee in employees:
+            employees_list = self.employee.get(page='all')
+            for employee in employees_list:
                 name = employee['name']
                 employee_id = employee['employeeId']
                 if request_data['owner'] == name:
@@ -299,10 +302,10 @@ class Report:
             attend = {}
             schedule_dict = {}
             if not is_holiday:
-                employees = self.employee.get(page='all')
+                employees_list = self.employee.get(page='all')
                 event = Event()
-                schedule_dict = event.schedule(employees, date=self.today)
-                for employee in employees:
+                schedule_dict = event.schedule(employees_list, date=self.today)
+                for employee in employees_list:
                     name = employee['name']
                     employee_id = employee['employeeId']
                     # 같은 employee_id 인데 이름이 바뀌는 경우 발생
@@ -407,7 +410,6 @@ class Report:
                             attend[name]['workingHours'] = None
                     else:
                         attend[name]['status'] = ('정상출근', 0)
-
                 self.collection.update_one({'date': self.today, 'name': name}, {'$set': attend[name]}, upsert=True)
 
     def update_date(self, start=None, end=None):
@@ -471,13 +473,13 @@ class Event:
             report = Report()
             report.update_date(start=self.start, end=self.end)
 
-    def schedule(self, employees, date=None):
+    def schedule(self, employees_list, date=None):
         schedule_dict = {}
         data_list = self.collection.find({'start': {"$lte": date}, 'end': {"$gt": date}})
         for data in data_list:
             name = None
             status = '기타'
-            for employee in employees:
+            for employee in employees_list:
                 if employee['name'] in data['title']:
                     name = employee['name']
             for status_type in WORKING['status']:
