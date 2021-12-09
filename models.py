@@ -112,6 +112,7 @@ class Employee:
 
 # Device
 class Device:
+    employee = Employee()
     collection = db['device']
 
     def get(self, page=1):
@@ -127,6 +128,13 @@ class Device:
             request_data = {'mac': request_data['mac'], 'owner': None, 'device': None}
         elif request_data['owner'] == 'None':
             request_data['owner'] = None
+        else:
+            employees = self.employee.get(page='all')
+            for employee in employees:
+                name = employee['name']
+                employee_id = employee['employeeId']
+                if request_data['owner'] == name:
+                    request_data['employeeId'] = employee_id
         self.collection.update_one({'mac': request_data['mac']}, {'$set': request_data}, upsert=True)
 
 
