@@ -18,12 +18,14 @@ try:
     from mainconfig import ACCESS_DB_PWD, OUTSIDE_CALENDAR_URL, ACCOUNT, CC, MAIL_SERVER, SERVER_URL
 except Exception as e:
     # try your own Access_DB_PWD and ACCOUNT
+    # CC: cc email when notice email
     ACCESS_DB_PWD = '*******'
     OUTSIDE_CALENDAR_URL = None
     ACCOUNT = {
         'email': 'test@test.co.kr',
         'password': '*******',
     }
+    CC = 'test@test.co.kr'
     MAIL_SERVER = {'host': 'smtp.office365.com', 'port': 587}
     SERVER_URL = 'http://127.0.0.1:5000/'
 

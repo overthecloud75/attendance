@@ -10,3 +10,4 @@ venv
 venv/
 views/__pycache__
 views/__pycache__/
+static/
