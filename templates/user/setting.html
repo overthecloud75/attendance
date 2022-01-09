@@ -10,16 +10,19 @@
         </tr>
         </thead>
         <tr>
-            <td>calendar 연결</td>
-            <td>{{ isCalendarConnected }}</td>
+            <td>외부 calendar 연결</td>
+            <td>{{ is_outside_calendar_connected }}</td>
         </tr>
-        {% for key in office365_account %}
+        <tr>
+            <td>외부 calendar url</td>
+            <td>{{ outside_calendar_url }}</td>
+        </tr>
+        {% for key in account %}
         <tr>
             <td>{{ key }}</td>
-            <td>{{ office365_account[key] }}</td>
+            <td>{{ account[key] }}</td>
         </tr>
         {% endfor %}
-
         {% for key in working %}
         <tr>
             <td>{{ key }}</td>

@@ -11,7 +11,18 @@ from office365.runtime.http.request_options import RequestOptions
 from office365.sharepoint.client_context import ClientContext
 
 from utils import check_time, check_holiday, request_event, request_get, Page
-from mainconfig import ACCESS_DB_PWD, IS_CALENDAR_CONNECTED, OFFICE365_ACCOUNT
+try:
+    from mainconfig import ACCESS_DB_PWD, IS_OUTSIDE_CALENDAR_CONNECTED, OUTSIDE_CALENDAR_URL, ACCOUNT
+except Exception as e:
+    # try your own Access_DB_PWD and ACCOUNT
+    ACCESS_DB_PWD = '*******'
+    IS_OUTSIDE_CALENDAR_CONNECTED = False
+    OUTSIDE_CALENDAR_URL = None
+    ACCOUNT = {
+        'email': 'test@test.co.kr',
+        'password': '*******',
+    }
+
 from workingconfig import WORKING
 
 mongoClient = MongoClient('mongodb://localhost:27017/')
@@ -28,9 +39,9 @@ cursor = conn.cursor()
 def eventFromSharePoint():
     collection = db['calendar']
 
-    calendar_url = "https://mirageworks.sharepoint.com/sites/msteams_a0f4c8/_api/web/lists(guid'%s')/items" %(OFFICE365_ACCOUNT['guid'])
+    calendar_url = "https://mirageworks.sharepoint.com/sites/msteams_a0f4c8/_api/web/lists(guid'%s')/items" %(ACCOUNT['guid'])
 
-    ctx = ClientContext(calendar_url).with_credentials(UserCredential(OFFICE365_ACCOUNT['email'], OFFICE365_ACCOUNT['password']))
+    ctx = ClientContext(calendar_url).with_credentials(UserCredential(ACCOUNT['email'], ACCOUNT['password']))
     request = RequestOptions(calendar_url)
     response = ctx.execute_request_direct(request)
     json_data = json.loads(response.content)
@@ -50,7 +61,7 @@ def eventFromSharePoint():
 
 
 def get_setting():
-    return IS_CALENDAR_CONNECTED, OFFICE365_ACCOUNT, WORKING
+    return IS_OUTSIDE_CALENDAR_CONNECTED, OUTSIDE_CALENDAR_URL, ACCOUNT, WORKING
 
 
 def get_sharepoint():
@@ -289,14 +300,14 @@ class Report:
 
         is_holiday = check_holiday(self.today)
         if self.hour > 6:
-            if IS_CALENDAR_CONNECTED:
+            if IS_OUTSIDE_CALENDAR_CONNECTED:
                 try:
                     eventFromSharePoint()
                 except Exception as e:
                     # current_app.logger.info(e)
-                    print(e)
                     # https://wikidocs.net/81081
                     # https://stackoverflow.com/questions/39476889/use-flask-current-app-logger-inside-threading
+                    print(e)
 
             # attend 초기화
             attend = {}

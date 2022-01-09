@@ -70,7 +70,7 @@ def logout():
 @bp.route('/setting/', methods=('GET', 'POST'))
 @login_required
 def setting():
-    isCalendarConnected, office365_account, working = get_setting()
+    is_outside_calendar_connected, outside_calendar_url, account, working = get_setting()
     return render_template('user/setting.html', **locals())
 
 
@@ -147,7 +147,7 @@ def attend():
 
 
 @bp.route('/summary/', methods=('GET', 'POST'))
-def summary():
+def summarize():
     report = Report()
     if request.method == 'POST':
         start = request.form['start']

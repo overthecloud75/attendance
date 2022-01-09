@@ -2,7 +2,11 @@ from flask import Blueprint, request, render_template, url_for, current_app, ses
 from werkzeug.utils import redirect
 
 from models import Event, get_sharepoint
-from mainconfig import OFFICE365_CALENDAR_URL
+try:
+    from mainconfig import IS_OUTSIDE_CALENDAR_CONNECTED, OUTSIDE_CALENDAR_URL
+except Exception as e:
+    IS_OUTSIDE_CALENDAR_CONNECTED = False
+    OUTSIDE_CALENDAR_URL = None
 
 # blueprint
 bp = Blueprint('calendar', __name__, url_prefix='/calendar')
@@ -13,7 +17,11 @@ def calendar():
     # https://stackoverflow.com/questions/39902405/fullcalendar-in-django
     event = Event()
     events = event.get()
-    calendar_url = OFFICE365_CALENDAR_URL
+    is_outside_calendar_connected = IS_OUTSIDE_CALENDAR_CONNECTED
+    outside_calendar_url = OUTSIDE_CALENDAR_URL
+    # open link in new tab
+    # https://www.freecodecamp.org/news/how-to-use-html-to-open-link-in-new-tab/
+    # To open a link in a new tab, just set the target attribute to _blank:
     return render_template('report/calendar.html', **locals())
 
 
