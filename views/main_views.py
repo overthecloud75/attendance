@@ -70,7 +70,7 @@ def logout():
 @bp.route('/setting/', methods=('GET', 'POST'))
 @login_required
 def setting():
-    is_outside_calendar_connected, outside_calendar_url, account, working = get_setting()
+    use_wifi_attendance, use_notice_email, is_outside_calendar_connected, outside_calendar_url, account, cc, working = get_setting()
     return render_template('user/setting.html', **locals())
 
 

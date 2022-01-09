@@ -5,6 +5,9 @@ from pymongo import MongoClient
 import pyodbc
 from collections import OrderedDict
 import json
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from office365.runtime.auth.user_credential import UserCredential
 from office365.runtime.http.request_options import RequestOptions
@@ -12,18 +15,19 @@ from office365.sharepoint.client_context import ClientContext
 
 from utils import check_time, check_holiday, request_event, request_get, Page
 try:
-    from mainconfig import ACCESS_DB_PWD, IS_OUTSIDE_CALENDAR_CONNECTED, OUTSIDE_CALENDAR_URL, ACCOUNT
+    from mainconfig import ACCESS_DB_PWD, OUTSIDE_CALENDAR_URL, ACCOUNT, CC, MAIL_SERVER, SERVER_URL
 except Exception as e:
     # try your own Access_DB_PWD and ACCOUNT
     ACCESS_DB_PWD = '*******'
-    IS_OUTSIDE_CALENDAR_CONNECTED = False
     OUTSIDE_CALENDAR_URL = None
     ACCOUNT = {
         'email': 'test@test.co.kr',
         'password': '*******',
     }
+    MAIL_SERVER = {'host': 'smtp.office365.com', 'port': 587}
+    SERVER_URL = 'http://127.0.0.1:5000/'
 
-from workingconfig import WORKING
+from workingconfig import USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, IS_OUTSIDE_CALENDAR_CONNECTED, EMAIL_NOTICE_BASE, WORKING
 
 mongoClient = MongoClient('mongodb://localhost:27017/')
 db = mongoClient['report']
@@ -61,7 +65,7 @@ def eventFromSharePoint():
 
 
 def get_setting():
-    return IS_OUTSIDE_CALENDAR_CONNECTED, OUTSIDE_CALENDAR_URL, ACCOUNT, WORKING
+    return USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, IS_OUTSIDE_CALENDAR_CONNECTED, OUTSIDE_CALENDAR_URL, ACCOUNT, CC, WORKING
 
 
 def get_sharepoint():
@@ -113,7 +117,7 @@ class Employee:
             employees = self.collection.find(sort=[('name', 1)])
             employees_list = []
             for employee in employees:
-                employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId']})
+                employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': employee['email']})
             return employees_list
         else:
             data_list = self.collection.find(sort=[('department', 1), ('name', 1)])
@@ -313,6 +317,7 @@ class Report:
             attend = {}
             schedule_dict = {}
             if not is_holiday:
+
                 employees_list = self.employee.get(page='all')
                 event = Event()
                 schedule_dict = event.schedule(employees_list, date=self.today)
@@ -321,6 +326,15 @@ class Report:
                     employee_id = employee['employeeId']
                     # 같은 employee_id 인데 이름이 바뀌는 경우 발생
                     attend[name] = {'date': self.today, 'name': name, 'employId': employee_id, 'begin': None, 'end': None, 'reason': None}
+
+                if USE_NOTICE_EMAIL:
+                    '''
+                        1. USE_NOTICE_EMAIL 설정이 True일 경우
+                        2. 오늘 notice한 이력이 있는지 확인 후 
+                        3. EMAIL_NOTICE_BASE 일 경우 email 전송
+                    '''
+                    for employee in employees_list:
+                        self.send_email(employee=employee)
 
             # 지문 인식 출퇴근 기록
             access_day = self.today[0:4] + self.today[5:7] + self.today[8:]  # access_day 형식으로 변환
@@ -442,6 +456,53 @@ class Report:
         get_page = Page(page)
         return get_page.paginate(wifi_list, count=paging['count'])
 
+    def send_email(self, employee=None):
+        collection = db['notice']
+        name = employee['name']
+        email = employee['email']
+        notice = collection.find_one({'date': self.today, 'name': name, 'email': email})
+        if notice is None:
+
+            report = self.collection.find_one({'name': name, 'date': {"$lt": self.today}}, sort=[('date', -1)])
+            report_date = report['date']
+            begin = report['begin']
+            status = report['status'][0]
+            working_hours = report['workingHours']
+
+            if status in EMAIL_NOTICE_BASE:
+                # htps://techexpert.tips/ko/python-ko/파이썬-office-365를-사용하여-이메일-보내기
+                # https://nowonbun.tistory.com/684 (참조자)
+                body = '\n' \
+                       ' 안녕하세요 %s님 \n' \
+                       '근태 관련하여 다음과 사유가 있어 메일을 송부합니다. \n ' \
+                       '\n' \
+                       '- 이름: %s \n' \
+                       '- 날짜: %s \n' \
+                       '- 출근 시각: %s \n' \
+                       '- 근무 시간: %s \n' \
+                       '- 사유: %s \n' \
+                       '\n' \
+                       '연차, 외근 등의 이유가 있는 경우 %s 에 기록을 하시면 근태가 정정이 될 것입니다. ' \
+                       % (name, name, report_date, begin, working_hours, str(status), SERVER_URL + 'calendar')
+
+                mimemsg = MIMEMultipart()
+                mimemsg['From'] = ACCOUNT['email']
+                mimemsg['Cc'] = CC
+                mimemsg['To'] = email
+                mimemsg['Subject'] = '[근태 관리] ' + report_date + ' ' + name + ' ' + str(status)
+                mimemsg.attach(MIMEText(body, 'plain'))
+                try:
+                    connection = smtplib.SMTP(host=MAIL_SERVER['host'], port=MAIL_SERVER['port'])
+                    connection.starttls()
+                    connection.login(ACCOUNT['email'], ACCOUNT['password'])
+                    connection.send_message(mimemsg)
+                    connection.quit()
+                    collection.insert_one({'date': self.today, 'name': name, 'email': email, 'reportDate': report_date, 'status': status})
+                except Exception as e:
+                    print(e)
+            else:
+                collection.insert_one({'date': self.today, 'name': name, 'email': email, 'reportDate': report_date, 'status': status})
+
 
 class Event:
     collection = db['event']
@@ -502,6 +563,9 @@ class Event:
                 else:
                     schedule_dict[name] = status
         return schedule_dict
+
+
+
 
 
 

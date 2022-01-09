@@ -5,7 +5,7 @@ import time
 
 from flask import Flask, current_app
 
-from models import Report, Device, Mac
+from models import Report, Device, Mac, get_setting
 import utils
 
 
@@ -76,9 +76,12 @@ if __name__ == '__main__':
     app = create_app()
     save_db()
 
-    th = threading.Thread(target=check_mac)
-    th.daemon = True
-    th.start()
+    use_wifi_attendance, _, _, _, _, _, _ = get_setting()
+
+    if use_wifi_attendance:
+        th = threading.Thread(target=check_mac)
+        th.daemon = True
+        th.start()
 
     app.run(host='0.0.0.0', debug=False, threaded=True)
 

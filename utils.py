@@ -9,7 +9,15 @@ from korean_lunar_calendar import KoreanLunarCalendar
 
 from views.config import page_default
 from workingconfig import WORKING
-from mainconfig import NET, PDST, PSRC, NAME_OF_ROUTER
+try:
+    from mainconfig import NET, PDST, PSRC, NAME_OF_ROUTER
+except Exception as e:
+    # use your own wifi ip and router name
+    # PSRC: server wifi ip
+    NET = '192.168.2.1/24'
+    PSRC = '192.168.2.2'
+    PDST = '192.168.2.'
+    NAME_OF_ROUTER = 'default'
 
 
 class Page:
@@ -101,9 +109,9 @@ def check_holiday(date):
         is_holiday = True
     elif date.weekday() == 0:
         # 대체공휴일 적용
-        yesterday = date - timedelta(1)
+        yesterday = date - timedelta(days=1)
         yesterday = datetimeToDate(yesterday)
-        twodaysago = date - timedelta(2)
+        twodaysago = date - timedelta(days=2)
         twodaysago = datetimeToDate(twodaysago)
 
         if yesterday in WORKING['alternativeVacation'] or twodaysago in WORKING['alternativeVacation']:

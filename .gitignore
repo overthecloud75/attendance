@@ -8,4 +8,5 @@ mainconfig.py
 .venv/
 venv
 venv/
-
+views/__pycache__
+views/__pycache__/
