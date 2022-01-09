@@ -11,6 +11,7 @@
         <tr class="thead-dark">
             <th>번호</th>
             <th>이름</th>
+            <th>email</th>
             <th>소속</th>
             <th>직급</th>
             <th>사원번호</th>
@@ -20,6 +21,7 @@
         <tr>
             <td>{{ paging.offset + loop.index0 + 1}}</td>
             <td><a href="{{ url_for('main.update_employee', name=data.name) }}">{{ data.name }}</a></td>
+            <td>{{ data.email }}</td>
             <td>{{ data.department }}</td>
             <td>{{ data.rank }}</td>
             <td>{{ data.employeeId }}</td>

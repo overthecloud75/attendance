@@ -90,7 +90,8 @@ def update_employee():
     employee = Employee()
     _, name, _, _ = request_get(request.args)
     if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'name': form.name.data, 'department': form.department.data, 'rank': form.rank.data, 'employeeId': int(form.employeeId.data)}
+        request_data = {'name': form.name.data, 'email': form.email.data, 'department': form.department.data,
+                        'rank': form.rank.data, 'employeeId': int(form.employeeId.data)}
         employee.post(request_data)
         return redirect(url_for('main.employees'))
     data = employee.get(name=name)

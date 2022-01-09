@@ -10,6 +10,11 @@
                    value="{{ data.name or '' }}">
         </div>
         <div class="form-group">
+            <label for="name">이메일</label>
+            <input type="text" class="form-control" name="email" id="email"
+                   value="{{ data.email or '' }}">
+        </div>
+        <div class="form-group">
             <label for="department">소속</label>
             <input type="text" class="form-control" name="department" id="department"
                    value="{{ data.department or '' }}">
