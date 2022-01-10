@@ -15,19 +15,24 @@ from office365.sharepoint.client_context import ClientContext
 
 from utils import check_time, check_holiday, request_event, request_get, Page
 try:
-    from mainconfig import ACCESS_DB_PWD, OUTSIDE_CALENDAR_URL, ACCOUNT, CC, MAIL_SERVER, SERVER_URL
+    from mainconfig import ACCESS_DB_PWD, OUTSIDE_CALENDAR_URL, ACCOUNT, MAIL_SERVER, SERVER_URL
 except Exception as e:
     # try your own Access_DB_PWD and ACCOUNT
-    # CC: cc email when notice email
     ACCESS_DB_PWD = '*******'
     OUTSIDE_CALENDAR_URL = None
     ACCOUNT = {
         'email': 'test@test.co.kr',
         'password': '*******',
     }
-    CC = 'test@test.co.kr'
     MAIL_SERVER = {'host': 'smtp.office365.com', 'port': 587}
     SERVER_URL = 'http://127.0.0.1:5000/'
+
+try:
+    from mainconfig import CC
+except Exception as e:
+    # CC: cc email when notice email
+    CC = None
+    # CC = 'test@test.co.kr'
 
 from workingconfig import USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, IS_OUTSIDE_CALENDAR_CONNECTED, EMAIL_NOTICE_BASE, WORKING
 
@@ -468,15 +473,17 @@ class Report:
             report = self.collection.find_one({'name': name, 'date': {"$lt": self.today}}, sort=[('date', -1)])
             report_date = report['date']
             begin = report['begin']
+            if begin is not None:
+                begin = begin[0:2] + ':' + begin[2:4] + ':' + begin[4:6]
             status = report['status'][0]
             working_hours = report['workingHours']
 
             if status in EMAIL_NOTICE_BASE:
-                # htps://techexpert.tips/ko/python-ko/파이썬-office-365를-사용하여-이메일-보내기
+                # https://techexpert.tips/ko/python-ko/파이썬-office-365를-사용하여-이메일-보내기
                 # https://nowonbun.tistory.com/684 (참조자)
                 body = '\n' \
                        ' 안녕하세요 %s님 \n' \
-                       '근태 관련하여 다음과 사유가 있어 메일을 송부합니다. \n ' \
+                       '근태 관련하여 다음의 사유가 있어 메일을 송부합니다. \n ' \
                        '\n' \
                        '- 이름: %s \n' \
                        '- 날짜: %s \n' \
@@ -484,13 +491,14 @@ class Report:
                        '- 근무 시간: %s \n' \
                        '- 사유: %s \n' \
                        '\n' \
-                       '연차, 외근 등의 이유가 있는 경우 %s 에 기록을 하시면 근태가 정정이 될 것입니다. ' \
+                       '연차, 외근 등의 이유가 있는 경우 %s 에 기록을 하시면 근태가 정정이 됩니다. ' \
                        % (name, name, report_date, begin, working_hours, str(status), SERVER_URL + 'calendar')
 
                 mimemsg = MIMEMultipart()
                 mimemsg['From'] = ACCOUNT['email']
-                mimemsg['Cc'] = CC
                 mimemsg['To'] = email
+                if CC is not None:
+                    mimemsg['Cc'] = CC
                 mimemsg['Subject'] = '[근태 관리] ' + report_date + ' ' + name + ' ' + str(status)
                 mimemsg.attach(MIMEText(body, 'plain'))
                 try:
@@ -515,7 +523,6 @@ class Event:
         _, today, this_month = check_time()
         self.start = this_month['start']
         self.end = this_month['end']
-        print(self.start, self.end)
         data_list = []
         if self.start is not None and self.end is not None:
             data_list = self.collection.find({'start': {"$gte": self.start, "$lt": self.end}}, sort=[('id', 1)])

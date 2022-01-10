@@ -3,10 +3,10 @@ from werkzeug.utils import redirect
 
 from models import Event, get_sharepoint
 try:
-    from mainconfig import IS_OUTSIDE_CALENDAR_CONNECTED, OUTSIDE_CALENDAR_URL
+    from mainconfig import OUTSIDE_CALENDAR_URL
 except Exception as e:
-    IS_OUTSIDE_CALENDAR_CONNECTED = False
     OUTSIDE_CALENDAR_URL = None
+from workingconfig import IS_OUTSIDE_CALENDAR_CONNECTED
 
 # blueprint
 bp = Blueprint('calendar', __name__, url_prefix='/calendar')
