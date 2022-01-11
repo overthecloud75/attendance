@@ -323,8 +323,8 @@ class Report:
             # attend 초기화
             attend = {}
             schedule_dict = {}
-            if not is_holiday:
 
+            if not is_holiday:
                 employees_list = self.employee.get(page='all')
                 event = Event()
                 schedule_dict = event.schedule(employees_list, date=self.today)

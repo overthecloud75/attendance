@@ -15,3 +15,5 @@ WORKING = {
     'alternativeVacation': ['0815', '1003', '1009']
     }
 
+USE_LUNAR_NEW_YEAR = True
+

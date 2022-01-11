@@ -8,7 +8,7 @@ from datetime import timedelta
 from korean_lunar_calendar import KoreanLunarCalendar
 
 from views.config import page_default
-from workingconfig import WORKING
+from workingconfig import WORKING, USE_LUNAR_NEW_YEAR
 try:
     from mainconfig import NET, PDST, PSRC, NAME_OF_ROUTER
 except Exception as e:
@@ -96,26 +96,37 @@ def check_holiday(date):
     day = date[8:]
     month_day = month + day
 
-    calendar = KoreanLunarCalendar()
-    calendar.setSolarDate(int(year), int(month), int(day))
-    lunar_month_day = calendar.LunarIsoFormat()
-    lunar_month_day = lunar_month_day[5:7] + lunar_month_day[8:]
-    if month_day in WORKING['holidays']:
-        is_holiday = True
-    if lunar_month_day in WORKING['lunarHolidays']:
-        is_holiday = True
     date = datetime.datetime(int(year), int(month), int(day), 1, 0, 0)  # str -> datetime으로 변환
-    if date.weekday() == 5 or date.weekday() == 6:
+
+    lunar_calendar = KoreanLunarCalendar()
+    lunar_calendar.setSolarDate(int(year), int(month), int(day))
+    lunar_month_day = lunar_calendar.LunarIsoFormat()
+    lunar_month_day = lunar_month_day[5:7] + lunar_month_day[8:]
+
+    if month_day in WORKING['holidays'] or lunar_month_day in WORKING['lunarHolidays']:
+        is_holiday = True
+    elif date.weekday() == 5 or date.weekday() == 6:
         is_holiday = True
     elif date.weekday() == 0:
         # 대체공휴일 적용
         yesterday = date - timedelta(days=1)
         yesterday = datetimeToDate(yesterday)
-        twodaysago = date - timedelta(days=2)
-        twodaysago = datetimeToDate(twodaysago)
-
-        if yesterday in WORKING['alternativeVacation'] or twodaysago in WORKING['alternativeVacation']:
+        two_days_ago = date - timedelta(days=2)
+        two_days_ago = datetimeToDate(two_days_ago)
+        if yesterday in WORKING['alternativeVacation'] or two_days_ago in WORKING['alternativeVacation']:
             is_holiday = True
+            
+    if USE_LUNAR_NEW_YEAR:
+        if not is_holiday and int(month) < 4:
+            # 음력 1월 1일 전날의 날짜를 특정하기 어려워서 아래의 logic을 사용
+            # 12월 29일수도 있고 12월 30일일 수도 있음 윤달이 있으면 단순히 처리하기 쉽지 않음
+            tomorrow = date + timedelta(days=1)
+            tomorrow = datetimeToDate(tomorrow)
+            lunar_calendar.setSolarDate(int(year), int(tomorrow[0:2]), int(tomorrow[2:4]))
+            lunar_month_day = lunar_calendar.LunarIsoFormat()
+            lunar_month_day = lunar_month_day[5:7] + lunar_month_day[8:]
+            if lunar_month_day == '0101':
+                is_holiday = True
     return is_holiday
 
 
