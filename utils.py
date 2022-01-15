@@ -115,7 +115,7 @@ def check_holiday(date):
         two_days_ago = datetimeToDate(two_days_ago)
         if yesterday in WORKING['alternativeVacation'] or two_days_ago in WORKING['alternativeVacation']:
             is_holiday = True
-            
+
     if USE_LUNAR_NEW_YEAR:
         if not is_holiday and int(month) < 4:
             # 음력 1월 1일 전날의 날짜를 특정하기 어려워서 아래의 logic을 사용

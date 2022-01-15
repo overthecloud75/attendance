@@ -240,11 +240,12 @@ class Report:
             get_page = Page(page)
             paging, data_list = get_page.paginate(data_list)
 
-            summary = {}
+            summary = OrderedDict()
             if name:
                 attend_list = []
-                summary['totalWorkingHours'] = 0
                 summary['totalDay'] = 0
+                summary['totalWorkingDay'] = 0
+                summary['totalWorkingHours'] = 0
                 for status in WORKING['inStatus']:
                     summary[status] = 0
                 for status in WORKING['status']:
@@ -260,7 +261,7 @@ class Report:
                             summary[data['reason']] = summary[data['reason']] + 1
                         summary['totalWorkingHours'] = summary['totalWorkingHours'] + data['workingHours']
                     attend_list.append(data)
-                summary['totalWorkingHours'] = round(summary['totalWorkingHours'], 2)
+                summary = self.get_summary(summary)
                 return paging, self.today, attend_list, summary
             else:
                 return paging, self.today, data_list, summary
@@ -278,10 +279,12 @@ class Report:
                     name = data['name']
                     if name not in summary:
                         summary[name] = {'name': name}
-                    if 'totalWorkingHours' not in summary[name]:
-                        summary[name]['totalWorkingHours'] = 0
                     if 'totalDay' not in summary[name]:
                         summary[name]['totalDay'] = 0
+                    if 'totalWorkingDay' not in summary[name]:
+                        summary[name]['totalWorkingDay'] = 0
+                    if 'totalWorkingHours' not in summary[name]:
+                        summary[name]['totalWorkingHours'] = 0
                     for status in WORKING['inStatus']:
                         if status not in summary[name]:
                             summary[name][status] = 0
@@ -297,11 +300,23 @@ class Report:
                         summary[name][data['reason']] = summary[name][data['reason']] + 1
                     summary[name]['totalWorkingHours'] = summary[name]['totalWorkingHours'] + data['workingHours']
             for name in summary:
-                summary[name]['totalWorkingHours'] = round(summary[name]['totalWorkingHours'], 2)
+                summary[name] = self.get_summary(summary[name])
                 summary_list.append(summary[name])
 
         get_page = Page(page)
         return get_page.paginate(summary_list)
+
+    def get_summary(self, summary):
+        summary['totalWorkingDay'] = summary['totalDay']
+        for status in summary:
+            if status in WORKING['offDay']:
+                summary['totalWorkingDay'] = summary['totalWorkingDay'] - summary[status] * WORKING['offDay'][status]
+        summary['totalWorkingDay'] = round(summary['totalWorkingDay'], 2)
+        summary['totalWorkingHours'] = round(summary['totalWorkingHours'], 2)
+        summary['휴가'] = summary['휴가'] + summary['연차'] + summary['월차']
+        del summary['연차']
+        del summary['월차']
+        return summary
 
     def update(self, date=None):
         if date is not None:

@@ -87,30 +87,34 @@ $(function() {
         <thead>
         <tr class="thead-dark">
             <th>기준일</th>
+            <th>근무일</th>
             <th>총근무시간</th>
             <th>정상출근</th>
             <th>지각</th>
             <th>미출근</th>
             <th>휴가</th>
-            <th>연차</th>
             <th>반차</th>
             <th>출장</th>
             <th>외근</th>
+            <th>파견</th>
+            <th>재택</th>
             <th>정기점검</th>
             <th>기타</th>
         </tr>
         </thead>
         <tr>
-            <td>{{ summary.totalDay }}</td>
-            <td>{{ summary.totalWorkingHours }}</td>
+            <td>{{ summary['totalDay'] }}</td>
+            <td>{{ summary['totalWorkingDay'] }}</td>
+            <td>{{ summary['totalWorkingHours'] }}</td>
             <td>{{ summary['정상출근'] }}</td>
             <td>{{ summary['지각'] }}</td>
             <td>{{ summary['미출근'] }}</td>
             <td>{{ summary['휴가'] }}</td>
-            <td>{{ summary['연차'] }}</td>
             <td>{{ summary['반차'] }}</td>
             <td>{{ summary['출장'] }}</td>
             <td>{{ summary['외근'] }}</td>
+            <td>{{ summary['파견'] }}</td>
+            <td>{{ summary['재택'] }}</td>
             <td>{{ summary['정기점검'] }}</td>
             <td>{{ summary['기타'] }}</td>
         </tr>
