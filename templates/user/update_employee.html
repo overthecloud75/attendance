@@ -10,11 +10,6 @@
                    value="{{ data.name or '' }}">
         </div>
         <div class="form-group">
-            <label for="name">이메일</label>
-            <input type="text" class="form-control" name="email" id="email"
-                   value="{{ data.email or '' }}">
-        </div>
-        <div class="form-group">
             <label for="department">소속</label>
             <input type="text" class="form-control" name="department" id="department"
                    value="{{ data.department or '' }}">
@@ -28,6 +23,21 @@
             <label for="rank">사원 번호</label>
             <input type="text" class="form-control" name="employeeId" id="employeeId"
                    value="{{ data.employeeId or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="rank">입사일</label>
+            <input type="text" class="form-control" name="beginDate" id="beginDate"
+                   value="{{ data.employeeId or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="rank">퇴사일</label>
+            <input type="text" class="form-control" name="endDate" id="endDate"
+                   value="{{ data.employeeId or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="email">이메일</label>
+            <input type="text" class="form-control" name="email" id="email"
+                   value="{{ data.email or '' }}">
         </div>
         <button type="submit" class="btn btn-primary">등록</button>
     </form>

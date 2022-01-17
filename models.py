@@ -124,7 +124,11 @@ class Employee:
             employees = self.collection.find(sort=[('name', 1)])
             employees_list = []
             for employee in employees:
-                employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': employee['email']})
+                if 'endDate' not in employee:  # 퇴사하지 않은 직원만 포함하기 위해서
+                    if 'email' in employee and employee['email']:
+                        employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': employee['email']})
+                    else:
+                        employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': None})
             return employees_list
         else:
             data_list = self.collection.find(sort=[('department', 1), ('name', 1)])
@@ -132,7 +136,11 @@ class Employee:
             return get_page.paginate(data_list)
 
     def post(self, request_data):
-        self.collection.update_one({'name': request_data['name']}, {'$set': request_data}, upsert=True)
+        if 'employeeId' not in request_data:
+            data = self.collection.find_one(sort=[('employeeId', -1)])
+            request_data['employeeId'] = data['employeeId'] + 1
+        self.collection.update_one({'name': request_data['name'], 'employeeId': request_data['employeeId']},
+                                   {'$set': request_data}, upsert=True)
 
 
 # Device
@@ -356,7 +364,8 @@ class Report:
                         3. EMAIL_NOTICE_BASE 일 경우 email 전송
                     '''
                     for employee in employees_list:
-                        self.send_email(employee=employee)
+                        if employee['email'] is not None:
+                            self.send_email(employee=employee)
 
             # 지문 인식 출퇴근 기록
             access_day = self.today[0:4] + self.today[5:7] + self.today[8:]  # access_day 형식으로 변환
