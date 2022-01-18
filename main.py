@@ -83,5 +83,5 @@ if __name__ == '__main__':
         th.daemon = True
         th.start()
 
-    app.run(host='0.0.0.0', debug=False, threaded=True)
+    app.run(host='127.0.0.1', debug=False, threaded=True)
 

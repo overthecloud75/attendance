@@ -26,6 +26,7 @@ class EmployeeSubmitForm(FlaskForm):
     beginDate = StringField('beginDate', validators=[Optional(), Length(min=10, max=10)])
     endDate = StringField('endDate', validators=[Optional(), Length(min=10, max=10)])
     email = EmailField('email', validators=[Optional(), Email()])
+    regular = EmailField('regular', validators=[])
 
 
 class DateSubmitForm(FlaskForm):

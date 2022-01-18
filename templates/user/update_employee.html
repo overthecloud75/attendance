@@ -20,24 +20,29 @@
                    value="{{ data.rank or '' }}">
         </div>
         <div class="form-group">
-            <label for="rank">사원 번호</label>
+            <label for="employeeId">사원 번호</label>
             <input type="text" class="form-control" name="employeeId" id="employeeId"
                    value="{{ data.employeeId or '' }}">
         </div>
         <div class="form-group">
-            <label for="rank">입사일</label>
+            <label for="beginDate">입사일</label>
             <input type="text" class="form-control" name="beginDate" id="beginDate"
-                   value="{{ data.employeeId or '' }}">
+                   value="{{ data.beginDate or '' }}">
         </div>
         <div class="form-group">
-            <label for="rank">퇴사일</label>
+            <label for="endDate">퇴사일</label>
             <input type="text" class="form-control" name="endDate" id="endDate"
-                   value="{{ data.employeeId or '' }}">
+                   value="{{ data.endDate or '' }}">
         </div>
         <div class="form-group">
             <label for="email">이메일</label>
             <input type="text" class="form-control" name="email" id="email"
                    value="{{ data.email or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="regular">상근 여부</label>
+            <input type="text" class="form-control" name="regular" id="regular"
+                   value="{{ data.regular or '' }}">
         </div>
         <button type="submit" class="btn btn-primary">등록</button>
     </form>

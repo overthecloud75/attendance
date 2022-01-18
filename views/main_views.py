@@ -99,7 +99,8 @@ def update_employee():
             request_data['endDate'] = form.endDate.data
         if form.email.data:
             request_data['email'] = form.email.data
-        print(request_data)
+        if form.regular.data:
+            request_data['regular'] = form.regular.data
         employee.post(request_data)
         return redirect(url_for('main.employees'))
     data = employee.get(name=name)

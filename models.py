@@ -124,11 +124,14 @@ class Employee:
             employees = self.collection.find(sort=[('name', 1)])
             employees_list = []
             for employee in employees:
-                if 'endDate' not in employee:  # 퇴사하지 않은 직원만 포함하기 위해서
+                regular = True
+                if 'regular' in employee and employee['regular'] == '비상근':
+                    regular = False
+                if 'endDate' not in employee:  # 퇴사하지 않은 직원과 fulltime 직원만 포함하기 위해서
                     if 'email' in employee and employee['email']:
-                        employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': employee['email']})
+                        employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': employee['email'], 'regular': regular})
                     else:
-                        employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': None})
+                        employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': None, 'regular': regular})
             return employees_list
         else:
             data_list = self.collection.find(sort=[('department', 1), ('name', 1)])
@@ -354,8 +357,9 @@ class Report:
                 for employee in employees_list:
                     name = employee['name']
                     employee_id = employee['employeeId']
+                    regular = employee['regular']
                     # 같은 employee_id 인데 이름이 바뀌는 경우 발생
-                    attend[name] = {'date': self.today, 'name': name, 'employId': employee_id, 'begin': None, 'end': None, 'reason': None}
+                    attend[name] = {'date': self.today, 'name': name, 'employeeId': employee_id, 'begin': None, 'end': None, 'reason': None, 'regular': regular}
 
                 if USE_NOTICE_EMAIL:
                     '''
@@ -369,16 +373,17 @@ class Report:
 
             # 지문 인식 출퇴근 기록
             access_day = self.today[0:4] + self.today[5:7] + self.today[8:]  # access_day 형식으로 변환
-            cursor.execute("select e_name, e_date, e_time from tenter where e_date = ?", access_day)
+            cursor.execute("select e_id, e_name, e_date, e_time from tenter where e_date = ?", access_day)
 
             for row in cursor.fetchall():
-                name = row[0]
-                date = row[1]
-                time = row[2]
+                employee_id = row[0]
+                name = row[1]
+                date = row[2]
+                time = row[3]
                 # card 출근자 name = ''
                 if name != '':
                     if name not in attend:
-                        attend[name] = {'date': self.today, 'name': name, 'begin': None, 'end': None, 'reason': None}
+                        attend[name] = {'date': self.today, 'name': name, 'employeeId': employee_id, 'begin': None, 'end': None, 'reason': None}
                     if attend[name]['begin']:
                         if int(time) < int(attend[name]['begin']):
                             attend[name]['begin'] = time
@@ -437,7 +442,8 @@ class Report:
                         attend[name]['workingHours'] = None
                 elif attend[name]['begin']:
                     if not is_holiday:
-                        if int(attend[name]['begin']) > WORKING['time']['beginTime']:
+                        if 'regular' in attend[name] and attend[name]['regular'] and int(attend[name]['begin']) > WORKING['time']['beginTime']:
+                            # fulltime job만 지각을 처리
                             attend[name]['status'] = ('지각', 1)
                         else:
                             attend[name]['status'] = ('정상출근', 0)
@@ -466,7 +472,12 @@ class Report:
                             attend[name]['workingHours'] = None
                     else:
                         attend[name]['status'] = ('정상출근', 0)
-                self.collection.update_one({'date': self.today, 'name': name}, {'$set': attend[name]}, upsert=True)
+
+                if 'regular' in attend[name] and not attend[name]['regular'] and attend[name]['status'] == '미출근':
+                    # fulltime이 아니고 미출근인 경우 기록하지 않음
+                    pass
+                else:
+                    self.collection.update_one({'date': self.today, 'name': name}, {'$set': attend[name]}, upsert=True)
 
     def update_date(self, start=None, end=None):
         data_list = self.collection.find({'date': {"$gte": start, "$lt": end}})
