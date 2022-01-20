@@ -1,5 +1,6 @@
 from flask import Blueprint, request, render_template, url_for, current_app, session, g, flash, jsonify
 from werkzeug.utils import redirect
+import functools
 
 from models import Event, get_sharepoint
 try:
@@ -7,12 +8,24 @@ try:
 except Exception as e:
     OUTSIDE_CALENDAR_URL = None
 from workingconfig import IS_OUTSIDE_CALENDAR_CONNECTED
+from utils import check_private_ip
 
 # blueprint
 bp = Blueprint('calendar', __name__, url_prefix='/calendar')
 
 
+def client_ip_check(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if 'X-Forwarded-For' in request.headers and g.user is None:
+            if not check_private_ip(request.headers['X-Forwarded-For']):
+                return redirect(url_for('main.login'))
+        return view(**kwargs)
+    return wrapped_view
+
+
 @bp.route('/', methods=('GET', 'POST'))
+@client_ip_check
 def calendar():
     # https://stackoverflow.com/questions/39902405/fullcalendar-in-django
     event = Event()

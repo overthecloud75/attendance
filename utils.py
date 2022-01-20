@@ -8,7 +8,7 @@ from datetime import timedelta
 from korean_lunar_calendar import KoreanLunarCalendar
 
 from views.config import page_default
-from workingconfig import WORKING, USE_LUNAR_NEW_YEAR
+from workingconfig import WORKING, USE_LUNAR_NEW_YEAR, PRIVATE_IP_RANGE
 try:
     from mainconfig import NET, PDST, PSRC, NAME_OF_ROUTER
 except Exception as e:
@@ -265,6 +265,20 @@ def check_wifi_connected():
 
 def connect_wifi():
     os.system(f'''cmd /c "netsh wlan connect name={NAME_OF_ROUTER}"''')
+
+
+def check_private_ip(ip):
+    ip = ip.split('.')
+    private_ip_range = PRIVATE_IP_RANGE.split('.')
+
+    is_private_ip = True
+    for i, table in enumerate(private_ip_range):
+        if table != '0':
+            if ip[i] != private_ip_range[i]:
+                is_private_ip = False
+                break
+    return is_private_ip
+
 
 
 

@@ -7,7 +7,7 @@ import functools
 
 from models import get_setting, User, Employee, Report, Device
 from form import UserCreateForm, UserLoginForm, EmployeeSubmitForm, DateSubmitForm, DeviceSubmitForm
-from utils import request_get
+from utils import request_get, check_private_ip
 
 # blueprint
 bp = Blueprint('main', __name__, url_prefix='/')
@@ -18,6 +18,16 @@ def login_required(view):
     def wrapped_view(**kwargs):
         if g.user is None:
             return redirect(url_for('main.login'))
+        return view(**kwargs)
+    return wrapped_view
+
+
+def client_ip_check(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if 'X-Forwarded-For' in request.headers and g.user is None:
+            if not check_private_ip(request.headers['X-Forwarded-For']):
+                return redirect(url_for('main.login'))
         return view(**kwargs)
     return wrapped_view
 
@@ -130,6 +140,7 @@ def wifi_attend():
 
 
 @bp.route('/attend/', methods=('GET', 'POST'))
+@client_ip_check
 def attend():
     report = Report()
     if request.method == 'POST':
@@ -156,6 +167,7 @@ def attend():
 
 
 @bp.route('/summary/', methods=('GET', 'POST'))
+@client_ip_check
 def summarize():
     report = Report()
     if request.method == 'POST':

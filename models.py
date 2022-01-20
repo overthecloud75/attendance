@@ -15,7 +15,7 @@ from office365.sharepoint.client_context import ClientContext
 
 from utils import check_time, check_holiday, request_event, request_get, Page
 try:
-    from mainconfig import ACCESS_DB_PWD, OUTSIDE_CALENDAR_URL, ACCOUNT, MAIL_SERVER, SERVER_URL
+    from mainconfig import ACCESS_DB_PWD, OUTSIDE_CALENDAR_URL, ACCOUNT, MAIL_SERVER, SERVER_URL, MONGO_URL
 except Exception as e:
     # try your own Access_DB_PWD and ACCOUNT
     ACCESS_DB_PWD = '*******'
@@ -26,6 +26,7 @@ except Exception as e:
     }
     MAIL_SERVER = {'host': 'smtp.office365.com', 'port': 587}
     SERVER_URL = 'http://127.0.0.1:5000/'
+    MONGO_URL = 'mongodb://localhost:27017/'
 
 try:
     from mainconfig import CC
@@ -36,7 +37,7 @@ except Exception as e:
 
 from workingconfig import USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, IS_OUTSIDE_CALENDAR_CONNECTED, EMAIL_NOTICE_BASE, WORKING
 
-mongoClient = MongoClient('mongodb://localhost:27017/')
+mongoClient = MongoClient(MONGO_URL)
 db = mongoClient['report']
 
 # connect to access db
@@ -465,16 +466,17 @@ class Report:
                             attend[name]['status'] = ('미출근', 3)
                             attend[name]['workingHours'] = 0
                         elif self.hour >= WORKING['time']['beginTime'] / 10000:
+                            # fulltime job만 지각을 처리
                             attend[name]['workingHours'] = None
                             attend[name]['status'] = ('지각', 1)
-                        else:
+                        elif 'regular' in attend[name] and attend[name]['regular']:
                             attend[name]['status'] = ('출근전', 2)
                             attend[name]['workingHours'] = None
                     else:
                         attend[name]['status'] = ('정상출근', 0)
 
-                if 'regular' in attend[name] and not attend[name]['regular']:
-                    # fulltime이 아니고 미출근인 경우 기록하지 않음
+                if 'regular' in attend[name] and not attend[name]['regular'] and attend[name]['status'][0] in ['미출근', '줄근전', '지각'] :
+                    # fulltime이 아닌 직원에 대해 미출근과 출근전인 경우 기록하지 않음
                     pass
                 else:
                     self.collection.update_one({'date': self.today, 'name': name}, {'$set': attend[name]}, upsert=True)

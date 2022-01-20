@@ -8,7 +8,6 @@ from flask import Flask, current_app
 from models import Report, Device, Mac, get_setting
 import utils
 
-
 def create_app():
     # https://flask.palletsprojects.com/en/2.0.x/logging/
     dictConfig({
