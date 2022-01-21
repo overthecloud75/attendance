@@ -45,7 +45,7 @@ def signup():
         request_data = {'name': form.name.data, 'email': form.email.data, 'password': generate_password_hash(form.password1.data)}
         error = user.signup(request_data)
         if error:
-            flash('이미 존재하는 사용자입니다.')
+            flash(error)
         else:
             return redirect(url_for('main.attend'))
     return render_template('user/signup.html', form=form)

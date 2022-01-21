@@ -88,18 +88,34 @@ class User:
     error = None
 
     def get_user(self, request_data):
-        return self.collection.find_one(filter={'email': request_data['email']})
+        return self.collection.find_one({'email': request_data['email']})
+
+    def get_employee(self, request_data):
+        collection = db['employees']
+        return collection.find_one({'email': request_data['email'], 'name': request_data['name']})
 
     def signup(self, request_data):
+        '''
+            1. the first user is admin.
+            2. from the second user, request_data['email'] must be in the employees data.
+
+        '''
         user_data = self.get_user(request_data)
         if user_data:
             self.error = '이미 존재하는 사용자입니다.'
         else:
             user_data = self.collection.find_one(sort=[('create_time', -1)])
             if user_data:
-                user_id = user_data['user_id'] + 1
+                employee_data = self.get_employee(request_data)
+                if employee_data:
+                    user_id = user_data['user_id'] + 1
+                    request_data['is_admin'] = False
+                else:
+                    self.error = '가입 요건이 되지 않습니다.'
+                    return self.error
             else:
                 user_id = 1
+                request_data['is_admin'] = True
             request_data['create_time'] = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             request_data['user_id'] = user_id
             self.collection.insert(request_data)
