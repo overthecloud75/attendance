@@ -13,6 +13,17 @@ from utils import request_get, check_private_ip
 bp = Blueprint('main', __name__, url_prefix='/')
 
 
+def admin_required(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if g.user is None:
+            return redirect(url_for('main.login'))
+        elif not g.user['is_admin']:
+            return redirect(url_for('main.attend'))
+        return view(**kwargs)
+    return wrapped_view
+
+
 def login_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
@@ -78,14 +89,14 @@ def logout():
 
 
 @bp.route('/setting/', methods=('GET', 'POST'))
-@login_required
+@admin_required
 def setting():
     use_wifi_attendance, use_notice_email, is_outside_calendar_connected, outside_calendar_url, account, cc, working = get_setting()
     return render_template('user/setting.html', **locals())
 
 
 @bp.route('/employees/', methods=('GET',))
-@login_required
+@admin_required
 def employees():
     employee = Employee()
     page, name, _, _ = request_get(request.args)
@@ -94,7 +105,7 @@ def employees():
 
 
 @bp.route('/update_employee/', methods=('GET', 'POST'))
-@login_required
+@admin_required
 def update_employee():
     form = EmployeeSubmitForm()
     employee = Employee()
@@ -118,7 +129,7 @@ def update_employee():
 
 
 @bp.route('/device/', methods=('GET', 'POST'))
-@login_required
+@admin_required
 def get_device():
     form = DeviceSubmitForm()
     device = Device()
@@ -131,7 +142,7 @@ def get_device():
 
 
 @bp.route('/wifi_attend/', methods=('GET', ))
-@login_required
+@admin_required
 def wifi_attend():
     report = Report()
     page, _, _, _ = request_get(request.args)

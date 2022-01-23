@@ -25,12 +25,18 @@
         </ul>
         {% else %}
         <ul class="navbar-nav">
+            {% if g.user %}
+            <li class="nav-item ">
+                <a class="nav-link" href="{{ url_for('main.logout') }}">{{ g.user.name }} (logout)</a>
+            </li>
+            {% else %}
             <li class="nav-item ">
                 <a class="nav-link" href="{{ url_for('main.signup') }}">signup</a>
             </li>
             <li class="nav-item ">
                 <a class="nav-link" href="{{ url_for('main.login') }}">login</a>
             </li>
+            {% endif %}
             <li class="nav-item ">
                 <a class="nav-link" href="{{ url_for('main.attend') }}">attend</a>
             </li>

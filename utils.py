@@ -268,6 +268,7 @@ def connect_wifi():
 
 
 def check_private_ip(ip):
+    ip = ip.split(':')[0]  # port 정보가 넘어오는 경우 port 정보를 빼기 위함 
     ip = ip.split('.')
     private_ip_range = PRIVATE_IP_RANGE.split('.')
 
