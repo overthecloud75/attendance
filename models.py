@@ -443,6 +443,7 @@ class Report:
                             attend[name]['end'] = end
                     else:
                         attend[name] = {'date': self.today, 'name': name, 'begin': begin, 'end': end, 'reason': None}
+
             for name in attend:
                 if name in schedule_dict:
                     status = schedule_dict[name]
@@ -479,23 +480,27 @@ class Report:
                 else:
                     if not is_holiday:
                         if self.hour >= 18:
-                            attend[name]['status'] = ('미출근', 3)
                             attend[name]['workingHours'] = 0
+                            attend[name]['status'] = ('미출근', 3)
                         elif self.hour >= WORKING['time']['beginTime'] / 10000:
                             # fulltime job만 지각을 처리
                             attend[name]['workingHours'] = None
                             attend[name]['status'] = ('지각', 1)
-                        elif 'regular' in attend[name] and attend[name]['regular']:
-                            attend[name]['status'] = ('출근전', 2)
+                        else:
                             attend[name]['workingHours'] = None
+                            attend[name]['status'] = ('출근전', 2)
                     else:
                         attend[name]['status'] = ('정상출근', 0)
 
-                if 'regular' in attend[name] and not attend[name]['regular'] and attend[name]['status'][0] in ['미출근', '줄근전', '지각'] :
-                    # fulltime이 아닌 직원에 대해 미출근과 출근전인 경우 기록하지 않음
-                    pass
-                else:
-                    self.collection.update_one({'date': self.today, 'name': name}, {'$set': attend[name]}, upsert=True)
+                try:
+                    if 'regular' in attend[name] and not attend[name]['regular'] and attend[name]['status'][0] in ['미출근', '줄근전', '지각'] :
+                        # fulltime이 아닌 직원에 대해 미출근과 출근전인 경우 기록하지 않음
+                        pass
+                    else:
+                        self.collection.update_one({'date': self.today, 'name': name}, {'$set': attend[name]}, upsert=True)
+                except Exception as e:
+                    print(e)
+                    attend[name]
 
     def update_date(self, start=None, end=None):
         data_list = self.collection.find({'date': {"$gte": start, "$lt": end}})
