@@ -493,7 +493,7 @@ class Report:
                         attend[name]['status'] = ('정상출근', 0)
 
                 try:
-                    if 'regular' in attend[name] and not attend[name]['regular'] and attend[name]['status'][0] in ['미출근', '줄근전', '지각'] :
+                    if 'regular' in attend[name] and not attend[name]['regular'] and attend[name]['status'][0] in ['미출근', '출근전', '지각'] :
                         # fulltime이 아닌 직원에 대해 미출근과 출근전인 경우 기록하지 않음
                         pass
                     else:
