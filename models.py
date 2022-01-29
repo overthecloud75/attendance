@@ -77,7 +77,7 @@ def get_setting():
 
 
 def get_sharepoint():
-    _, today, this_month = check_time()
+    _, yesterday, today, this_month = check_time()
     start = this_month['start']
     end = this_month['end']
     collection = db['calendar']
@@ -223,7 +223,7 @@ class Report:
     mac = Mac()
 
     def __init__(self):
-        self.hour, self.today, self.this_month = check_time()
+        self.hour, self.yesterday, self.today, self.this_month = check_time()
 
     def attend(self, page=None, name=None, start=None, end=None):
         if page == 'all':
@@ -389,29 +389,34 @@ class Report:
                             self.send_email(employee=employee)
 
             # 지문 인식 출퇴근 기록
-            access_day = self.today[0:4] + self.today[5:7] + self.today[8:]  # access_day 형식으로 변환
-            cursor.execute("select e_id, e_name, e_date, e_time from tenter where e_date = ?", access_day)
+            access_today = self.today[0:4] + self.today[5:7] + self.today[8:]  # access_day 형식으로 변환
+            cursor.execute("select e_id, e_name, e_date, e_time, e_mode from tenter where e_date = ?", access_today)
+
+            over_night_employees = []
 
             for row in cursor.fetchall():
                 employee_id = row[0]
                 name = row[1]
-                date = row[2]
                 time = row[3]
+                mode = int(row[4])
                 # card 출근자 name = ''
                 if name != '':
-                    if name not in attend:
-                        attend[name] = {'date': self.today, 'name': name, 'employeeId': employee_id, 'begin': None, 'end': None, 'reason': None}
-                    if attend[name]['begin']:
-                        if int(time) < int(attend[name]['begin']):
-                            attend[name]['begin'] = time
-                        if self.hour >= 18:
-                            attend[name]['end'] = time
-                    else:
-                        attend[name]['begin'] = time
-                        if self.hour >= 18:
-                            attend[name]['end'] = time
+                    if int(time) > int(WORKING['time']['overNight']) or mode != 2:   # overnight에 대한 기준
+                        if name not in attend:
+                            attend[name] = {'date': self.today, 'name': name, 'employeeId': int(employee_id), 'begin': None, 'end': None, 'reason': None}
+                        if attend[name]['begin']:
+                            if int(time) < int(attend[name]['begin']):
+                                attend[name]['begin'] = time
+                            if self.hour >= 18:
+                                attend[name]['end'] = time
                         else:
-                            attend[name]['end'] = None
+                            attend[name]['begin'] = time
+                            if self.hour >= 18:
+                                attend[name]['end'] = time
+                            else:
+                                attend[name]['end'] = None
+                    else:
+                        over_night_employees.append(employee_id)
 
             # wifi device
             device = Device()
@@ -460,8 +465,8 @@ class Report:
                         attend[name]['workingHours'] = None
                 elif attend[name]['begin']:
                     if not is_holiday:
-                        if 'regular' in attend[name] and attend[name]['regular'] and int(attend[name]['begin']) > WORKING['time']['beginTime']:
-                            # fulltime job만 지각을 처리
+                        if 'regular' in attend[name] and attend[name]['regular'] and int(attend[name]['begin']) > int(WORKING['time']['beginTime']):
+                            # fulltime job만 지각 처리
                             attend[name]['status'] = ('지각', 1)
                         else:
                             attend[name]['status'] = ('정상출근', 0)
@@ -470,8 +475,8 @@ class Report:
                     if self.hour >= 18:
                         working_hours = int(attend[name]['end'][0:2]) - int(attend[name]['begin'][0:2]) + \
                                         (int(attend[name]['end'][2:4]) - int(attend[name]['begin'][2:4])) / 60
-                        if int(attend[name]['end']) > WORKING['time']['lunchFinishTime'] and \
-                                WORKING['time']['lunchTime'] > int(attend[name]['begin']):
+                        if int(attend[name]['end']) > int(WORKING['time']['lunchFinishTime']) and \
+                                int(WORKING['time']['lunchTime']) > int(attend[name]['begin']):
                             working_hours = working_hours - 1
                         working_hours = round(working_hours, 1)
                         attend[name]['workingHours'] = working_hours
@@ -482,8 +487,7 @@ class Report:
                         if self.hour >= 18:
                             attend[name]['workingHours'] = 0
                             attend[name]['status'] = ('미출근', 3)
-                        elif self.hour >= WORKING['time']['beginTime'] / 10000:
-                            # fulltime job만 지각을 처리
+                        elif self.hour >= int(WORKING['time']['beginTime']) / 10000:
                             attend[name]['workingHours'] = None
                             attend[name]['status'] = ('지각', 1)
                         else:
@@ -491,7 +495,6 @@ class Report:
                             attend[name]['status'] = ('출근전', 2)
                     else:
                         attend[name]['status'] = ('정상출근', 0)
-
                 try:
                     if 'regular' in attend[name] and not attend[name]['regular'] and attend[name]['status'][0] in ['미출근', '출근전', '지각'] :
                         # fulltime이 아닌 직원에 대해 미출근과 출근전인 경우 기록하지 않음
@@ -501,6 +504,46 @@ class Report:
                 except Exception as e:
                     print(e)
                     attend[name]
+
+            '''
+                 1. over_night 근무자에 대해서 이전 날짜 update
+            '''
+            if over_night_employees:
+                print(over_night_employees)
+                access_yesterday = self.yesterday[0:4] + self.yesterday[5:7] + self.yesterday[8:]
+                for employee_id in over_night_employees:
+                    cursor.execute("select e_id, e_name, e_date, e_time, e_mode from tenter where e_date=? and e_id = ?",
+                                   (access_yesterday, employee_id))
+                    attend = {'date': self.yesterday, 'employeeId': int(employee_id)}
+                    for row in cursor.fetchall():
+                        time = row[3]
+                        mode = int(row[4])
+                        if int(time) > int(WORKING['time']['overNight']) or mode != 2:
+                            if'begin' in attend:
+                                if int(time) < int(attend['begin']):
+                                    attend['begin'] = time
+                                if int(time) > int(attend['end']):
+                                    attend['end'] = time
+                            else:
+                                attend['begin'] = time
+                                attend['end'] = time
+
+                    if 'begin' in attend:
+                        cursor.execute("select e_id, e_name, e_date, e_time, e_mode from tenter where e_date = ? and e_id = ? and e_mode = ?",
+                                       (access_today, employee_id, '2'))
+                        for row in cursor.fetchall():
+                            print(row)
+                            time = row[3]
+                            if int(time) < 20000:
+                                attend['end'] = time
+
+                        working_hours = 24 + int(attend['end'][0:2]) - int(attend['begin'][0:2]) + \
+                                        (int(attend['end'][2:4]) - int(attend['begin'][2:4])) / 60
+                        if int(WORKING['time']['lunchTime']) > int(attend['begin']):
+                            working_hours = working_hours - 1
+                        working_hours = round(working_hours, 1)
+                        attend['workingHours'] = working_hours
+                        self.collection.update_one({'date': attend['date'], 'employeeId': int(employee_id)}, {'$set': attend}, upsert=True)
 
     def update_date(self, start=None, end=None):
         data_list = self.collection.find({'date': {"$gte": start, "$lt": end}})
@@ -526,8 +569,8 @@ class Report:
         name = employee['name']
         email = employee['email']
         notice = collection.find_one({'date': self.today, 'name': name, 'email': email})
-        if notice is None:
 
+        if notice is None:
             report = self.collection.find_one({'name': name, 'date': {"$lt": self.today}}, sort=[('date', -1)])
             report_date = report['date']
             begin = report['begin']
@@ -578,7 +621,7 @@ class Event:
     end = None
 
     def get(self):
-        _, today, this_month = check_time()
+        _, yesterday, today, this_month = check_time()
         self.start = this_month['start']
         self.end = this_month['end']
         data_list = []

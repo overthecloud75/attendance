@@ -4,6 +4,7 @@ __pycache__/
 __pycache__
 chromedriver.exe
 mainconfig.py
+history.txt
 
 .venv/
 venv
@@ -11,3 +12,4 @@ venv/
 views/__pycache__
 views/__pycache__/
 static/
+
