@@ -618,10 +618,8 @@ class Report:
 class Event:
     collection = db['event']
 
-    def get(self):
-        _, yesterday, today, this_month = check_time()
-        start = this_month['start']
-        end = this_month['end']
+    def get(self, args):
+        _, start, end, _ = request_event(args)
         data_list = []
         if start is not None and end is not None:
             data_list = self.collection.find({'start': {"$gte": start, "$lt": end}}, sort=[('id', 1)])
@@ -640,12 +638,10 @@ class Event:
             self.collection.insert_one(request_data)
         else:
             self.collection.update_one({'id': event_id}, {'$set': request_data}, upsert=True)
-        # calendar 에 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
+        # calendar 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
         self.update_report(start=start, end=end)
 
-
     def delete(self, args):
-
         title, _, _, event_id = request_event(args)
 
         data = self.collection.find_one({'id': event_id})
@@ -653,7 +649,7 @@ class Event:
         end = data['end']
         self.collection.delete_one({'id': event_id})
 
-        # calendar 에 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
+        # calendar 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
         self.update_report(start=start, end=end)
         return start, end
 
@@ -667,7 +663,7 @@ class Event:
         request_data = {'title': title, 'start': start, 'end': end, 'id': event_id}
         self.collection.update_one({'id': event_id}, {'$set': request_data}, upsert=True)
 
-        # calendar 에 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
+        # calendar 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
         self.update_report(start=start, end=end)
 
     def schedule(self, employees_list, date=None):

@@ -28,8 +28,6 @@ def client_ip_check(view):
 @client_ip_check
 def calendar():
     # https://stackoverflow.com/questions/39902405/fullcalendar-in-django
-    event = Event()
-    events = event.get()
     is_outside_calendar_connected = IS_OUTSIDE_CALENDAR_CONNECTED
     outside_calendar_url = OUTSIDE_CALENDAR_URL
     # open link in new tab
@@ -38,27 +36,36 @@ def calendar():
     return render_template('report/calendar.html', **locals())
 
 
-# https://fullcalendar.io/docs/select-callback
-# Triggered when a date/time selection is made
+@bp.route('/get_event/')
+@client_ip_check
+def get_event():
+    event = Event()
+    events = event.get(request.args)
+    event_list = []
+    for event in events:
+        del event['_id']
+        event_list.append(event)
+    return jsonify(event_list)
+
+
 @bp.route('/add_event/')
+@client_ip_check
 def add_event():
     event = Event()
     event.insert(request.args)
     return jsonify({})
 
 
-# https://fullcalendar.io/docs/eventDrop
-# Triggered when dragging stops and the event has moved to a different day/time.
 @bp.route('/drop_event/')
+@client_ip_check
 def drop():
     event = Event()
     event.drop(request.args)
     return jsonify({})
 
 
-# https://fullcalendar.io/docs/eventClick
-# Triggered when the user clicks an event.
 @bp.route('/delete_event/')
+@client_ip_check
 def delete():
     event = Event()
     event.delete(request.args)

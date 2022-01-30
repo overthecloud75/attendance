@@ -215,6 +215,10 @@ def request_event(request_data):
     start = request_data.get('start', None)
     end = request_data.get('end', None)
     id = request_data.get('id', None)
+    if start is not None:
+        start = start[:10]
+    if end is not None:
+        end = end[:10]
     if id is not None:
         id = int(id)
     return title, start, end, id

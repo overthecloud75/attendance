@@ -10,3 +10,9 @@
   1.5.3
     - fullcalendar.js: 3.2.1 -> 5.10.1
 
+  1.5.4
+    - calendar.refetchEvents() is working 
+  
+  1.5.5
+    - previous, next month is working 
+
