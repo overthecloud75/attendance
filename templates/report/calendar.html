@@ -6,7 +6,6 @@
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css"
       integrity="sha256-16PDMvytZTH9heHu9KBPjzrFTaoner60bnABykjNiM0=" crossorigin="anonymous"
 >
@@ -28,18 +27,16 @@ document.addEventListener('DOMContentLoaded', function() {
         select: function(selectinfo) {
             var title = prompt("Enter Event Title");
             if (title) {
-                var start = moment(selectinfo.start).format("Y-MM-DD");
-                var end = moment(selectinfo.end).format("Y-MM-DD");
                 $.ajax({
                     type: "GET",
                     url: '/calendar/add_event',
-                    data: {'title': title, 'start': start, 'end': end},
+                    data: {'title': title, 'start': selectinfo.startStr, 'end': selectinfo.endStr},
                     dataType: "json",
                     success: function(data) {
                     calendar.refetchEvents();
                     alert("Added Successfully");
                     },
-                    failure: function (data) {
+                    failure: function(data) {
                     alert('There is a problem!!!');
                     }
                 });
@@ -86,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         },
     });
-calendar.render();
+    calendar.render();
 });
 </script>
 <div class="container my-3">

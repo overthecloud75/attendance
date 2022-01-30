@@ -7,7 +7,7 @@ try:
     from mainconfig import OUTSIDE_CALENDAR_URL
 except Exception as e:
     OUTSIDE_CALENDAR_URL = None
-from workingconfig import IS_OUTSIDE_CALENDAR_CONNECTED
+from workingconfig import IS_OUTSIDE_CALENDAR_CONNECTED, WORKING
 from utils import check_private_ip
 
 # blueprint
@@ -44,6 +44,19 @@ def get_event():
     event_list = []
     for event in events:
         del event['_id']
+        title = event['title'].split('/')
+        if len(title) > 1:
+            event_title = title[1]
+            for status in WORKING['status']:
+                if status in title:
+                    event_title = status
+            if event_title in WORKING['offDay']:
+                event['color'] = 'yellow'
+                event['textColor'] = 'black'
+            elif event_title not in WORKING['status']:
+                event['color'] = 'green'
+        else:
+            event['color'] = 'red'
         event_list.append(event)
     return jsonify(event_list)
 

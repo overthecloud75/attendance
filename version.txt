@@ -14,5 +14,11 @@
     - calendar.refetchEvents() is working 
   
   1.5.5
-    - previous, next month is working 
+    - previous, next month is working
+
+  1.5.6
+    - according to the status, the background color is different in callendar.
+
+  1.5.7
+    - remove moment.js
 
