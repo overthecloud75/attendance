@@ -13,7 +13,7 @@ from office365.runtime.auth.user_credential import UserCredential
 from office365.runtime.http.request_options import RequestOptions
 from office365.sharepoint.client_context import ClientContext
 
-from utils import check_time, check_holiday, request_event, request_get, Page
+from utils import check_time, check_holiday, request_event, request_delta, request_get, get_delta_day, Page
 try:
     from mainconfig import ACCESS_DB_PWD, OUTSIDE_CALENDAR_URL, ACCOUNT, MAIL_SERVER, SERVER_URL, MONGO_URL
 except Exception as e:
@@ -503,7 +503,7 @@ class Report:
                         self.collection.update_one({'date': self.today, 'name': name}, {'$set': attend[name]}, upsert=True)
                 except Exception as e:
                     print(e)
-                    attend[name]
+                    print(attend[name])
 
             '''
                  1. over_night 근무자에 대해서 이전 날짜 update
@@ -617,43 +617,58 @@ class Report:
 
 class Event:
     collection = db['event']
-    start = None
-    end = None
 
     def get(self):
         _, yesterday, today, this_month = check_time()
-        self.start = this_month['start']
-        self.end = this_month['end']
+        start = this_month['start']
+        end = this_month['end']
         data_list = []
-        if self.start is not None and self.end is not None:
-            data_list = self.collection.find({'start': {"$gte": self.start, "$lt": self.end}}, sort=[('id', 1)])
+        if start is not None and end is not None:
+            data_list = self.collection.find({'start': {"$gte": start, "$lt": end}}, sort=[('id', 1)])
         return data_list
 
-    def post(self, args, type='insert'):
+    def insert(self, args):
+        title, start, end, event_id = request_event(args)
+        request_data = {'title': title, 'start': start, 'end': end, 'id': event_id}
 
-        title, self.start, self.end, event_id = request_event(args)
-        request_data = {'title': title, 'start': self.start, 'end': self.end, 'id': event_id}
-
-        if event_id is None and type == 'insert':
+        if event_id is None:
             data = self.collection.find_one(sort=[('id', -1)])
             if data:
-                event_id = data['id'] + 1
+                request_data['id'] = data['id'] + 1
             else:
-                event_id = 1
-            request_data['id'] = event_id
+                request_data['id'] = 1
             self.collection.insert_one(request_data)
-        elif type == 'update':
-            self.collection.update_one({'id': event_id}, {'$set': request_data})
-        elif type == 'delete':
-            data = self.collection.find_one({'id': event_id})
-            self.start = data['start']
-            self.end = data['end']
-            self.collection.delete_one({'id': event_id})
+        else:
+            self.collection.update_one({'id': event_id}, {'$set': request_data}, upsert=True)
+        # calendar 에 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
+        self.update_report(start=start, end=end)
+
+
+    def delete(self, args):
+
+        title, _, _, event_id = request_event(args)
+
+        data = self.collection.find_one({'id': event_id})
+        start = data['start']
+        end = data['end']
+        self.collection.delete_one({'id': event_id})
 
         # calendar 에 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
-        if self.start is not None and self.end is not None:
-            report = Report()
-            report.update_date(start=self.start, end=self.end)
+        self.update_report(start=start, end=end)
+        return start, end
+
+    def drop(self, args):
+
+        start, end = self.delete(args)
+        title, event_id, delta = request_delta(args)
+        start = get_delta_day(start, delta=delta)
+        end = get_delta_day(end, delta=delta)
+
+        request_data = {'title': title, 'start': start, 'end': end, 'id': event_id}
+        self.collection.update_one({'id': event_id}, {'$set': request_data}, upsert=True)
+
+        # calendar 에 일정이 변경 되면 그에 따라서 report 내용도 update 하기 위함
+        self.update_report(start=start, end=end)
 
     def schedule(self, employees_list, date=None):
         schedule_dict = {}
@@ -673,6 +688,12 @@ class Event:
                 else:
                     schedule_dict[name] = status
         return schedule_dict
+
+    def update_report(self, start=None, end=None):
+        if start is not None and end is not None:
+            report = Report()
+            report.update_date(start=start, end=end)
+
 
 
 

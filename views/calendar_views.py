@@ -38,24 +38,30 @@ def calendar():
     return render_template('report/calendar.html', **locals())
 
 
+# https://fullcalendar.io/docs/select-callback
+# Triggered when a date/time selection is made
 @bp.route('/add_event/')
 def add_event():
     event = Event()
-    event.post(request.args, type='insert')
+    event.insert(request.args)
     return jsonify({})
 
 
-@bp.route('/update_event/')
-def update():
+# https://fullcalendar.io/docs/eventDrop
+# Triggered when dragging stops and the event has moved to a different day/time.
+@bp.route('/drop_event/')
+def drop():
     event = Event()
-    event.post(request.args, type='update')
+    event.drop(request.args)
     return jsonify({})
 
 
+# https://fullcalendar.io/docs/eventClick
+# Triggered when the user clicks an event.
 @bp.route('/delete_event/')
 def delete():
     event = Event()
-    event.post(request.args, type='delete')
+    event.delete(request.args)
     return jsonify({})
 
 

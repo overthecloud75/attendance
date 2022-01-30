@@ -5,3 +5,8 @@
   1.5.2
      - bootstrap version: 4.3.1 -> 5.1.3
      - bootstrap@5.1.2/dist/js/bootstrap.bundle.min.js
+
+# 2022/01/30
+  1.5.3
+    - fullcalendar.js: 3.2.1 -> 5.10.1
+

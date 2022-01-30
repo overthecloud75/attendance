@@ -184,6 +184,18 @@ def correct_time(time):
     return time
 
 
+def get_delta_day(date, delta=None):
+    date = datetime.datetime(int(date[0:4]), int(date[5:7]), int(date[8:10]), 0, 0, 0)
+    if delta is not None:
+        if delta >= 0:
+            date = date + timedelta(days=delta)
+        else:
+            delta = -1 * delta
+            date = date - timedelta(days=delta)
+    date = date.strftime("%Y-%m-%d")
+    return date
+
+
 def request_get(request_data):
     page = int(request_data.get('page', 1))
     name = request_data.get('name', None)
@@ -206,6 +218,17 @@ def request_event(request_data):
     if id is not None:
         id = int(id)
     return title, start, end, id
+
+
+def request_delta(request_data):
+    title = request_data.get('title', None)
+    id = request_data.get('id', None)
+    delta = request_data.get('delta', None)
+    if id is not None:
+        id = int(id)
+    if delta is not None:
+        delta = int(delta)
+    return title, id, delta 
 
 
 def detect_network():
