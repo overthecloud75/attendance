@@ -48,7 +48,7 @@ def get_event():
         if len(title) > 1:
             event_title = title[1]
             for status in WORKING['status']:
-                if status in title:
+                if status in title[1]:
                     event_title = status
             if event_title in WORKING['offDay']:
                 event['color'] = 'yellow'
