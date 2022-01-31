@@ -45,6 +45,8 @@ def get_event():
     for event in events:
         del event['_id']
         title = event['title'].split('/')
+        if len(title) == 1:
+            title = title[0].split(' ')
         if len(title) > 1:
             event_title = title[1]
             for status in WORKING['status']:
