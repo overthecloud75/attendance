@@ -24,5 +24,12 @@
 
 # 2022/01/31
   1.5.8
-    - simplify notice-email check
+    - simplify notice_email check
+
+# 2022/02/02
+  1.5.9
+    - workingconfig.py -> config.py
+
+  1.6.0
+    - create_index : db.mac.create_index([('date', 1), ('mac', 1)])
 

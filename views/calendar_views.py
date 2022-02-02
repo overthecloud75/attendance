@@ -7,7 +7,7 @@ try:
     from mainconfig import OUTSIDE_CALENDAR_URL
 except Exception as e:
     OUTSIDE_CALENDAR_URL = None
-from workingconfig import IS_OUTSIDE_CALENDAR_CONNECTED, WORKING
+from config import IS_OUTSIDE_CALENDAR_CONNECTED, WORKING
 from utils import check_private_ip
 
 # blueprint

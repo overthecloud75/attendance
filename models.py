@@ -8,6 +8,7 @@ import json
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import time
 
 from office365.runtime.auth.user_credential import UserCredential
 from office365.runtime.http.request_options import RequestOptions
@@ -35,10 +36,13 @@ except Exception as e:
     CC = None
     # CC = 'test@test.co.kr'
 
-from workingconfig import USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, IS_OUTSIDE_CALENDAR_CONNECTED, EMAIL_NOTICE_BASE, WORKING
+from config import USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, IS_OUTSIDE_CALENDAR_CONNECTED, EMAIL_NOTICE_BASE, WORKING
 
 mongoClient = MongoClient(MONGO_URL)
 db = mongoClient['report']
+
+# createIndex https://velopert.com/560
+db.mac.create_index([('date', 1), ('mac', 1)])
 
 # connect to access db
 # https://stackoverflow.com/questions/50757873/connect-to-ms-access-in-python
@@ -518,9 +522,9 @@ class Report:
         wifi_list = []
         for device in device_list:
             begin, end = self.mac.get([device['mac']], self.today)
+            print(device['mac'], time.time() - time2)
             wifi_list.append({'mac': device['mac'], 'begin': begin, 'end': end, 'owner': device['owner'], 'device': device['device']})
-        get_page = Page(page)
-        return get_page.paginate(wifi_list, count=paging['count'])
+        return paging, wifi_list
 
     def update_overnight(self, overnight_employees):
         print(overnight_employees)

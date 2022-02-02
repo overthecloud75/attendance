@@ -1,3 +1,9 @@
+# paging
+PAGE_DEFAULT = {
+    'per_page': 20,
+    'screen_pages': 10
+}
+
 # wift attend
 USE_WIFI_ATTENDANCE = True
 

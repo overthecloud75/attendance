@@ -7,8 +7,7 @@ import datetime
 from datetime import timedelta
 from korean_lunar_calendar import KoreanLunarCalendar
 
-from views.config import page_default
-from workingconfig import WORKING, USE_LUNAR_NEW_YEAR, PRIVATE_IP_RANGE
+from config import PAGE_DEFAULT, WORKING, USE_LUNAR_NEW_YEAR, PRIVATE_IP_RANGE
 try:
     from mainconfig import NET, PDST, PSRC, NAME_OF_ROUTER
 except Exception as e:
@@ -23,7 +22,8 @@ except Exception as e:
 class Page:
     def __init__(self, page):
         self.page = page
-        self.per_page = page_default['per_page']
+        self.per_page = PAGE_DEFAULT['per_page']
+        self.screen_pages = PAGE_DEFAULT['screen_pages']
         self.offset = (page - 1) * self.per_page
 
     def paginate(self, data_list, count=None):
@@ -36,39 +36,37 @@ class Page:
             else:
                 count = data_list.count()
                 data_list = data_list.limit(self.per_page).skip(self.offset)
-
         if count != 0:
-            if count // self.per_page == 0:
+            if count % self.per_page == 0:
                 total_pages = int(count / self.per_page)
             else:
                 total_pages = int(count / self.per_page) + 1
         else:
             total_pages = 1
-        screen_pages = 10
 
         if self.page < 1:
             self.page = 1
         elif self.page > total_pages:
             self.page = total_pages
 
-        start_page = (self.page - 1) // screen_pages * screen_pages + 1
+        start_page = (self.page - 1) // self.screen_pages * self.screen_pages + 1
 
         pages = []
-        prev_num = start_page - screen_pages
-        next_num = start_page + screen_pages
+        prev_num = start_page - self.screen_pages
+        next_num = start_page + self.screen_pages
 
-        if start_page - screen_pages > 0:
+        if start_page - self.screen_pages > 0:
             has_prev = True
         else:
             has_prev = False
-        if start_page + screen_pages > total_pages:
+        if start_page + self.screen_pages > total_pages:
             has_next = False
         else:
             has_next = True
-        if total_pages > screen_pages + start_page:
-            for i in range(screen_pages):
+        if total_pages > self.screen_pages + start_page:
+            for i in range(self.screen_pages):
                 pages.append(i + start_page)
-        elif total_pages < screen_pages:
+        elif total_pages < self.screen_pages:
             for i in range(total_pages):
                 pages.append(i + start_page)
         else:
@@ -83,7 +81,7 @@ class Page:
                   'count': count,
                   'offset': self.offset,
                   'pages': pages,
-                  'screen_pages': screen_pages,
+                  'screen_pages': self.screen_pages,
                   'total_pages': total_pages
                   }
         return paging, data_list
