@@ -33,3 +33,7 @@
   1.6.0
     - create_index : db.mac.create_index([('date', 1), ('mac', 1)])
 
+# 2022/02/04
+  1.6.1
+    - apply wifi overnight
+

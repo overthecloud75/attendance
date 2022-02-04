@@ -216,13 +216,13 @@ class Mac:
         end = None
         # if users have devices
         for mac in mac_list:
-            data = self.collection.find_one({'date': date, 'mac': mac}, sort=[('time', 1)])
+            data = self.collection.find_one({'date': date, 'mac': mac, 'time': {"$gt": WORKING['time']['overNight']}}, sort=[('time', 1)])
             if data:
                 if begin and int(begin) > int(data['time']):
                     begin = data['time']
                 elif not begin:
                     begin = data['time']
-            data = self.collection.find_one({'date': date, 'mac': mac}, sort=[('time', -1)])
+            data = self.collection.find_one({'date': date, 'mac': mac, 'time': {"$gt": WORKING['time']['overNight']}}, sort=[('time', -1)])
             if data:
                 if end and int(end) < int(data['time']):
                     end = data['time']
