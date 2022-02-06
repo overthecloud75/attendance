@@ -37,3 +37,9 @@
   1.6.1
     - apply wifi overnight
 
+# 2022/02/06
+  1.6.2
+    - utils request_get length
+
+  1.6.3
+    - when error in login, signup, status code 200 -> 400

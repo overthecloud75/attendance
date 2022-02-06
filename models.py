@@ -341,8 +341,10 @@ class Report:
                     if 'status' in data:
                         if data['status'][0]:
                             summary[name][data['status'][0]] = summary[name][data['status'][0]] + 1
-                    if 'reason' in data and data['reason']:
+                    if 'reason' in data and data['reason'] and data['reason'] in summary[name]:
                         summary[name][data['reason']] = summary[name][data['reason']] + 1
+                    else:
+                        summary[name]['기타'] = summary[name]['기타'] + 1
                     summary[name]['totalWorkingHours'] = summary[name]['totalWorkingHours'] + data['workingHours']
             for name in summary:
                 summary[name] = self.get_summary(summary[name])

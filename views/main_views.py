@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, url_for, current_app, session, g, flash, jsonify, send_file
+from flask import Blueprint, request, render_template, url_for, current_app, session, g, flash, jsonify, send_file, make_response
 from io import BytesIO, StringIO
 from csvalidate import ValidatedWriter
 from werkzeug.security import generate_password_hash
@@ -57,8 +57,11 @@ def signup():
         error = user.signup(request_data)
         if error:
             flash(error)
+            return make_response(render_template('user/signup.html', form=form), 400)
         else:
             return redirect(url_for('main.attend'))
+    elif request.method == 'POST' and not form.validate_on_submit():
+        return make_response(render_template('user/signup.html', form=form), 400)
     return render_template('user/signup.html', form=form)
 
 
@@ -77,7 +80,11 @@ def login():
             for key in user_data:
                 session[key] = user_data[key]
             return redirect(url_for('main.attend'))
-        flash(error)
+        else:
+            flash(error)
+            return make_response(render_template('user/login.html', form=form), 400)
+    elif request.method == 'POST' and not form.validate_on_submit():
+        return make_response(render_template('user/login.html', form=form), 400)
     return render_template('user/login.html', form=form)
 
 
