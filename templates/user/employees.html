@@ -18,6 +18,7 @@
             <th>퇴사일</th>
             <th>email</th>
             <th>상근 여부</th>
+            <th>상태</th>
         </tr>
         </thead>
         {% for data in data_list %}
@@ -31,6 +32,7 @@
             <td>{{ data.endDate }}</td>
             <td>{{ data.email }}</td>
             <td>{{ data.regular }}</td>
+            <td>{{ data.status }}</td>
         </tr>
         {% endfor %}
     {% else %}

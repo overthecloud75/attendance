@@ -43,3 +43,7 @@
 
   1.6.3
     - when error in login, signup, status code 200 -> 400
+
+# 2022/02/07
+  1.6.4
+    - employee key : status

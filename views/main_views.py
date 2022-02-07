@@ -129,6 +129,8 @@ def update_employee():
             request_data['email'] = form.email.data
         if form.regular.data:
             request_data['regular'] = form.regular.data
+        if form.status.data:
+            request_data['status'] = form.status.data
         employee.post(request_data)
         return redirect(url_for('main.employees'))
     data = employee.get(name=name)

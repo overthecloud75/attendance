@@ -148,11 +148,16 @@ class Employee:
                 regular = True
                 if 'regular' in employee and employee['regular'] == '비상근':
                     regular = False
-                if 'endDate' not in employee:  # 퇴사하지 않은 직원과 fulltime 직원만 포함하기 위해서
+                if 'endDate' not in employee:  # 퇴사하지 않은 직원만 포함하기 위해서
                     if 'email' in employee and employee['email']:
-                        employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': employee['email'], 'regular': regular})
+                        email = employee['email']
                     else:
-                        employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': None, 'regular': regular})
+                        email = None
+                    if 'status' in employee and employee['status']:
+                        status = employee['status']
+                    else:
+                        status = None
+                    employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': regular, 'status': status})
             return employees_list
         else:
             data_list = self.collection.find(sort=[('department', 1), ('name', 1)])
@@ -395,8 +400,9 @@ class Report:
                     name = employee['name']
                     employee_id = employee['employeeId']
                     regular = employee['regular']
+                    reason = employee['status']
                     # 같은 employee_id 인데 이름이 바뀌는 경우 발생
-                    attend[name] = {'date': self.today, 'name': name, 'employeeId': employee_id, 'begin': None, 'end': None, 'reason': None, 'regular': regular}
+                    attend[name] = {'date': self.today, 'name': name, 'employeeId': employee_id, 'begin': None, 'end': None, 'reason': reason, 'regular': regular}
 
                 self.notice_email(employees_list=employees_list)
 
@@ -462,6 +468,10 @@ class Report:
                         attend[name]['workingHours'] = WORKING['status'][status]
                     else:
                         attend[name]['workingHours'] = None
+                elif attend[name]['reason']:
+                    attend[name]['status'] = (None, 0)
+                    if self.hour >= 18:
+                        attend[name]['workingHours'] = WORKING['status'][attend[name]['reason']]
                 elif attend[name]['begin']:
                     if not is_holiday:
                         if 'regular' in attend[name] and attend[name]['regular'] and int(attend[name]['begin']) > int(WORKING['time']['beginTime']):
@@ -524,7 +534,6 @@ class Report:
         wifi_list = []
         for device in device_list:
             begin, end = self.mac.get([device['mac']], self.today)
-            print(device['mac'], time.time() - time2)
             wifi_list.append({'mac': device['mac'], 'begin': begin, 'end': end, 'owner': device['owner'], 'device': device['device']})
         return paging, wifi_list
 
