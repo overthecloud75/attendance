@@ -137,7 +137,7 @@ class User:
 class Employee:
     collection = db['employees']
 
-    def get(self, page=1, name=None):
+    def get(self, page=1, name=None, date=None):
         if name:
             employee = self.collection.find_one({'name': name})
             return employee
@@ -148,16 +148,21 @@ class Employee:
                 regular = True
                 if 'regular' in employee and employee['regular'] == '비상근':
                     regular = False
-                if 'endDate' not in employee:  # 퇴사하지 않은 직원만 포함하기 위해서
-                    if 'email' in employee and employee['email']:
-                        email = employee['email']
+                if 'email' in employee and employee['email']:
+                    email = employee['email']
+                else:
+                    email = None
+                if 'status' in employee and employee['status']:
+                    status = employee['status']
+                else:
+                    status = None
+                # 퇴사하지 않은 직원만 포함하기 위해서
+                if status != '퇴사':
+                    if 'endDate' not in employee:
+                        employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': regular, 'status': status})
                     else:
-                        email = None
-                    if 'status' in employee and employee['status']:
-                        status = employee['status']
-                    else:
-                        status = None
-                    employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': regular, 'status': status})
+                        if date <= employee['endDate']:
+                            employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': regular, 'status': status})
             return employees_list
         else:
             data_list = self.collection.find(sort=[('department', 1), ('name', 1)])
@@ -373,11 +378,15 @@ class Report:
     def update(self, date=None):
         if date is not None:
             if date != self.today:
-                self.hour = 23
-            self.today = date
+                hour = 23
+            else:
+                hour = self.hour
+        else:
+            date = self.today
+            hour = self.hour
 
-        is_holiday = check_holiday(self.today)
-        if self.hour > 6:
+        is_holiday = check_holiday(date)
+        if hour > 6:
             if IS_OUTSIDE_CALENDAR_CONNECTED:
                 try:
                     eventFromSharePoint()
@@ -393,21 +402,21 @@ class Report:
             overnight_employees = []
 
             if not is_holiday:
-                employees_list = self.employee.get(page='all')
+                employees_list = self.employee.get(page='all', date=date)
                 event = Event()
-                schedule_dict = event.schedule(employees_list, date=self.today)
+                schedule_dict = event.schedule(employees_list, date=date)
                 for employee in employees_list:
                     name = employee['name']
                     employee_id = employee['employeeId']
                     regular = employee['regular']
                     reason = employee['status']
                     # 같은 employee_id 인데 이름이 바뀌는 경우 발생
-                    attend[name] = {'date': self.today, 'name': name, 'employeeId': employee_id, 'begin': None, 'end': None, 'reason': reason, 'regular': regular}
+                    attend[name] = {'date': date, 'name': name, 'employeeId': employee_id, 'begin': None, 'end': None, 'reason': reason, 'regular': regular}
 
                 self.notice_email(employees_list=employees_list)
 
             # 지문 인식 출퇴근 기록
-            access_today = self.today[0:4] + self.today[5:7] + self.today[8:]  # access_day 형식으로 변환
+            access_today = date[0:4] + date[5:7] + date[8:]  # access_day 형식으로 변환
             cursor.execute("select e_id, e_name, e_date, e_time, e_mode from tenter where e_date = ?", access_today)
 
             for row in cursor.fetchall():
@@ -417,17 +426,17 @@ class Report:
                 mode = int(row[4])
                 # card 출근자 name = ''
                 if name != '':
-                    if int(time) > int(WORKING['time']['overNight']) or mode != 2:   # overnight가 아닌 것에 대한 기준
+                    if int(time) > int(WORKING['time']['overNight']):   # overnight가 아닌 것에 대한 기준
                         if name not in attend:
-                            attend[name] = {'date': self.today, 'name': name, 'employeeId': int(employee_id), 'begin': None, 'end': None, 'reason': None}
+                            attend[name] = {'date': date, 'name': name, 'employeeId': int(employee_id), 'begin': None, 'end': None, 'reason': None}
                         if attend[name]['begin']:
                             if int(time) < int(attend[name]['begin']):
                                 attend[name]['begin'] = time
-                            if self.hour >= 18:
+                            if hour >= 18:
                                 attend[name]['end'] = time
                         else:
                             attend[name]['begin'] = time
-                            if self.hour >= 18:
+                            if hour >= 18:
                                 attend[name]['end'] = time
                             else:
                                 attend[name]['end'] = None
@@ -440,7 +449,7 @@ class Report:
 
             # wifi 와 지문 인식기 근태 비교
             for name in device_dict:
-                begin, end = self.mac.get(device_dict[name], self.today)
+                begin, end = self.mac.get(device_dict[name], date)
                 if begin:
                     if name in attend:
                         if attend[name]['begin']:
@@ -454,14 +463,14 @@ class Report:
                         else:
                             attend[name]['end'] = end
                     else:
-                        attend[name] = {'date': self.today, 'name': name, 'begin': begin, 'end': end, 'reason': None}
+                        attend[name] = {'date': date, 'name': name, 'begin': begin, 'end': end, 'reason': None}
 
             for name in attend:
                 if name in schedule_dict:
                     status = schedule_dict[name]
                     attend[name]['status'] = (None, 0)
                     attend[name]['reason'] = status
-                    if self.hour >= 18:
+                    if hour >= 18:
                         if '반차' in status:  # status가 2개 이상으로 표시된 경우 ex) 반차, 정기점검
                             status = '반차'
                             attend[name]['reason'] = status
@@ -470,7 +479,7 @@ class Report:
                         attend[name]['workingHours'] = None
                 elif attend[name]['reason']:
                     attend[name]['status'] = (None, 0)
-                    if self.hour >= 18:
+                    if hour >= 18:
                         attend[name]['workingHours'] = WORKING['status'][attend[name]['reason']]
                 elif attend[name]['begin']:
                     if not is_holiday:
@@ -481,7 +490,7 @@ class Report:
                             attend[name]['status'] = ('정상출근', 0)
                     else:
                         attend[name]['status'] = ('정상출근', 0)
-                    if self.hour >= 18:
+                    if hour >= 18:
                         working_hours = int(attend[name]['end'][0:2]) - int(attend[name]['begin'][0:2]) + \
                                         (int(attend[name]['end'][2:4]) - int(attend[name]['begin'][2:4])) / 60
                         if int(attend[name]['end']) > int(WORKING['time']['lunchFinishTime']) and \
@@ -492,10 +501,10 @@ class Report:
                         attend[name]['workingHours'] = None
                 else:
                     if not is_holiday:
-                        if self.hour >= 18:
+                        if hour >= 18:
                             attend[name]['workingHours'] = 0
                             attend[name]['status'] = ('미출근', 3)
-                        elif self.hour >= int(WORKING['time']['beginTime']) / 10000:
+                        elif hour >= int(WORKING['time']['beginTime']) / 10000:
                             attend[name]['workingHours'] = None
                             attend[name]['status'] = ('지각', 1)
                         else:
@@ -508,7 +517,7 @@ class Report:
                         # fulltime이 아닌 직원에 대해 미출근과 출근전인 경우 기록하지 않음
                         pass
                     else:
-                        self.collection.update_one({'date': self.today, 'name': name}, {'$set': attend[name]}, upsert=True)
+                        self.collection.update_one({'date': date, 'name': name}, {'$set': attend[name]}, upsert=True)
                 except Exception as e:
                     print(e)
                     print(attend[name])

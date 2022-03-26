@@ -28,6 +28,7 @@ def create_app():
 
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.urandom(32)
+    app.config['SESSION_COOKIE_SECURE'] = True
 
     from views import main_views, calendar_views
     app.register_blueprint(main_views.bp)

@@ -47,3 +47,11 @@
 # 2022/02/07
   1.6.4
     - employee key : status
+
+# 2022/02/19
+  1.6.5
+    - app.config['SESSION_COOKIE_SECURE'] = True
+
+# 2022/03/26
+  1.6.6
+    - modify employee quit
