@@ -55,3 +55,7 @@
 # 2022/03/26
   1.6.6
     - modify employee quit
+
+# 2022/03/28
+  1.6.7
+    - err fix (summary etc)
