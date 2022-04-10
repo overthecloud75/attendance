@@ -33,6 +33,7 @@ def create_app():
     from views import main_views, calendar_views
     app.register_blueprint(main_views.bp)
     app.register_blueprint(calendar_views.bp)
+
     # Manually Push a Context https://flask.palletsprojects.com/en/2.0.x/appcontext/
     # with app.app_context():
     #    save_db()

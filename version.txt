@@ -59,3 +59,8 @@
 # 2022/03/28
   1.6.7
     - err fix (summary etc)
+
+# 2022/04/10
+  1.6.8
+    - fix clickjacking
+    - resp.headers['X-Frame-Options'] = 'SAMEORIGIN'

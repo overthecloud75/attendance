@@ -14,6 +14,13 @@ from utils import check_private_ip
 bp = Blueprint('calendar', __name__, url_prefix='/calendar')
 
 
+@bp.after_request
+def add_security_headers(resp):
+    # https://flask.palletsprojects.com/en/2.1.x/security/
+    resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    return resp
+
+
 def client_ip_check(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):

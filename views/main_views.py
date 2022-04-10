@@ -13,6 +13,13 @@ from utils import request_get, check_private_ip
 bp = Blueprint('main', __name__, url_prefix='/')
 
 
+@bp.after_request
+def add_security_headers(resp):
+    # https://flask.palletsprojects.com/en/2.1.x/security/
+    resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    return resp
+
+
 def admin_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
