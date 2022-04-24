@@ -3,12 +3,12 @@
 
 <div class="container my-3">
     {% if g.user %}
-    <button type="submit" onclick="location.href={{ url_for('main.update_employee') }}" class="btn btn-primary">등록</button>
+    <button type="submit" onclick="location.href={{ url_for('main.update_employee') }}" class="btn btn-primary my-3">등록</button>
     {% endif %}
     <table class="table">
     {% if data_list %}
         <thead>
-        <tr class="thead-dark">
+        <tr class="table-dark">
             <th>번호</th>
             <th>이름</th>
             <th>소속</th>

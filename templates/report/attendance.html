@@ -17,12 +17,14 @@ $(function() {
     {% else %}
     <h1>{{ today }}</h1>
     {% endif %}
-    <form method="get" action="">
-        {% include "form_errors.html" %}
-        {{ form.start(class="dtpick") }}
-        {{ form.end(class="dtpick") }}
-        <button type="submit" class="btn btn-primary">기간</button>
-    </form>
+    <div class="my-3">
+        <form method="get" action="">
+            {% include "form_errors.html" %}
+            {{ form.start(class="dtpick") }}
+            {{ form.end(class="dtpick") }}
+            <button type="submit" class="btn btn-primary">기간</button>
+        </form>
+    </div>
     <table class="table">
     {% if data_list %}
         <thead>

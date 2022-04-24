@@ -30,12 +30,18 @@ class EmployeeSubmitForm(FlaskForm):
     status = StringField('status', validators=[])
 
 
-class DateSubmitForm(FlaskForm):
+class PeriodSubmitForm(FlaskForm):
     start = DateField('Pick a Date', format="%m/%d/%Y")
     end = DateField('Pick a Date', format="%m/%d/%Y")
 
 
+class DateSubmitForm(FlaskForm):
+    start = DateField('Pick a Date', format="%m/%d/%Y")
+
+
 class DeviceSubmitForm(FlaskForm):
     mac = StringField('mac', validators=[DataRequired(), Length(min=2, max=30)])
+    registerTime = StringField('registerTime', validators=[Optional(), Length(16)])
     owner = StringField('owner', validators=[])
     device = StringField('device', validators=[])
+

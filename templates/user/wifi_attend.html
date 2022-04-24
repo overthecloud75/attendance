@@ -1,13 +1,30 @@
 {% extends "base.html" %}
 {% block content %}
 
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+<script>
+$(function() {
+	$( ".dtpick" ).datepicker();
+});
+</script>
+
 <div class="container my-3">
+    <div class="my-3">
+        <form method="get" action="">
+            {% include "form_errors.html" %}
+            {{ form.start(class="dtpick") }}
+            <button type="submit" class="btn btn-primary">date</button>
+        </form>
+    </div>
     <table class="table">
     {% if data_list %}
         <thead>
-        <tr class="thead-dark">
+        <tr class="table-dark">
             <th>번호</th>
             <th>address</th>
+            <th>date</th>
             <th>begin</th>
             <th>end</th>
             <th>owner</th>
@@ -18,6 +35,7 @@
         <tr>
             <td>{{ paging.offset + loop.index0 + 1}}</td>
             <td>{{ data.mac }}</td>
+            <td>{{ data.date }}</td>
             <td>{{ data.begin }}</td>
             <td>{{ data.end }}</td>
             <td>{{ data.owner }}</td>

@@ -6,7 +6,7 @@ from werkzeug.utils import redirect
 import functools
 
 from models import get_setting, User, Employee, Report, Device
-from form import UserCreateForm, UserLoginForm, EmployeeSubmitForm, DateSubmitForm, DeviceSubmitForm
+from form import UserCreateForm, UserLoginForm, EmployeeSubmitForm, PeriodSubmitForm, DateSubmitForm, DeviceSubmitForm
 from utils import request_get, check_private_ip
 
 # blueprint
@@ -150,7 +150,7 @@ def get_device():
     form = DeviceSubmitForm()
     device = Device()
     if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'mac': form.mac.data, 'owner': form.owner.data, 'device': form.device.data}
+        request_data = {'mac': form.mac.data, 'registerTime': form.registerTime.data, 'owner': form.owner.data, 'device': form.device.data}
         device.post(request_data)
     page, _, _, _ = request_get(request.args)
     paging, data_list = device.get(page=page)
@@ -161,8 +161,9 @@ def get_device():
 @admin_required
 def wifi_attend():
     report = Report()
-    page, _, _, _ = request_get(request.args)
-    paging, data_list = report.wifi_attend(page=page)
+    form = DateSubmitForm()
+    page, _, start, _ = request_get(request.args)
+    paging, data_list = report.wifi_attend(page=page, date=start)
     return render_template('user/wifi_attend.html', **locals())
 
 
@@ -187,7 +188,7 @@ def attend():
             buf = BytesIO(buf.read().encode(encoding))
             return send_file(buf, attachment_filename=filename, as_attachment=True, mimetype='text/csv')
     # https://gist.github.com/doobeh/3e685ef25fac7d03ded7#file-vort-html-L11
-    form = DateSubmitForm()
+    form = PeriodSubmitForm()
     page, name, start, end = request_get(request.args)
     paging, today, data_list, summary = report.attend(page=page, name=name, start=start, end=end)
     return render_template('report/attendance.html', **locals())
@@ -213,7 +214,7 @@ def summarize():
             buf.seek(0)
             buf = BytesIO(buf.read().encode(encoding))
             return send_file(buf, attachment_filename=filename, as_attachment=True, mimetype='text/csv')
-    form = DateSubmitForm()
+    form = PeriodSubmitForm()
     page, _, start, end = request_get(request.args)
     paging, data_list = report.summary(page=page, start=start, end=end)
     return render_template('report/summary.html', **locals())

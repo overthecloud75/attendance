@@ -64,3 +64,27 @@
   1.6.8
     - fix clickjacking
     - resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
+
+# 2022/04/23
+  1.6.9
+    - explain employee key index
+
+  1.7.0
+    - device wifi register_time
+
+# 2022/04/24
+  1.7.1
+    - show only alive devices in wifi attend
+
+  1.7.2
+    - insert date in wifi attend
+
+  1.7.3
+    - apply w-50 in login, signup container
+    - apply my-3 in login, signup form
+
+  1.7.4
+    - thead-dark to table-dark in device, setting, employees, wifi-attend.html
+
+  1.7.5
+    - apply datepicker in wifi attend

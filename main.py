@@ -8,6 +8,7 @@ from flask import Flask, current_app
 from models import Report, Device, Mac, get_setting
 import utils
 
+
 def create_app():
     # https://flask.palletsprojects.com/en/2.0.x/logging/
     dictConfig({
@@ -66,10 +67,10 @@ def check_mac():
                 network = utils.check_arp(ip)
                 if network:
                     # app.logger.info(network)
-                    mac.post(network)
                     if network['mac'] not in macs:
                         macs.append(network['mac'])
                         device.post({'mac': network['mac']})
+                    mac.post(network)
         time.sleep(5)
 
 

@@ -158,10 +158,11 @@ class Employee:
                     status = None
                 # 퇴사하지 않은 직원만 포함하기 위해서
                 if status != '퇴사':
+                    print(employee)
                     if 'endDate' not in employee:
                         employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': regular, 'status': status})
                     else:
-                        if date <= employee['endDate']:
+                        if date and date <= employee['endDate']:
                             employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': regular, 'status': status})
             return employees_list
         else:
@@ -191,17 +192,23 @@ class Device:
             return get_page.paginate(device_list)
 
     def post(self, request_data):
+        print(request_data)
         if 'owner' not in request_data:
-            request_data = {'mac': request_data['mac'], 'owner': None, 'device': None}
-        elif request_data['owner'] == 'None':
-            request_data['owner'] = None
+            now = datetime.datetime.now() # 최초 등록 시간 기록
+            now = str(now)[:16]
+            request_data = {'mac': request_data['mac'], 'registerTime': now, 'owner': None, 'device': None}
         else:
-            employees_list = self.employee.get(page='all')
-            for employee in employees_list:
-                name = employee['name']
-                employee_id = employee['employeeId']
-                if request_data['owner'] == name:
-                    request_data['employeeId'] = employee_id
+            if request_data['owner'] == 'None':
+                request_data['owner'] = None
+            if request_data['device'] == 'None':
+                request_data['device'] = None
+            if request_data['owner']:
+                employees_list = self.employee.get(page='all')
+                for employee in employees_list:
+                    name = employee['name']
+                    employee_id = employee['employeeId']
+                    if request_data['owner'] == name:
+                        request_data['employeeId'] = employee_id
         self.collection.update_one({'mac': request_data['mac']}, {'$set': request_data}, upsert=True)
 
     def by_employees(self):
@@ -239,6 +246,17 @@ class Mac:
                 elif not end:
                     end = data['time']
         return begin, end
+
+    def get_device_list(self, page=1, date=None):
+        device_list = []
+        data_list = self.collection.aggregate([
+            {'$match':{'date': date, 'time': {"$gt": WORKING['time']['overNight']}}},
+            {'$group':{'_id': '$mac'}}])
+        for data in data_list:
+            for key in data:
+                device_list.append(data[key])
+        get_page = Page(page)
+        return get_page.paginate(device_list)
 
     def post(self, request_data):
         self.collection.insert_one(request_data)
@@ -279,7 +297,7 @@ class Report:
                      'date': data['date'], 'begin': begin, 'end': end, 'reason': reason})
             return attend_list
         else:
-            if start:
+            if start and end:
                 if name:
                     data_list = self.collection.find({'date': {"$gte": start, "$lte": end}, 'name': name},
                                                      sort=[('name', 1), ('date', -1)])
@@ -325,7 +343,7 @@ class Report:
 
         data_list = None
         summary_list = []
-        if start:
+        if start and end:
             data_list = self.collection.find({'date': {"$gte": start, "$lte": end}}, sort=[('name', 1), ('date', -1)])
         if data_list:
             summary = OrderedDict()
@@ -535,13 +553,23 @@ class Report:
         for date in date_list:
             self.update(date=date)
 
-    def wifi_attend(self, page=1):
+    def wifi_attend(self, page=1, date=None):
+        if date is None:
+            date = self.today
         device = Device()
-        paging, device_list = device.get(page=page)
-        wifi_list = []
+        device_list = device.get(page='all')
+        device_dict = {}
         for device in device_list:
-            begin, end = self.mac.get([device['mac']], self.today)
-            wifi_list.append({'mac': device['mac'], 'begin': begin, 'end': end, 'owner': device['owner'], 'device': device['device']})
+            device_dict[device['mac']] = device
+
+        paging, mac_list = self.mac.get_device_list(page=page, date=date)
+
+        wifi_list = []
+        for mac in mac_list:
+            begin, end = self.mac.get([mac], date)
+            device = device_dict[mac]
+            if begin:
+                wifi_list.append({'mac': mac, 'date': date, 'begin': begin, 'end': end, 'owner': device['owner'], 'device': device['device'],})
         return paging, wifi_list
 
     def update_overnight(self, overnight_employees):

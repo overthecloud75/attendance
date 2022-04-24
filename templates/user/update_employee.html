@@ -25,12 +25,12 @@
                    value="{{ data.employeeId or '' }}">
         </div>
         <div class="form-group">
-            <label for="beginDate">입사일</label>
+            <label for="beginDate">입사일 [ex)2022-01-01]</label>
             <input type="text" class="form-control" name="beginDate" id="beginDate"
                    value="{{ data.beginDate or '' }}">
         </div>
         <div class="form-group">
-            <label for="endDate">퇴사일</label>
+            <label for="endDate">퇴사일 [ex)2022-12-31]</label>
             <input type="text" class="form-control" name="endDate" id="endDate"
                    value="{{ data.endDate or '' }}">
         </div>
@@ -40,12 +40,12 @@
                    value="{{ data.email or '' }}">
         </div>
         <div class="form-group">
-            <label for="regular">상근 여부</label>
+            <label for="regular">상근 여부 [ex)상근, 비상근, 휴직]</label>
             <input type="text" class="form-control" name="regular" id="regular"
                    value="{{ data.regular or '' }}">
         </div>
         <div class="form-group">
-            <label for="status">상태</label>
+            <label for="status">상태 [ex)파견, 퇴사]</label>
             <input type="text" class="form-control" name="status" id="status"
                    value="{{ data.status or '' }}">
         </div>
