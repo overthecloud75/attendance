@@ -88,3 +88,10 @@
 
   1.7.5
     - apply datepicker in wifi attend
+
+  1.7.6
+    - device: registerTime -> registerDate
+    - device: apply endDate
+
+  1.7.7
+    - device_list: get devices when endDats is greater than date before 2 months.

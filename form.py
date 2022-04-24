@@ -41,7 +41,8 @@ class DateSubmitForm(FlaskForm):
 
 class DeviceSubmitForm(FlaskForm):
     mac = StringField('mac', validators=[DataRequired(), Length(min=2, max=30)])
-    registerTime = StringField('registerTime', validators=[Optional(), Length(16)])
+    registerDate = StringField('registerDate', validators=[Optional(), Length(10)])
+    endDate = StringField('endDate', validators=[Optional(), Length(10)])
     owner = StringField('owner', validators=[])
     device = StringField('device', validators=[])
 

@@ -14,7 +14,7 @@ from office365.runtime.auth.user_credential import UserCredential
 from office365.runtime.http.request_options import RequestOptions
 from office365.sharepoint.client_context import ClientContext
 
-from utils import check_time, check_holiday, request_event, request_delta, request_get, get_delta_day, Page
+from utils import check_time, check_holiday, request_event, request_delta, request_get, get_delta_day, get_date_several_months_before, Page
 try:
     from mainconfig import ACCESS_DB_PWD, OUTSIDE_CALENDAR_URL, ACCOUNT, MAIL_SERVER, SERVER_URL, MONGO_URL
 except Exception as e:
@@ -158,7 +158,6 @@ class Employee:
                     status = None
                 # 퇴사하지 않은 직원만 포함하기 위해서
                 if status != '퇴사':
-                    print(employee)
                     if 'endDate' not in employee:
                         employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': regular, 'status': status})
                     else:
@@ -183,36 +182,43 @@ class Device:
     employee = Employee()
     collection = db['device']
 
-    def get(self, page=1):
-        device_list = self.collection.find()
+    def get(self, page=1, date=None):
+        if date is None and page=='all':
+            device_list = self.collection.find()
+        else:
+            if date is None:
+                _, _, today, _ = check_time()
+                date = today
+            date = get_date_several_months_before(date, delta=2)
+            device_list = self.collection.find({'endDate': {"$gt": date}})
         if page == 'all':
             return device_list
         else:
             get_page = Page(page)
             return get_page.paginate(device_list)
 
-    def post(self, request_data):
-        print(request_data)
-        if 'owner' not in request_data:
-            now = datetime.datetime.now() # 최초 등록 시간 기록
-            now = str(now)[:16]
-            request_data = {'mac': request_data['mac'], 'registerTime': now, 'owner': None, 'device': None}
-        else:
-            if request_data['owner'] == 'None':
-                request_data['owner'] = None
-            if request_data['device'] == 'None':
-                request_data['device'] = None
-            if request_data['owner']:
-                employees_list = self.employee.get(page='all')
-                for employee in employees_list:
-                    name = employee['name']
-                    employee_id = employee['employeeId']
-                    if request_data['owner'] == name:
-                        request_data['employeeId'] = employee_id
+    def new_post(self, request_data): # new device 발견인 경우
+        now = datetime.datetime.now() # 최초 등록 시간 기록
+        now = str(now)[:10]
+        request_data = {'mac': request_data['mac'], 'registerDate': now, 'endDate': now, 'owner': None, 'device': None}
         self.collection.update_one({'mac': request_data['mac']}, {'$set': request_data}, upsert=True)
 
-    def by_employees(self):
-        device_list = self.get(page='all')
+    def post(self, request_data):
+        if 'owner' in request_data and request_data['owner'] == 'None':
+            request_data['owner'] = None
+        if 'device' in request_data and request_data['device'] == 'None':
+            request_data['device'] = None
+        if 'owner' in request_data and request_data['owner']:
+            employees_list = self.employee.get(page='all')
+            for employee in employees_list:
+                name = employee['name']
+                employee_id = employee['employeeId']
+                if request_data['owner'] == name:
+                    request_data['employeeId'] = employee_id
+        self.collection.update_one({'mac': request_data['mac']}, {'$set': request_data}, upsert=True)
+
+    def by_employees(self, date=None):
+        device_list = self.get(page='all', date=date)
         device_dict = {}
         for device in device_list:
             if 'owner' in device:
@@ -228,7 +234,7 @@ class Device:
 class Mac:
     collection = db['mac']
 
-    def get(self, mac_list, date):
+    def get(self, mac_list, date=None):
         begin = None
         end = None
         # if users have devices
@@ -255,8 +261,19 @@ class Mac:
         for data in data_list:
             for key in data:
                 device_list.append(data[key])
-        get_page = Page(page)
-        return get_page.paginate(device_list)
+        if page == 'all':
+            return device_list
+        else:
+            get_page = Page(page)
+            return get_page.paginate(device_list)
+
+    def get_device_end_date(self, mac):
+        data = self.collection.find_one({'mac': mac}, sort=[('date', -1)])
+        if data is not None:
+            date = data['date']
+            return date
+        else:
+            return None
 
     def post(self, request_data):
         self.collection.insert_one(request_data)
@@ -417,6 +434,9 @@ class Report:
             schedule_dict = {}
             overnight_employees = []
 
+            if date == self.today:        # device update는 오늘 날짜인 경우만 진행
+                self.update_devices(date=date)
+
             if not is_holiday:
                 employees_list = self.employee.get(page='all', date=date)
                 event = Event()
@@ -460,12 +480,12 @@ class Report:
                         overnight_employees.append(employee_id)
 
             # wifi device
-            device = Device()
-            device_dict = device.by_employees()
+            devices = Device()
+            device_dict = devices.by_employees(date=date)
 
             # wifi 와 지문 인식기 근태 비교
             for name in device_dict:
-                begin, end = self.mac.get(device_dict[name], date)
+                begin, end = self.mac.get(device_dict[name], date=date)
                 if begin:
                     if name in attend:
                         if attend[name]['begin']:
@@ -556,8 +576,8 @@ class Report:
     def wifi_attend(self, page=1, date=None):
         if date is None:
             date = self.today
-        device = Device()
-        device_list = device.get(page='all')
+        devices = Device()
+        device_list = devices.get(page='all', date=date)
         device_dict = {}
         for device in device_list:
             device_dict[device['mac']] = device
@@ -566,7 +586,7 @@ class Report:
 
         wifi_list = []
         for mac in mac_list:
-            begin, end = self.mac.get([mac], date)
+            begin, end = self.mac.get([mac], date=date)
             device = device_dict[mac]
             if begin:
                 wifi_list.append({'mac': mac, 'date': date, 'begin': begin, 'end': end, 'owner': device['owner'], 'device': device['device'],})
@@ -676,6 +696,13 @@ class Report:
                 return None
         else:
             return None
+
+    def update_devices(self, date=None):
+        devices = Device()
+        mac_list = self.mac.get_device_list(page='all', date=date)
+        for mac in mac_list:
+            request_data = {'mac': mac, 'endDate': date}
+            devices.post(request_data)
 
 
 class Event:

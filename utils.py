@@ -194,6 +194,22 @@ def get_delta_day(date, delta=None):
     return date
 
 
+def get_date_several_months_before(date, delta=1):
+    year = int(date[0:4])
+    month = int(date[5:7])
+    month = month - delta
+    if month <= 0:
+        abs_month = abs(month)
+        year = year - abs_month // 12 - 1
+        month = 12 - abs_month % 12
+    day = int(date[8:10])
+    if day > 28:
+        day = 28
+    date = datetime.datetime(year, month, day, 0, 0, 0)
+    date = date.strftime("%Y-%m-%d")
+    return date
+
+
 def request_get(request_data):
     page = int(request_data.get('page', 1))
     name = request_data.get('name', None)

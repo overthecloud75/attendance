@@ -52,10 +52,10 @@ def save_db():
 
 
 def check_mac():
-    device = Device()
+    devices = Device()
     mac = Mac()
     macs = []
-    data_list = device.get(page='all')
+    data_list = devices.get(page='all')
     for data in data_list:
         macs.append(data['mac'])
     while True:
@@ -69,7 +69,7 @@ def check_mac():
                     # app.logger.info(network)
                     if network['mac'] not in macs:
                         macs.append(network['mac'])
-                        device.post({'mac': network['mac']})
+                        device.new_post({'mac': network['mac']})
                     mac.post(network)
         time.sleep(5)
 

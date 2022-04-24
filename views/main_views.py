@@ -148,12 +148,13 @@ def update_employee():
 @admin_required
 def get_device():
     form = DeviceSubmitForm()
-    device = Device()
+    devices = Device()
     if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'mac': form.mac.data, 'registerTime': form.registerTime.data, 'owner': form.owner.data, 'device': form.device.data}
-        device.post(request_data)
+        request_data = {'mac': form.mac.data, 'registerDate': form.registerDate.data, 'endDate': form.endDate.data,
+                        'owner': form.owner.data, 'device': form.device.data}
+        devices.post(request_data)
     page, _, _, _ = request_get(request.args)
-    paging, data_list = device.get(page=page)
+    paging, data_list = devices.get(page=page)
     return render_template('user/device.html', **locals())
 
 
