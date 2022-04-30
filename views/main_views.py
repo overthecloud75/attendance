@@ -66,7 +66,7 @@ def signup():
             flash(error)
             return make_response(render_template('user/signup.html', form=form), 400)
         else:
-            return redirect(url_for('main.attend'))
+            return redirect(url_for('main.confirmed_email'))
     elif request.method == 'POST' and not form.validate_on_submit():
         return make_response(render_template('user/signup.html', form=form), 400)
     return render_template('user/signup.html', form=form)
@@ -79,7 +79,7 @@ def login():
     if request.method == 'POST' and form.validate_on_submit():
         request_data = {'email': form.email.data, 'password': form.password.data}
         error, user_data = user.login(request_data)
-        if error is None:
+        if error is None and user_data['email_confirmed']:
             del user_data['_id']
             del user_data['password']
 
@@ -87,6 +87,8 @@ def login():
             for key in user_data:
                 session[key] = user_data[key]
             return redirect(url_for('main.attend'))
+        elif error is None and not user_data['email_confirmed']:
+            return redirect(url_for('main.unconfirmed', email=user_data['email']))
         else:
             flash(error)
             return make_response(render_template('user/login.html', form=form), 400)
@@ -102,10 +104,47 @@ def logout():
     return redirect(url_for('main.index'))
 
 
+@bp.route('/confirm/<token>')
+def confirm_token(token):
+    user = User()
+    error, user_data = user.confirm_token(token)
+    if error is None:
+        del user_data['_id']
+        del user_data['password']
+
+        session.clear()
+        for key in user_data:
+            session[key] = user_data[key]
+        return redirect(url_for('main.attend'))
+    else:
+        flash(error)
+        return make_response(render_template('user/confirm_email.html'), 404)
+
+
+@bp.route('/confirm_email/')
+def confirm_email():
+    return render_template('user/confirm_email.html')
+
+
+@bp.route('/unconfirmed/<email>')
+def unconfirmed(email):
+    return render_template('user/unconfirmed.html', email=email)
+
+
+@bp.route('/resend/<email>')
+def resend(email):
+    user = User()
+    error, result = user.resend(email)
+    if result:
+        return redirect(url_for('main.confirm_email'))
+    else:
+        return render_template('user/confirmed.html')
+
+
 @bp.route('/setting/', methods=('GET', 'POST'))
 @admin_required
 def setting():
-    use_wifi_attendance, use_notice_email, is_outside_calendar_connected, outside_calendar_url, account, cc, working = get_setting()
+    use_wifi_attendance, use_notice_email, account, cc, working = get_setting()
     return render_template('user/setting.html', **locals())
 
 

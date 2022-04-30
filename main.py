@@ -69,7 +69,7 @@ def check_mac():
                     # app.logger.info(network)
                     if network['mac'] not in macs:
                         macs.append(network['mac'])
-                        device.new_post({'mac': network['mac']})
+                        devices.new_post({'mac': network['mac']})
                     mac.post(network)
         time.sleep(5)
 
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     app = create_app()
     save_db()
 
-    use_wifi_attendance, _, _, _, _, _, _ = get_setting()
+    use_wifi_attendance, _, _, _, _ = get_setting()
 
     if use_wifi_attendance:
         th = threading.Thread(target=check_mac)

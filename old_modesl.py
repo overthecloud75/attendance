@@ -102,7 +102,6 @@ class User:
         '''
             1. the first user is admin.
             2. from the second user, request_data['email'] must be in the employees data.
-
         '''
         user_data = self.get_user(request_data)
         if user_data:

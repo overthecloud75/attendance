@@ -11,9 +11,6 @@ USE_WIFI_ATTENDANCE = True
 USE_NOTICE_EMAIL = True
 EMAIL_NOTICE_BASE = ['미출근', '지각']
 
-# calendar
-IS_OUTSIDE_CALENDAR_CONNECTED = False
-
 # working
 WORKING = {
     'time': {'beginTime': '100000', 'lunchTime': '123000', 'lunchFinishTime': '133000', 'overNight': '040000'},
