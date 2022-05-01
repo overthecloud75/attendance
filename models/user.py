@@ -14,7 +14,6 @@ except Exception as e:
 class User:
     def __init__(self):
         self.collection = db['user']
-        self.error = None
 
     def get_user(self, request_data):
         return self.collection.find_one({'email': request_data['email']})
@@ -53,9 +52,10 @@ class User:
             1. the first user is admin.
             2. from the second user, request_data['email'] must be in the employees data.
         '''
+        error = None
         user_data = self.get_user(request_data)
         if user_data:
-            self.error = '이미 존재하는 사용자입니다.'
+            error = '이미 존재하는 사용자입니다.'
         else:
             user_data = self.collection.find_one(sort=[('create_time', -1)])
             if user_data:
@@ -64,8 +64,8 @@ class User:
                     user_id = user_data['user_id'] + 1
                     request_data['is_admin'] = False
                 else:
-                    self.error = '가입 요건이 되지 않습니다.'
-                    return self.error
+                    error = '가입 요건이 되지 않습니다.'
+                    return error
             else:
                 user_id = 1
                 request_data['is_admin'] = True
@@ -78,27 +78,32 @@ class User:
                 request_data['email_confirmed'] = False
                 self.collection.insert(request_data)
             else:
-                self.error = 'email이 보내지지 않았습니다.'
-        return self.error
+                error = 'email이 보내지지 않았습니다.'
+        return error
 
     def login(self, request_data):
+        error = None
         user_data = self.get_user(request_data)
         if not user_data:
-            self.error = "존재하지 않는 사용자입니다."
+            error = "존재하지 않는 사용자입니다."
         elif not check_password_hash(user_data['password'], request_data['password']):
-            self.error = "비밀번호가 올바르지 않습니다."
-        return self.error, user_data
+            error = "비밀번호가 올바르지 않습니다."
+        return error, user_data
 
     def resend(self, email):
         error = None
         user_data = self.get_user({'email': email})
-        if user_data:
+        if user_data and not user_data['email_confirmed']:
             request_data = {'name': user_data['name'], 'email': user_data['email']}
             token = self.generate_confirmation_token(email)
             result = self.signup_email(request_data, token=token)
-            return error, result
+            if not result:
+                error = 'email이 보내지지 않았습니다.'
+        elif user_data and user_data['email_confirmed']:
+            error = 'Account already confirmed.'
         else:
-            return 'email 주소가 잘 못 되었습니다.', False
+            error = 'email 주소가 잘 못 되었습니다.'
+        return error
 
     def signup_email(self, request_data, token=None):
         name = request_data['name']

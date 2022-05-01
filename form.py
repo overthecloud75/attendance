@@ -17,6 +17,10 @@ class UserLoginForm(FlaskForm):
     password = PasswordField('password', validators=[DataRequired()])
 
 
+class ResendForm(FlaskForm):
+    email = EmailField('email', validators=[DataRequired(), Email()])
+
+
 class EmployeeSubmitForm(FlaskForm):
     # Optional - https://wtforms.readthedocs.io/en/2.3.x/validators/
     name = StringField('name', validators=[DataRequired(), Length(min=2, max=5)])

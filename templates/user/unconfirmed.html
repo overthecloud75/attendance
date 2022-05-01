@@ -4,6 +4,13 @@
     <h1>Welcome!</h1>
     <br>
     <p>You have not confirmed your account. Please check your inbox (and your spam folder) - you should have received an email with a confirmation link.</p>
-    <p>Didn't get the email? <a href="{{ url_for('main.resend', email=email) }}">Resend</a>.</p>
+    <p>Didn't get the email? <a href="{{ url_for('main.resend') }}">Resend</a>.</p>
+    <!-- flash 오류 -->
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-danger" role="alert">
+        {{ message }}
+    </div>
+    {% endfor %}
+    <!-- ---------------------------------------------------------------------- -->
 </div>
 {% endblock %}

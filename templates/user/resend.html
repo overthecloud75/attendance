@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container w-50 my-3">
+    <form method="post" class="post-form">
+        {{ form.csrf_token }}
+        {% include "form_errors.html" %}
+        <div class="form-group my-3">
+            <label for="email">이메일</label>
+            <input type="text" class="form-control" name="email" id="email"
+                   value="{{ form.email.data or '' }}">
+        </div>
+        <button type="submit" class="btn btn-primary">이메일 다시 보내기</button>
+    </form>
+</div>
+{% endblock %}

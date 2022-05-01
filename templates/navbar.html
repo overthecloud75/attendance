@@ -36,6 +36,7 @@
                     <a class="nav-link" href="{{ url_for('main.login') }}">login</a>
                 </li>
                 {% endif %}
+            {% endif %}
                 <li class="nav-item ">
                     <a class="nav-link" href="{{ url_for('main.attend') }}">attend</a>
                 </li>
@@ -45,7 +46,9 @@
                 <li class="nav-item ">
                     <a class="nav-link" href="{{ url_for('calendar.calendar') }}">calendar</a>
                 </li>
-            {% endif %}
+                <li class="nav-item ">
+                    <a class="nav-link" href="{{ url_for('main.get_board') }}">게시판</a>
+                </li>
             </ul>
         </div>
     </div>

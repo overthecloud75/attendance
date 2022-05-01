@@ -14,7 +14,7 @@ class Device:
             device_list = self.collection.find()
         else:
             if date is None:
-                _, _, today, _ = check_time()
+                _, today, _ = check_time()
                 date = today
             date = get_date_several_months_before(date, delta=2)
             device_list = self.collection.find({'endDate': {"$gt": date}})

@@ -145,11 +145,9 @@ def datetimeToDate(date):
 
 def check_time():
     today = datetime.date.today()
-    yesterday = today - timedelta(days=1)
     now = datetime.datetime.now()
     hour = now.hour
     today = today.strftime("%Y-%m-%d")
-    yesterday = yesterday.strftime("%Y-%m-%d")
     month = now.month
     year = now.year
     start = datetime.datetime(year, month, 1, 0, 0, 0)
@@ -161,7 +159,7 @@ def check_time():
     end = datetime.datetime(year, month, 1, 0, 0, 0)
     end = end.strftime("%Y-%m-%d")
     this_month = {'start': start, 'end': end}
-    return hour, yesterday, today, this_month
+    return hour, today, this_month
 
 
 def check_hour():

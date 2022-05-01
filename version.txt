@@ -31,7 +31,7 @@
     - workingconfig.py -> config.py
 
   1.6.0
-    - create_index : db.mac.create_index([('date', 1), ('mac', 1)])
+    - create_index: db.mac.create_index([('date', 1), ('mac', 1)])
 
 # 2022/02/04
   1.6.1
@@ -46,7 +46,7 @@
 
 # 2022/02/07
   1.6.4
-    - employee key : status
+    - employee key: status
 
 # 2022/02/19
   1.6.5
@@ -57,8 +57,8 @@
     - modify employee quit
 
 # 2022/03/28
-  1.6.7
-    - err fix (summary etc)
+  1.6.7 err fix
+    - summary etc
 
 # 2022/04/10
   1.6.8
@@ -115,3 +115,12 @@
 # 2022/05/01
   1.8.3
     - confirm_email when signup
+
+  1.8.4
+    - add resend() in main_views
+
+  1.8.5 err fix
+    - when overnight, sometimes working_hours was over 24.
+
+  1.8.6
+    - remove yesterday return in check_time()

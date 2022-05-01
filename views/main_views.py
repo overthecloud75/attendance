@@ -5,12 +5,23 @@ from werkzeug.security import generate_password_hash
 from werkzeug.utils import redirect
 import functools
 
-from models import get_setting, User, Employee, Report, Device
-from form import UserCreateForm, UserLoginForm, EmployeeSubmitForm, PeriodSubmitForm, DateSubmitForm, DeviceSubmitForm
+from models import get_setting, User, Employee, Report, Device, Board
+from form import UserCreateForm, UserLoginForm, ResendForm, EmployeeSubmitForm, PeriodSubmitForm, DateSubmitForm, DeviceSubmitForm
 from utils import request_get, check_private_ip
 
 # blueprint
 bp = Blueprint('main', __name__, url_prefix='/')
+
+
+@bp.before_app_request
+def load_logged_in_user():
+    user_id = session.get('user_id')
+    if user_id is None:
+        g.user = None
+    else:
+        g.user = {}
+        for key in session:
+            g.user[key] = session[key]
 
 
 @bp.after_request
@@ -66,7 +77,7 @@ def signup():
             flash(error)
             return make_response(render_template('user/signup.html', form=form), 400)
         else:
-            return redirect(url_for('main.confirmed_email'))
+            return redirect(url_for('main.unconfirmed'))
     elif request.method == 'POST' and not form.validate_on_submit():
         return make_response(render_template('user/signup.html', form=form), 400)
     return render_template('user/signup.html', form=form)
@@ -88,7 +99,7 @@ def login():
                 session[key] = user_data[key]
             return redirect(url_for('main.attend'))
         elif error is None and not user_data['email_confirmed']:
-            return redirect(url_for('main.unconfirmed', email=user_data['email']))
+            return redirect(url_for('main.unconfirmed'))
         else:
             flash(error)
             return make_response(render_template('user/login.html', form=form), 400)
@@ -118,27 +129,29 @@ def confirm_token(token):
         return redirect(url_for('main.attend'))
     else:
         flash(error)
-        return make_response(render_template('user/confirm_email.html'), 404)
+        return make_response(render_template('user/unconfirmed.html'), 400)
 
 
-@bp.route('/confirm_email/')
-def confirm_email():
-    return render_template('user/confirm_email.html')
+@bp.route('/unconfirmed/')
+def unconfirmed():
+    return render_template('user/unconfirmed.html')
 
 
-@bp.route('/unconfirmed/<email>')
-def unconfirmed(email):
-    return render_template('user/unconfirmed.html', email=email)
-
-
-@bp.route('/resend/<email>')
-def resend(email):
-    user = User()
-    error, result = user.resend(email)
-    if result:
-        return redirect(url_for('main.confirm_email'))
-    else:
-        return render_template('user/confirmed.html')
+@bp.route('/resend/', methods=('GET', 'POST'))
+def resend():
+    form = ResendForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        email = form.email.data
+        user = User()
+        error = user.resend(email)
+        if error is None:
+            return redirect(url_for('main.unconfirmed'))
+        else:
+            flash(error)
+            return make_response(render_template('user/resend.html', form=form), 400)
+    elif request.method == 'POST' and not form.validate_on_submit():
+        return make_response(render_template('user/resend.html', form=form), 400)
+    return render_template('user/resend.html', form=form)
 
 
 @bp.route('/setting/', methods=('GET', 'POST'))
@@ -260,12 +273,11 @@ def summarize():
     return render_template('report/summary.html', **locals())
 
 
-@bp.before_app_request
-def load_logged_in_user():
-    user_id = session.get('user_id')
-    if user_id is None:
-        g.user = None
-    else:
-        g.user = {}
-        for key in session:
-            g.user[key] = session[key]
+@bp.route('/board/')
+def get_board():
+    board = Board()
+    page, _, start, end = request_get(request.args)
+    paging = board.get(page=page)
+    return render_template('report/board.html', **locals())
+
+

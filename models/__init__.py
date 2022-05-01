@@ -4,6 +4,7 @@ from .device import Device
 from .mac import Mac
 from .report import Report
 from .event import Event
+from .board import Board
 
 from config import USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, EMAIL_NOTICE_BASE, WORKING
 try:

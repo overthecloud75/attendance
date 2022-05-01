@@ -4,6 +4,7 @@ __pycache__/
 __pycache__
 chromedriver.exe
 mainconfig.py
+old_models.py
 history.txt
 
 .venv/

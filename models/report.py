@@ -1,7 +1,7 @@
 import pyodbc
 from collections import OrderedDict
 
-from utils import check_time, check_holiday, Page #, request_event, request_delta, request_get, get_delta_day, get_date_several_months_before
+from utils import check_time, check_holiday, get_delta_day, Page #, request_event, request_delta, request_get, get_date_several_months_before
 from .db import db
 from .mail import send_email
 from .employee import Employee
@@ -28,7 +28,7 @@ class Report:
         self.employee = Employee()
         self.mac = Mac()
 
-        self.hour, self.yesterday, self.today, self.this_month = check_time()
+        self.hour, self.today, self.this_month = check_time()
 
     def attend(self, page=None, name=None, start=None, end=None):
         if page == 'all':
@@ -296,7 +296,7 @@ class Report:
                  1. overnight 근무자에 대해서 이전 날짜 update
             '''
             if overnight_employees:
-                self.update_overnight(overnight_employees)
+                self.update_overnight(overnight_employees, date=date)
 
     def update_date(self, start=None, end=None):
         data_list = self.collection.find({'date': {"$gte": start, "$lt": end}})
@@ -326,13 +326,17 @@ class Report:
                 wifi_list.append({'mac': mac, 'date': date, 'begin': begin, 'end': end, 'owner': device['owner'], 'device': device['device'],})
         return paging, wifi_list
 
-    def update_overnight(self, overnight_employees):
-        print(overnight_employees)
-        access_yesterday = self.yesterday[0:4] + self.yesterday[5:7] + self.yesterday[8:]
+    def update_overnight(self, overnight_employees, date=None):
+        print('overnight', overnight_employees)
+        if date is None:
+            date = self.today
+        yesterday = get_delta_day(date, delta=-1)
+
+        access_yesterday = yesterday[0:4] + yesterday[5:7] + yesterday[8:]
         for employee_id in overnight_employees:
             cursor.execute("select e_id, e_name, e_date, e_time, e_mode from tenter where e_date=? and e_id = ?",
                            (access_yesterday, employee_id))
-            attend = {'date': self.yesterday, 'employeeId': int(employee_id)}
+            attend = {'date': yesterday, 'employeeId': int(employee_id)}
             for row in cursor.fetchall():
                 time = row[3]
                 mode = int(row[4])
@@ -347,18 +351,25 @@ class Report:
                         attend['end'] = time
 
             if 'begin' in attend:
-                access_today = self.today[0:4] + self.today[5:7] + self.today[8:]
+                access_today = date[0:4] + date[5:7] + date[8:]
                 cursor.execute(
-                    "select e_id, e_name, e_date, e_time, e_mode from tenter where e_date = ? and e_id = ? and e_mode = ?",
-                    (access_today, employee_id, '2'))
+                    "select e_id, e_name, e_date, e_time, e_mode from tenter where e_date = ? and e_id = ?",
+                    (access_today, employee_id))
+                end = '000000'
                 for row in cursor.fetchall():
-                    print(row)
                     time = row[3]
                     if int(time) < int(WORKING['time']['overNight']):
-                        attend['end'] = time
+                        if end < time:
+                            end = time
+                attend['end'] = end
 
-                working_hours = 24 + int(attend['end'][0:2]) - int(attend['begin'][0:2]) + \
-                                (int(attend['end'][2:4]) - int(attend['begin'][2:4])) / 60
+                if end != '000000':
+                    working_hours = 24 + int(attend['end'][0:2]) - int(attend['begin'][0:2]) + \
+                                    (int(attend['end'][2:4]) - int(attend['begin'][2:4])) / 60
+                else:
+                    working_hours = int(attend['end'][0:2]) - int(attend['begin'][0:2]) + \
+                                    (int(attend['end'][2:4]) - int(attend['begin'][2:4])) / 60
+
                 if int(WORKING['time']['lunchTime']) > int(attend['begin']):
                     working_hours = working_hours - 1
                 attend['workingHours'] = round(working_hours, 1)
