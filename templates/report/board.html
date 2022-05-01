@@ -17,10 +17,10 @@
         </thead>
         {% for data in data_list %}
         <tr>
-            <td><a href="{{ url_for('board.get_content', create_time=data.create_time) }}">{{ paging.offset + loop.index0 + 1}}</a></td>
+            <td>{{ paging.offset + loop.index0 + 1}}</td>
             <td>{{ data.create_time }}</td>
             <td>{{ data.name }}</td>
-            <td>{{ data.title }}</td>
+            <td><a href="{{ url_for('board.get_content', create_time=data.create_time) }}">{{ data.title }}</a></td>
         </tr>
         {% endfor %}
     {% else %}

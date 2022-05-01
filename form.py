@@ -35,17 +35,17 @@ class EmployeeSubmitForm(FlaskForm):
 
 
 class PeriodSubmitForm(FlaskForm):
-    start = DateField('Pick a Date', format="%m/%d/%Y")
-    end = DateField('Pick a Date', format="%m/%d/%Y")
+    start = DateField('Pick a Date', format="%Y-%m-%d")
+    end = DateField('Pick a Date', format="%Y-%m-%d")
 
 
 class DateSubmitForm(FlaskForm):
-    start = DateField('Pick a Date', format="%m/%d/%Y")
+    start = DateField('Pick a Date', format="%Y-%m-%d")
 
 
 class DeviceSubmitForm(FlaskForm):
     mac = StringField('mac', validators=[DataRequired(), Length(min=2, max=30)])
-    registerDate = StringField('registerDate', validators=[Optional(), Length(10)])
+    registerDate = DateField('registerDate', format="%Y-%m-%d")
     endDate = DateField('endDate', format="%Y-%m-%d")
     owner = StringField('owner', validators=[])
     device = StringField('device', validators=[])

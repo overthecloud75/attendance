@@ -130,3 +130,6 @@
 
   1.8.8
     - add markdown
+
+  1.8.9
+    - datepicker -> input type date

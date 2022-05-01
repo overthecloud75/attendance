@@ -22,6 +22,7 @@ from config import USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, EMAIL_NOTICE_BASE, WOR
 conn = pyodbc.connect(r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=c:/caps/acserver/access.mdb;PWD=%s' %ACCESS_DB_PWD)
 cursor = conn.cursor()
 
+
 class Report:
     def __init__(self):
         self.collection = db['report']
@@ -152,6 +153,13 @@ class Report:
         return summary
 
     def update(self, date=None):
+        '''
+            1. device 정보 update (오늘 날짜인 경우만 update)
+            2. 평일인 경우 이전 출근 기록에 지각, 미출근 등에 대해서 통지 메일 송부 (오늘 날짜인 경우만 update)
+            3. 지문 인식기 근태 기록 확인
+            4. wifi 근태 기록 확인
+            5. overnight 근무가 확인 되는 경우 이전 날짜 근태 기록 update
+        '''
         if date is not None:
             if date != self.today:
                 hour = 23
@@ -168,23 +176,21 @@ class Report:
             schedule_dict = {}
             overnight_employees = []
 
-            if date == self.today:        # device update는 오늘 날짜인 경우만 진행
-                self.update_devices(date=date)
-
             if not is_holiday:
                 employees_list = self.employee.get(page='all', date=date)
                 schedule_dict = self.schedule(employees_list, date=date)
                 for employee in employees_list:
-                    print('employee', employee)
                     name = employee['name']
                     employee_id = employee['employeeId']
                     regular = employee['regular']
                     reason = employee['status']
                     # 같은 employee_id 인데 이름이 바뀌는 경우 발생
                     attend[name] = {'date': date, 'name': name, 'employeeId': employee_id, 'begin': None, 'end': None, 'reason': reason, 'regular': regular}
-                # update 날짜가 오늘일때만 메일 송부
+                # update 날짜가 오늘 날짜인 경우만 진행
                 if date == self.today:
+                    self.update_devices(date=date)
                     self.notice_email(employees_list=employees_list)
+
             # 지문 인식 출퇴근 기록
             access_today = date[0:4] + date[5:7] + date[8:]  # access_day 형식으로 변환
             cursor.execute("select e_id, e_name, e_date, e_time, e_mode from tenter where e_date = ?", access_today)

@@ -1,15 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
 
-<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
-<script src="//code.jquery.com/jquery-1.10.2.js"></script>
-<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
-<script>
-$(function() {
-	$( ".dtpick" ).datepicker();
-});
-</script>
-
 <div class="container my-3">
     {% include 'search.html' %}
     {% if start %}
@@ -20,9 +11,11 @@ $(function() {
     <div class="my-3">
         <form method="get" action="">
             {% include "form_errors.html" %}
-            {{ form.start(class="dtpick") }}
-            {{ form.end(class="dtpick") }}
-            <button type="submit" class="btn btn-primary">기간</button>
+            <div class="row">
+                <div class="col"><input type="date" class="form-control" name="start" value="{{ start }}"></div>
+                <div class="col"><input type="date" class="form-control" name="end" value="{{ end }}"></div>
+                <div class="col"><button type="submit" class="btn btn-primary">기간</button></div>
+            </div>
         </form>
     </div>
     <table class="table">

@@ -181,9 +181,9 @@ def update_employee():
         if form.employeeId.data:
             request_data['employeeId'] = int(form.employeeId.data)
         if form.beginDate.data:
-            request_data['beginDate'] = form.beginDate.data
+            request_data['beginDate'] = form.beginDate.data.strftime('%Y-%m-%d')
         if form.endDate.data:
-            request_data['endDate'] = form.endDate.data
+            request_data['endDate'] = form.endDate.data.strftime('%Y-%m-%d')
         if form.email.data:
             request_data['email'] = form.email.data
         if form.regular.data:
@@ -202,7 +202,9 @@ def get_device():
     form = DeviceSubmitForm()
     devices = Device()
     if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'mac': form.mac.data, 'registerDate': form.registerDate.data, 'endDate': form.endDate.data,
+        register_date = form.registerDate.data.strftime('%Y-%m-%d')
+        end_date = form.endDate.data.strftime('%Y-%m-%d')
+        request_data = {'mac': form.mac.data, 'registerDate': register_date, 'endDate': end_date,
                         'owner': form.owner.data, 'device': form.device.data}
         devices.post(request_data)
     page, _, _, _ = request_get(request.args)
