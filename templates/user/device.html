@@ -23,8 +23,8 @@
             <form method="post" class="my-3">
                 {{ form.csrf_token }}
                 <input type="hidden" name="mac" value="{{ data.mac }}">
-                <td><input type="text" class="form-control" name="registerDate" value="{{ data.registerDate }}"></td>
-                <td><input type="text" class="form-control" name="endDate" value="{{ data.endDate }}"></td>
+                <td><input type="date" class="form-control" name="registerDate" value="{{ data.registerDate }}"></td>
+                <td><input type="date" class="form-control" name="endDate" value="{{ data.endDate }}"></td>
                 <td><input type="text" class="form-control" name="owner" value="{{ data.owner }}"></td>
                 <td><input type="text" class="form-control" name="device" value="{{ data.device }}"></td>
                 <td><input type="submit" class="btn btn-primary"></td>

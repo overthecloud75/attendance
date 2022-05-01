@@ -4,6 +4,7 @@ import threading
 import time
 
 from flask import Flask, current_app
+from flaskext.markdown import Markdown
 
 from models import Report, Device, Mac, get_setting
 import utils
@@ -28,12 +29,16 @@ def create_app():
     })
 
     app = Flask(__name__)
+    # https://wikidocs.net/81066
+    Markdown(app, extensions=['nl2br', 'fenced_code'])
+
     app.config['SECRET_KEY'] = os.urandom(32)
     app.config['SESSION_COOKIE_SECURE'] = True
 
-    from views import main_views, calendar_views
+    from views import main_views, calendar_views, board_views
     app.register_blueprint(main_views.bp)
     app.register_blueprint(calendar_views.bp)
+    app.register_blueprint(board_views.bp)
 
     # Manually Push a Context https://flask.palletsprojects.com/en/2.0.x/appcontext/
     # with app.app_context():

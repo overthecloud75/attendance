@@ -124,3 +124,9 @@
 
   1.8.6
     - remove yesterday return in check_time()
+
+  1.8.7
+    - board
+
+  1.8.8
+    - add markdown

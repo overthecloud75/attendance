@@ -2,24 +2,25 @@
 {% block content %}
 <div class="container my-3">
     {% include 'search.html' %}
+    <div class="my-3">
+        <a href="{{ url_for('board.write') }}" class="btn btn-primary" role="button" aria-pressed="true">새글 쓰기</a>
+    </div>
     <table class="table">
     {% if data_list %}
         <thead>
         <tr class="table-dark">
             <th>번호</th>
-            <th>title</th>
-            <th>날짜</th>
+            <th>작성일</th>
             <th>작성자</th>
-            <th>email</th>
+            <th>title</th>
         </tr>
         </thead>
         {% for data in data_list %}
         <tr>
-            <td>{{ paging.offset + loop.index0 + 1}}</td>
-            <td>{{ data.title }}</td>
-            <td>{{ data.date }}</td>
+            <td><a href="{{ url_for('board.get_content', create_time=data.create_time) }}">{{ paging.offset + loop.index0 + 1}}</a></td>
+            <td>{{ data.create_time }}</td>
             <td>{{ data.name }}</td>
-            <td>{{ data.board }}</td>
+            <td>{{ data.title }}</td>
         </tr>
         {% endfor %}
     {% else %}

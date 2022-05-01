@@ -27,8 +27,8 @@ class EmployeeSubmitForm(FlaskForm):
     department = StringField('department', validators=[DataRequired(), Length(min=2, max=10)])
     rank = StringField('rank', validators=[DataRequired(), Length(min=2, max=10)])
     employeeId = StringField('employeeId', validators=[Optional(), Length(min=1, max=4)])
-    beginDate = StringField('beginDate', validators=[Optional(), Length(min=10, max=10)])
-    endDate = StringField('endDate', validators=[Optional(), Length(min=10, max=10)])
+    beginDate = DateField('beginDate', format="%Y-%m-%d")
+    endDate = DateField('endDate', format="%Y-%m-%d")
     email = EmailField('email', validators=[Optional(), Email()])
     regular = StringField('regular', validators=[])
     status = StringField('status', validators=[])
@@ -46,7 +46,13 @@ class DateSubmitForm(FlaskForm):
 class DeviceSubmitForm(FlaskForm):
     mac = StringField('mac', validators=[DataRequired(), Length(min=2, max=30)])
     registerDate = StringField('registerDate', validators=[Optional(), Length(10)])
-    endDate = StringField('endDate', validators=[Optional(), Length(10)])
+    endDate = DateField('endDate', format="%Y-%m-%d")
     owner = StringField('owner', validators=[])
     device = StringField('device', validators=[])
+
+
+class WriteSubmitForm(FlaskForm):
+    name = StringField('name', validators=[DataRequired(), Length(min=2, max=5)])
+    title = StringField('title', validators=[DataRequired(), Length(min=2, max=100)])
+    content = StringField('content', validators=[DataRequired(), Length(min=2, max=1000)])
 

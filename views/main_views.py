@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash
 from werkzeug.utils import redirect
 import functools
 
-from models import get_setting, User, Employee, Report, Device, Board
+from models import get_setting, User, Employee, Report, Device
 from form import UserCreateForm, UserLoginForm, ResendForm, EmployeeSubmitForm, PeriodSubmitForm, DateSubmitForm, DeviceSubmitForm
 from utils import request_get, check_private_ip
 
@@ -211,7 +211,6 @@ def get_device():
 
 
 @bp.route('/wifi_attend/', methods=('GET', ))
-@admin_required
 def wifi_attend():
     report = Report()
     form = DateSubmitForm()
@@ -271,13 +270,4 @@ def summarize():
     page, _, start, end = request_get(request.args)
     paging, data_list = report.summary(page=page, start=start, end=end)
     return render_template('report/summary.html', **locals())
-
-
-@bp.route('/board/')
-def get_board():
-    board = Board()
-    page, _, start, end = request_get(request.args)
-    paging = board.get(page=page)
-    return render_template('report/board.html', **locals())
-
 
