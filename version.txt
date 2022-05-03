@@ -133,3 +133,6 @@
 
   1.8.9
     - datepicker -> input type date
+
+  1.9.0 err fix
+    - when applying input type date form datepicker, jqurery.min.js was removed. so name search was not operated.

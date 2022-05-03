@@ -27,26 +27,26 @@ class EmployeeSubmitForm(FlaskForm):
     department = StringField('department', validators=[DataRequired(), Length(min=2, max=10)])
     rank = StringField('rank', validators=[DataRequired(), Length(min=2, max=10)])
     employeeId = StringField('employeeId', validators=[Optional(), Length(min=1, max=4)])
-    beginDate = DateField('beginDate', format="%Y-%m-%d")
-    endDate = DateField('endDate', format="%Y-%m-%d")
+    beginDate = DateField('beginDate', format='%Y-%m-%d', validators=(Optional(),))
+    endDate = DateField('endDate', format='%Y-%m-%d', validators=(Optional(),))
     email = EmailField('email', validators=[Optional(), Email()])
     regular = StringField('regular', validators=[])
     status = StringField('status', validators=[])
 
 
 class PeriodSubmitForm(FlaskForm):
-    start = DateField('Pick a Date', format="%Y-%m-%d")
-    end = DateField('Pick a Date', format="%Y-%m-%d")
+    start = DateField('Pick a Date', format='%Y-%m-%d')
+    end = DateField('Pick a Date', format='%Y-%m-%d')
 
 
 class DateSubmitForm(FlaskForm):
-    start = DateField('Pick a Date', format="%Y-%m-%d")
+    start = DateField('Pick a Date', format='%Y-%m-%d')
 
 
 class DeviceSubmitForm(FlaskForm):
     mac = StringField('mac', validators=[DataRequired(), Length(min=2, max=30)])
-    registerDate = DateField('registerDate', format="%Y-%m-%d")
-    endDate = DateField('endDate', format="%Y-%m-%d")
+    registerDate = DateField('registerDate', format='%Y-%m-%d', validators=(Optional(),))
+    endDate = DateField('endDate', format='%Y-%m-%d', validators=(Optional(),))
     owner = StringField('owner', validators=[])
     device = StringField('device', validators=[])
 
