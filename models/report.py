@@ -257,6 +257,8 @@ class Report:
                     attend[name]['status'] = (None, 0)
                     if hour >= 18:
                         attend[name]['workingHours'] = WORKING['status'][attend[name]['reason']]
+                    else:
+                        attend[name]['workingHours'] = None # 파견인 경우 18시 전에 workingHours에 대한 내용이 없어서 추가
                 elif attend[name]['begin']:
                     if not is_holiday:
                         if 'regular' in attend[name] and attend[name]['regular'] and int(attend[name]['begin']) > int(WORKING['time']['beginTime']):
