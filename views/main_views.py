@@ -202,10 +202,12 @@ def get_device():
     form = DeviceSubmitForm()
     devices = Device()
     if request.method == 'POST' and form.validate_on_submit():
-        register_date = form.registerDate.data.strftime('%Y-%m-%d')
-        end_date = form.endDate.data.strftime('%Y-%m-%d')
-        request_data = {'mac': form.mac.data, 'registerDate': register_date, 'endDate': end_date,
-                        'owner': form.owner.data, 'device': form.device.data}
+        request_data = {'mac': form.mac.data, 'owner': form.owner.data, 'device': form.device.data}
+        if form.registerDate.data:
+            request_data['registerDate'] = form.registerDate.data.strftime('%Y-%m-%d')
+        if form.endDate.data:
+            request_data['endDate'] = form.endDate.data.strftime('%Y-%m-%d')
+
         devices.post(request_data)
     page, _, _, _ = request_get(request.args)
     paging, data_list = devices.get(page=page)

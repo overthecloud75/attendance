@@ -140,3 +140,18 @@
 # 2022/05/09
   1.9.1 err fix
     - in case of dispatch, there was no workingHours Key before 18
+
+# 2022/05/23
+  1.9.2 err fix
+    - when register date is None in the device page, there was an error
+
+# 2022/05/25
+  1.9.3
+    - 외근 = 출장 = 설명회 = 미팅 = 평가
+
+# 2022/06/01
+  1.9.4
+    - config.py WORKING['specialHolidays'] = ['선거']
+
+  1.9.5
+    - not update when special holiday

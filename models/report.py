@@ -148,8 +148,13 @@ class Report:
         summary['totalWorkingDay'] = round(summary['totalWorkingDay'], 2)
         summary['totalWorkingHours'] = round(summary['totalWorkingHours'], 2)
         summary['휴가'] = summary['휴가'] + summary['연차'] + summary['월차']
+        summary['외근'] = summary['외근'] + summary['출장'] + summary['미팅'] + summary['설명회'] + summary['평가']
         del summary['연차']
         del summary['월차']
+        del summary['출장']
+        del summary['미팅']
+        del summary['설명회']
+        del summary['평가']
         return summary
 
     def update(self, date=None):
@@ -179,17 +184,19 @@ class Report:
             if not is_holiday:
                 employees_list = self.employee.get(page='all', date=date)
                 schedule_dict = self.schedule(employees_list, date=date)
-                for employee in employees_list:
-                    name = employee['name']
-                    employee_id = employee['employeeId']
-                    regular = employee['regular']
-                    reason = employee['status']
-                    # 같은 employee_id 인데 이름이 바뀌는 경우 발생
-                    attend[name] = {'date': date, 'name': name, 'employeeId': employee_id, 'begin': None, 'end': None, 'reason': reason, 'regular': regular}
-                # update 날짜가 오늘 날짜인 경우만 진행
-                if date == self.today:
-                    self.update_devices(date=date)
-                    self.notice_email(employees_list=employees_list)
+                # special holiday가 있는 경우 제외
+                if 'holiday' not in schedule_dict:
+                    for employee in employees_list:
+                        name = employee['name']
+                        employee_id = employee['employeeId']
+                        regular = employee['regular']
+                        reason = employee['status']
+                        # 같은 employee_id 인데 이름이 바뀌는 경우 발생
+                        attend[name] = {'date': date, 'name': name, 'employeeId': employee_id, 'begin': None, 'end': None, 'reason': reason, 'regular': regular}
+                    # update 날짜가 오늘 날짜인 경우만 진행
+                    if date == self.today:
+                        self.update_devices(date=date)
+                        self.notice_email(employees_list=employees_list)
 
             # 지문 인식 출퇴근 기록
             access_today = date[0:4] + date[5:7] + date[8:]  # access_day 형식으로 변환
@@ -401,10 +408,10 @@ class Report:
                             collection.insert_one(insert_data)
 
     def send_notice_email(self, employee):
-        print('send_notice_email')
         name = employee['name']
         employee_id = employee['employeeId']
         email = employee['email']
+        print('send_notice_email', self.today, name)
 
         report = self.collection.find_one({'name': name, 'employeeId': employee_id, 'date': {"$lt": self.today}}, sort=[('date', -1)])
         report_date = report['date']
@@ -450,6 +457,9 @@ class Report:
         schedule_dict = {}
         data_list = collection.find({'start': {"$lte": date}, 'end': {"$gt": date}})
         for data in data_list:
+            if data['title'] in WORKING['specialHolidays']:
+                schedule_dict = {'holiday': data['title']}
+                break
             name = None
             status = '기타'
             for employee in employees_list:
