@@ -14,26 +14,19 @@ class Employee:
             employees = self.collection.find(sort=[('name', 1)])
             employees_list = []
             for employee in employees:
-                regular = True
-                if 'regular' in employee and employee['regular'] == '비상근':
-                    regular = False
                 if 'email' in employee and employee['email']:
                     email = employee['email']
                 else:
                     email = None
-                if 'status' in employee and employee['status']:
-                    status = employee['status']
-                else:
-                    status = None
                 # 퇴사하지 않은 직원만 포함하기 위해서
-                if status != '퇴사':
+                if employee['status'] != '퇴사':
                     if 'beginDate' not in employee and 'endDate' not in employee:
-                        employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': regular, 'status': status})
+                        employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': employee['regular'], 'status': employee['status']})
                     elif 'beginDate' in employee and date and date >= employee['beginDate'] and 'endDate' not in employee:
-                        employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': regular, 'status': status})
+                        employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': employee['regular'], 'status': employee['status']})
                     else:
                         if 'endDate' in employee and date and date <= employee['endDate']:
-                            employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': regular, 'status': status})
+                            employees_list.append({'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': employee['regular'], 'status': employee['status']})
             return employees_list
         else:
             data_list = self.collection.find(sort=[('department', 1), ('name', 1)])

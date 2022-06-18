@@ -1,7 +1,8 @@
 import pyodbc
 from collections import OrderedDict
+import random
 
-from utils import check_time, check_holiday, get_delta_day, Page #, request_event, request_delta, request_get, get_date_several_months_before
+from utils import check_time, check_holiday, get_delta_day, date_range, Page #, request_event, request_delta, request_get, get_date_several_months_before
 from .db import db
 from .mail import send_email
 from .employee import Employee
@@ -13,7 +14,7 @@ except Exception as e:
     # try your own Access_DB_PWD
     ACCESS_DB_PWD = '*******'
     SERVER_URL = 'http://127.0.0.1:5000/'
-from config import USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, EMAIL_NOTICE_BASE, WORKING
+from config import USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, EMAIL_NOTICE_BASE, WORKING, ALTERNATIVE_MILITARY_ATTEND_MODE
 
 # connect to access db
 # https://stackoverflow.com/questions/50757873/connect-to-ms-access-in-python
@@ -60,8 +61,12 @@ class Report:
         else:
             if start and end:
                 if name:
-                    data_list = self.collection.find({'date': {"$gte": start, "$lte": end}, 'name': name},
-                                                     sort=[('name', 1), ('date', -1)])
+                    employee = self.employee.get(name=name)
+                    if employee['regular'] == '병특' and ALTERNATIVE_MILITARY_ATTEND_MODE:
+                        data_list = self._altertative_military_attend(employee, start, end)
+                    else:
+                        data_list = self.collection.find({'date': {"$gte": start, "$lte": end}, 'name': name},
+                                                         sort=[('name', 1), ('date', -1)])
                 else:
                     data_list = self.collection.find({'date': {"$gte": start, "$lte": end}},
                                                      sort=[('name', 1), ('date', -1)])
@@ -87,10 +92,11 @@ class Report:
                 for data in data_list:
                     if data['workingHours'] is not None:
                         summary['totalDay'] = summary['totalDay'] + 1
-                        del data['_id']
+                        if '_id' in data:
+                            del data['_id']
                         if 'status' in data:
-                            if data['status'][0]:
-                                summary[data['status'][0]] = summary[data['status'][0]] + 1
+                            if data['status']:
+                                summary[data['status']] = summary[data['status']] + 1
                         if 'reason' in data and data['reason']:
                             summary[data['reason']] = summary[data['reason']] + 1
                         summary['totalWorkingHours'] = summary['totalWorkingHours'] + data['workingHours']
@@ -128,8 +134,8 @@ class Report:
 
                     summary[name]['totalDay'] = summary[name]['totalDay'] + 1
                     if 'status' in data:
-                        if data['status'][0]:
-                            summary[name][data['status'][0]] = summary[name][data['status'][0]] + 1
+                        if data['status']:
+                            summary[name][data['status']] = summary[name][data['status']] + 1
                     if 'reason' in data and data['reason'] and data['reason'] in summary[name]:
                         summary[name][data['reason']] = summary[name][data['reason']] + 1
                     summary[name]['totalWorkingHours'] = summary[name]['totalWorkingHours'] + data['workingHours']
@@ -183,20 +189,23 @@ class Report:
 
             if not is_holiday:
                 employees_list = self.employee.get(page='all', date=date)
-                schedule_dict = self.schedule(employees_list, date=date)
+                schedule_dict = self._schedule(employees_list, date=date)
                 # special holiday가 있는 경우 제외
                 if 'holiday' not in schedule_dict:
                     for employee in employees_list:
                         name = employee['name']
                         employee_id = employee['employeeId']
                         regular = employee['regular']
-                        reason = employee['status']
+                        if employee['status'] in WORKING['status']:
+                            reason = employee['status']
+                        else:
+                            reason = None
                         # 같은 employee_id 인데 이름이 바뀌는 경우 발생
                         attend[name] = {'date': date, 'name': name, 'employeeId': employee_id, 'begin': None, 'end': None, 'reason': reason, 'regular': regular}
                     # update 날짜가 오늘 날짜인 경우만 진행
                     if date == self.today:
-                        self.update_devices(date=date)
-                        self.notice_email(employees_list=employees_list)
+                        self._update_devices(date=date)
+                        self._notice_email(employees_list=employees_list)
 
             # 지문 인식 출퇴근 기록
             access_today = date[0:4] + date[5:7] + date[8:]  # access_day 형식으로 변환
@@ -224,7 +233,9 @@ class Report:
                             else:
                                 attend[name]['end'] = None
                     else:
-                        overnight_employees.append(employee_id)
+                        print('overnight', employee_id, time)
+                        if employee_id not in overnight_employees:
+                            overnight_employees.append(employee_id)
 
             # wifi device
             devices = Device()
@@ -251,7 +262,7 @@ class Report:
             for name in attend:
                 if name in schedule_dict:
                     status = schedule_dict[name]
-                    attend[name]['status'] = (None, 0)
+                    attend[name]['status'] = None
                     attend[name]['reason'] = status
                     if hour >= 18:
                         if '반차' in status:  # status가 2개 이상으로 표시된 경우 ex) 반차, 정기점검
@@ -261,44 +272,39 @@ class Report:
                     else:
                         attend[name]['workingHours'] = None
                 elif attend[name]['reason']:
-                    attend[name]['status'] = (None, 0)
+                    attend[name]['status'] = None
                     if hour >= 18:
                         attend[name]['workingHours'] = WORKING['status'][attend[name]['reason']]
                     else:
                         attend[name]['workingHours'] = None # 파견인 경우 18시 전에 workingHours에 대한 내용이 없어서 추가
                 elif attend[name]['begin']:
                     if not is_holiday:
-                        if 'regular' in attend[name] and attend[name]['regular'] and int(attend[name]['begin']) > int(WORKING['time']['beginTime']):
+                        if attend[name]['regular'] != '비상근' and int(attend[name]['begin']) > int(WORKING['time']['beginTime']):
                             # fulltime job만 지각 처리
-                            attend[name]['status'] = ('지각', 1)
+                            attend[name]['status'] = '지각'
                         else:
-                            attend[name]['status'] = ('정상출근', 0)
+                            attend[name]['status'] = '정상출근'
                     else:
-                        attend[name]['status'] = ('정상출근', 0)
+                        attend[name]['status'] = '정상출근'
                     if hour >= 18:
-                        working_hours = int(attend[name]['end'][0:2]) - int(attend[name]['begin'][0:2]) + \
-                                        (int(attend[name]['end'][2:4]) - int(attend[name]['begin'][2:4])) / 60
-                        if int(attend[name]['end']) > int(WORKING['time']['lunchFinishTime']) and \
-                                int(WORKING['time']['lunchTime']) > int(attend[name]['begin']):
-                            working_hours = working_hours - 1
-                        attend[name]['workingHours'] = round(working_hours, 1)
+                        attend[name]['workingHours'] = self._calculate_working_hours(attend[name]['begin'], attend[name]['end'], overnight=False)
                     else:
                         attend[name]['workingHours'] = None
                 else:
                     if not is_holiday:
                         if hour >= 18:
                             attend[name]['workingHours'] = 0
-                            attend[name]['status'] = ('미출근', 3)
+                            attend[name]['status'] = '미출근'
                         elif hour >= int(WORKING['time']['beginTime']) / 10000:
                             attend[name]['workingHours'] = None
-                            attend[name]['status'] = ('지각', 1)
+                            attend[name]['status'] = '지각'
                         else:
                             attend[name]['workingHours'] = None
-                            attend[name]['status'] = ('출근전', 2)
+                            attend[name]['status'] = '출근전'
                     else:
-                        attend[name]['status'] = ('정상출근', 0)
+                        attend[name]['status'] = '정상출근'
                 try:
-                    if 'regular' in attend[name] and not attend[name]['regular'] and attend[name]['status'][0] in ['미출근', '출근전', '지각'] :
+                    if attend[name]['regular'] == '비상근' and attend[name]['status'] in ['미출근', '출근전', '지각'] :
                         # fulltime이 아닌 직원에 대해 미출근과 출근전인 경우 기록하지 않음
                         pass
                     else:
@@ -311,7 +317,7 @@ class Report:
                  1. overnight 근무자에 대해서 이전 날짜 update
             '''
             if overnight_employees:
-                self.update_overnight(overnight_employees, date=date)
+                self._update_overnight(overnight_employees, date=date)
 
     def update_date(self, start=None, end=None):
         data_list = self.collection.find({'date': {"$gte": start, "$lt": end}})
@@ -341,7 +347,21 @@ class Report:
                 wifi_list.append({'mac': mac, 'date': date, 'begin': begin, 'end': end, 'owner': device['owner'], 'device': device['device'],})
         return paging, wifi_list
 
-    def update_overnight(self, overnight_employees, date=None):
+    def _calculate_working_hours(self, begin, end, overnight=False):
+        working_hours = (int(end[0:2]) - int(begin[0:2])) + \
+                        (int(end[2:4]) - int(begin[2:4])) / 60
+        if overnight:
+            working_hours = working_hours + 24
+            if int(WORKING['time']['lunchTime']) > int(begin):
+                working_hours = working_hours - 1
+        else:
+            if int(end) > int(WORKING['time']['lunchFinishTime']) and \
+                    int(WORKING['time']['lunchTime']) > int(begin):
+                working_hours = working_hours - 1
+        working_hours = round(working_hours, 1)
+        return working_hours
+
+    def _update_overnight(self, overnight_employees, date=None):
         print('overnight', overnight_employees)
         if date is None:
             date = self.today
@@ -376,22 +396,12 @@ class Report:
                     if int(time) < int(WORKING['time']['overNight']):
                         if end < time:
                             end = time
-                attend['end'] = end
 
-                if end != '000000':
-                    working_hours = 24 + int(attend['end'][0:2]) - int(attend['begin'][0:2]) + \
-                                    (int(attend['end'][2:4]) - int(attend['begin'][2:4])) / 60
-                else:
-                    working_hours = int(attend['end'][0:2]) - int(attend['begin'][0:2]) + \
-                                    (int(attend['end'][2:4]) - int(attend['begin'][2:4])) / 60
-
-                if int(WORKING['time']['lunchTime']) > int(attend['begin']):
-                    working_hours = working_hours - 1
-                attend['workingHours'] = round(working_hours, 1)
+                attend['workingHours'] = self._calculate_working_hours(attend['begin'], end, overnight=True)
                 self.collection.update_one({'date': attend['date'], 'employeeId': int(employee_id)}, {'$set': attend},
                                            upsert=True)
 
-    def notice_email(self, employees_list=[]):
+    def _notice_email(self, employees_list=[]):
         '''
             1. USE_NOTICE_EMAIL 설정이 True일 경우
             2. 오늘 notice한 이력이 있는지 확인 후
@@ -403,11 +413,11 @@ class Report:
             if notice is None:
                 for employee in employees_list:
                     if employee['email'] is not None:
-                        insert_data = self.send_notice_email(employee=employee)
+                        insert_data = self._send_notice_email(employee=employee)
                         if insert_data:
                             collection.insert_one(insert_data)
 
-    def send_notice_email(self, employee):
+    def _send_notice_email(self, employee):
         name = employee['name']
         employee_id = employee['employeeId']
         email = employee['email']
@@ -445,14 +455,14 @@ class Report:
         else:
             return False
 
-    def update_devices(self, date=None):
+    def _update_devices(self, date=None):
         devices = Device()
         mac_list = self.mac.get_device_list(page='all', date=date)
         for mac in mac_list:
             request_data = {'mac': mac, 'endDate': date}
             devices.post(request_data)
 
-    def schedule(self, employees_list, date=None):
+    def _schedule(self, employees_list, date=None):
         collection = db['event']
         schedule_dict = {}
         data_list = collection.find({'start': {"$lte": date}, 'end': {"$gt": date}})
@@ -474,3 +484,34 @@ class Report:
                 else:
                     schedule_dict[name] = status
         return schedule_dict
+
+    def _altertative_military_attend(self, employee, start, end):
+        date_list = date_range(start, end)
+        data_list = []
+        name = employee['name']
+        for date in date_list:
+            if date > self.today:
+                break
+            if 'endDate' in employee and date > employee['endDate']:
+                break
+            data = self.collection.find_one({'date': date, 'name': name})
+            if data is None:
+                data = {'date': date, 'name': name, 'begin': None, 'employeeId': employee['employeeId'], 'end': None,
+                        'reason': '휴일', 'workingHours': None, 'status': None}
+            else:
+                if data['reason'] == '파견':
+                    data['begin'] = '08' + self._random_attend(30, add=30) + self._random_attend(60)
+                    data['end'] = '18' + self._random_attend(30) + self._random_attend(60)
+                    data['workingHours'] = self._calculate_working_hours(data['begin'], data['end'], overnight=False)
+                    data['status'] = '정상출근'
+                    data['reason'] = None
+            data_list.append(data)
+        return data_list
+
+    def _random_attend(self, range, add=0):
+        time = random.randrange(0, range) + add
+        if time >= 10:
+            str_time = str(time)
+        else:
+            str_time = '0'+str(time)
+        return str_time

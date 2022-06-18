@@ -1,7 +1,12 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, PasswordField, DateField
+from wtforms import StringField, TextAreaField, PasswordField, DateField, SelectField
 from wtforms.fields.html5 import EmailField
 from wtforms.validators import DataRequired, Optional, Length, EqualTo, Email
+
+from config import EMPLOYEES_STATUS
+
+EMPLOYEE_REGULAR = [(regular, regular) for regular in EMPLOYEES_STATUS['regular']]
+EMPLOYEE_MODE = [(mode, mode) for mode in EMPLOYEES_STATUS['mode']]
 
 
 class UserCreateForm(FlaskForm):
@@ -30,8 +35,8 @@ class EmployeeSubmitForm(FlaskForm):
     beginDate = DateField('beginDate', format='%Y-%m-%d', validators=(Optional(),))
     endDate = DateField('endDate', format='%Y-%m-%d', validators=(Optional(),))
     email = EmailField('email', validators=[Optional(), Email()])
-    regular = StringField('regular', validators=[])
-    status = StringField('status', validators=[])
+    regular = SelectField('regular', choices=EMPLOYEE_REGULAR)
+    status = SelectField('status', choices=EMPLOYEE_MODE)
 
 
 class PeriodSubmitForm(FlaskForm):

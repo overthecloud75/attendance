@@ -8,6 +8,7 @@ import functools
 from models import get_setting, User, Employee, Report, Device
 from form import UserCreateForm, UserLoginForm, ResendForm, EmployeeSubmitForm, PeriodSubmitForm, DateSubmitForm, DeviceSubmitForm
 from utils import request_get, check_private_ip
+from config import EMPLOYEES_STATUS
 
 # blueprint
 bp = Blueprint('main', __name__, url_prefix='/')
@@ -175,9 +176,11 @@ def employees():
 def update_employee():
     form = EmployeeSubmitForm()
     employee = Employee()
+    employees_status = EMPLOYEES_STATUS
     _, name, _, _ = request_get(request.args)
     if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'name': form.name.data, 'department': form.department.data, 'rank': form.rank.data}
+        request_data = {'name': form.name.data, 'department': form.department.data, 'rank': form.rank.data,
+                        'regular': form.regular.data, 'status': form.status.data}
         if form.employeeId.data:
             request_data['employeeId'] = int(form.employeeId.data)
         if form.beginDate.data:
@@ -186,10 +189,6 @@ def update_employee():
             request_data['endDate'] = form.endDate.data.strftime('%Y-%m-%d')
         if form.email.data:
             request_data['email'] = form.email.data
-        if form.regular.data:
-            request_data['regular'] = form.regular.data
-        if form.status.data:
-            request_data['status'] = form.status.data
         employee.post(request_data)
         return redirect(url_for('main.employees'))
     data = employee.get(name=name)

@@ -155,3 +155,16 @@
 
   1.9.5
     - not update when special holiday
+
+# 2022/06/18
+  1.9.6
+    - EMPLOYEES_STATUS in config.py
+
+  1.9.7
+    - regular, status select field in upldate_employee.html
+
+  1.9.8
+    - attend['status'] = (status, 1) -> attend['status'] = status
+
+  1.9.9
+    - apply ALTERNATIVE_MILITARY_ATTEND_MODE

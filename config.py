@@ -30,8 +30,11 @@ USE_LUNAR_NEW_YEAR = True
 # security
 PRIVATE_IP_RANGE = '192.168.0.0'
 
-'''
-employees 
-   reqular = ['비상근']
-   status = ['파견', '퇴사']
-'''
+# employees
+EMPLOYEES_STATUS = {
+    'regular': ['상근', '비상근', '휴직', '병특'],
+    'mode': ['내근', '파견', '퇴사']
+}
+
+# 병특
+ALTERNATIVE_MILITARY_ATTEND_MODE = True

@@ -56,12 +56,14 @@
             {% else %}
                 <td></td>
             {% endif %}
-            {% if not data.status[0] %}
-                <td></td>
-            {% elif data.status[1] == 0 %}
-                <td>{{ data.status[0] }}</td>
+            {% if data.status %}
+                {% if data.status == '정상출근' %}
+                    <td>{{ data.status }}</td>
+                {% else %}
+                    <td style='color:red'>{{ data.status }}</td>
+                {% endif %}
             {% else %}
-                <td style='color:red'>{{ data.status[0] }}</td>
+                <td></td>
             {% endif %}
             {% if 'reason' in data and data.reason %}
                 <td>{{ data.reason }}</td>
