@@ -31,8 +31,16 @@
             <td>{{ data.beginDate }}</td>
             <td>{{ data.endDate }}</td>
             <td>{{ data.email }}</td>
-            <td>{{ data.regular }}</td>
-            <td>{{ data.status }}</td>
+            {% if data.regular in ['병특', '비상근'] %}
+            <td style='color:red'>{{ data.regular }}</td>
+            {% else %}
+                <td>{{ data.regular }}</td>
+            {% endif %}
+            {% if data.status in ['퇴사']%}
+                <td style='color:red'>{{ data.status }}</td>
+            {% else %}
+                <td>{{ data.status }}</td>
+            {% endif %}
         </tr>
         {% endfor %}
     {% else %}

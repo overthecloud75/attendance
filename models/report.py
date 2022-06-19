@@ -501,7 +501,7 @@ class Report:
             else:
                 if data['reason'] == '파견':
                     data['begin'] = '08' + self._random_attend(30, add=30) + self._random_attend(60)
-                    data['end'] = '18' + self._random_attend(30) + self._random_attend(60)
+                    data['end'] = '18' + self._random_attend(60) + self._random_attend(60)
                     data['workingHours'] = self._calculate_working_hours(data['begin'], data['end'], overnight=False)
                     data['status'] = '정상출근'
                     data['reason'] = None
