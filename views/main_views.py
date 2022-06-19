@@ -226,6 +226,7 @@ def wifi_attend():
 @client_ip_check
 def attend():
     report = Report()
+    # https://gist.github.com/doobeh/3e685ef25fac7d03ded7#file-vort-html-L11
     if request.method == 'POST':
         start = request.form['start']
         end = request.form['end']
@@ -242,7 +243,6 @@ def attend():
             buf.seek(0)
             buf = BytesIO(buf.read().encode(encoding))
             return send_file(buf, attachment_filename=filename, as_attachment=True, mimetype='text/csv')
-    # https://gist.github.com/doobeh/3e685ef25fac7d03ded7#file-vort-html-L11
     form = PeriodSubmitForm()
     page, name, start, end = request_get(request.args)
     paging, today, data_list, summary = report.attend(page=page, name=name, start=start, end=end)

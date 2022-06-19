@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, PasswordField, DateField, SelectField
 from wtforms.fields.html5 import EmailField
 from wtforms.validators import DataRequired, Optional, Length, EqualTo, Email
+from datetime import date
 
 from config import EMPLOYEES_STATUS
 
@@ -40,12 +41,12 @@ class EmployeeSubmitForm(FlaskForm):
 
 
 class PeriodSubmitForm(FlaskForm):
-    start = DateField('Pick a Date', format='%Y-%m-%d')
-    end = DateField('Pick a Date', format='%Y-%m-%d')
+    start = DateField('Pick a Date', format='%Y-%m-%d', default=date.today())
+    end = DateField('Pick a Date', format='%Y-%m-%d', default=date.today())
 
 
 class DateSubmitForm(FlaskForm):
-    start = DateField('Pick a Date', format='%Y-%m-%d')
+    start = DateField('Pick a Date', format='%Y-%m-%d', default=date.today())
 
 
 class DeviceSubmitForm(FlaskForm):

@@ -296,13 +296,14 @@ class Report:
                     else:
                         attend[name]['status'] = '정상출근'
                 try:
-                    if attend[name]['regular'] == '비상근' and attend[name]['status'] in ['미출근', '출근전', '지각'] :
+                    if not is_holiday and attend[name]['regular'] == '비상근' and attend[name]['status'] in ['미출근', '출근전', '지각'] :
                         # fulltime이 아닌 직원에 대해 미출근과 출근전인 경우 기록하지 않음
+                        # 주말인 경우 employee 정보 수집을 하지 않기 때문에 regular key가 없을 수 있음
                         pass
                     else:
                         self.collection.update_one({'date': date, 'name': name}, {'$set': attend[name]}, upsert=True)
                 except Exception as e:
-                    print(e)
+                    print('error', e)
                     print(attend[name])
 
             '''

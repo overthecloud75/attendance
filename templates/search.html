@@ -8,8 +8,8 @@
 </div>
 <form id="searchForm" method="get">
     <input type="hidden" id="name1" name="name" value="{{ name or '' }}">
-    <input type="hidden" id="start1" name="start" value="{{ start or ''}}">
-    <input type="hidden" id="end1" name="end" value="{{ end or '' }}">
+    <input type="hidden" id="start1" name="start" value="{{ start or form.start.data }}">
+    <input type="hidden" id="end1" name="end" value="{{ end or form.end.data }}">
 </form>
 <script type='text/javascript'>
 $(document).ready(function(){

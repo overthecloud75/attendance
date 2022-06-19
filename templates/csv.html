@@ -2,8 +2,8 @@
     <button class="btn btn-outline-secondary" type="button" id="btn_search2">csv download</button>
 </div>
 <form id="postForm" method="post">
-    <input type="hidden" id="start2" name="start" value="{{ start or ''}}">
-    <input type="hidden" id="end2" name="end" value="{{ end or '' }}">
+    <input type="hidden" id="start2" name="start" value="{{ start or form.start.data}}">
+    <input type="hidden" id="end2" name="end" value="{{ end or form.end.data }}">
     <input type="hidden" id="name2" name="name" value="{{ name or '' }}">
 </form>
 <script type='text/javascript'>

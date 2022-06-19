@@ -210,9 +210,13 @@ def get_date_several_months_before(date, delta=1):
 
 # https://jsikim1.tistory.com/140
 def date_range(start, end):
-    start = datetime.datetime.strptime(start, '%Y-%m-%d')
-    end = datetime.datetime.strptime(end, '%Y-%m-%d')
-    date_list = [(start + timedelta(days=i)).strftime("%Y-%m-%d") for i in range((end - start).days + 1)]
+    date_list = []
+    try:
+        start = datetime.datetime.strptime(start, '%Y-%m-%d')
+        end = datetime.datetime.strptime(end, '%Y-%m-%d')
+        date_list = [(start + timedelta(days=i)).strftime("%Y-%m-%d") for i in range((end - start).days + 1)]
+    except Exception as e:
+        print(e)
     return date_list
 
 
