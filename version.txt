@@ -172,3 +172,9 @@
 # 2022/06/19
   2.0.0
     - input type hidden in attendance.html get name
+
+  2.0.1 err fix
+    - post all csv in attend
+
+  2.0.2
+    - download all employees summary

@@ -233,7 +233,7 @@ def attend():
         data_list = report.attend(page='all', name=name, start=start, end=end)
         if data_list:
             encoding = 'utf-8-sig'
-            filename = start + '_' + end + '.csv'
+            filename = 'attend' + '_' + start + '_' + end + '_' + name + '.csv'
             buf = StringIO()
             writer = ValidatedWriter(buf, fieldnames=data_list[0].keys())
             writer.writeheader()
@@ -256,11 +256,11 @@ def summarize():
     if request.method == 'POST':
         start = request.form['start']
         end = request.form['end']
-        paging, data_list = report.summary(start=start, end=end)
+        data_list = report.summary(page='all', start=start, end=end)
         # https://github.com/Shir0kamii/Flask-CSV
         if data_list:
             encoding = 'utf-8-sig'
-            filename = start + '_' + end + '.csv'
+            filename = 'summary' + '_' + start + '_' + end + '.csv'
             buf = StringIO()
             writer = ValidatedWriter(buf, fieldnames=data_list[0].keys())
             writer.writeheader()

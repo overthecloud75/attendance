@@ -34,41 +34,48 @@ class Report:
 
     def attend(self, page=None, name=None, start=None, end=None):
         if page == 'all':
-            employee = self.employee.get(name=name)
-            if start:
-                data_list = self.collection.find({'date': {"$gte": start, "$lte": end}, 'name': name},
-                                                 sort=[('name', 1), ('date', 1)])
-            else:
-                data_list = self.collection.find({'name': name}, sort=[('date', 1)])
             attend_list = []
-            for data in data_list:
-                if data['begin']:
-                    begin = data['begin'][0:2] + ':' + data['begin'][2:4]
+            employee = self.employee.get(name=name)
+            if employee:
+                if employee['regular'] == '병특' and ALTERNATIVE_MILITARY_ATTEND_MODE:
+                    data_list = self._altertative_military_attend(employee, start, end)
                 else:
-                    begin = ''
-                if data['end']:
-                    end = data['end'][0:2] + ':' + data['end'][2:4]
-                else:
-                    end = ''
-                if 'reason' in data:
-                    reason = data['reason']
-                else:
-                    reason = ''
-                attend_list.append(
-                    {'name': data['name'], 'rank': employee['rank'], 'department': employee['department'],
-                     'date': data['date'], 'begin': begin, 'end': end, 'reason': reason})
+                    if start and end:
+                        data_list = self.collection.find({'date': {'$gte': start, '$lte': end}, 'name': name},
+                                                     sort=[('name', 1), ('date', 1)])
+                    elif start or end:
+                        data_list = []
+                    else:
+                        data_list = self.collection.find({'name': name}, sort=[('date', 1)])
+
+                for data in data_list:
+                    if data['begin']:
+                        begin = data['begin'][0:2] + ':' + data['begin'][2:4]
+                    else:
+                        begin = ''
+                    if data['end']:
+                        end = data['end'][0:2] + ':' + data['end'][2:4]
+                    else:
+                        end = ''
+                    if 'reason' in data:
+                        reason = data['reason']
+                    else:
+                        reason = ''
+                    attend_list.append(
+                        {'name': data['name'], 'rank': employee['rank'], 'department': employee['department'],
+                         'date': data['date'], 'begin': begin, 'end': end, 'reason': reason})
             return attend_list
         else:
             if start and end:
                 if name:
                     employee = self.employee.get(name=name)
-                    if employee['regular'] == '병특' and ALTERNATIVE_MILITARY_ATTEND_MODE:
+                    if employee and employee['regular'] == '병특' and ALTERNATIVE_MILITARY_ATTEND_MODE:
                         data_list = self._altertative_military_attend(employee, start, end)
                     else:
-                        data_list = self.collection.find({'date': {"$gte": start, "$lte": end}, 'name': name},
+                        data_list = self.collection.find({'date': {'$gte': start, '$lte': end}, 'name': name},
                                                          sort=[('name', 1), ('date', -1)])
                 else:
-                    data_list = self.collection.find({'date': {"$gte": start, "$lte": end}},
+                    data_list = self.collection.find({'date': {'$gte': start, '$lte': end}},
                                                      sort=[('name', 1), ('date', -1)])
             else:
                 if name:
@@ -101,7 +108,7 @@ class Report:
                             summary[data['reason']] = summary[data['reason']] + 1
                         summary['totalWorkingHours'] = summary['totalWorkingHours'] + data['workingHours']
                     attend_list.append(data)
-                summary = self.get_summary(summary)
+                summary = self._get_summary(summary)
                 return paging, self.today, attend_list, summary
             else:
                 return paging, self.today, data_list, summary
@@ -111,7 +118,7 @@ class Report:
         data_list = None
         summary_list = []
         if start and end:
-            data_list = self.collection.find({'date': {"$gte": start, "$lte": end}}, sort=[('name', 1), ('date', -1)])
+            data_list = self.collection.find({'date': {'$gte': start, '$lte': end}}, sort=[('name', 1), ('date', -1)])
         if data_list:
             summary = OrderedDict()
             for data in data_list:
@@ -140,28 +147,13 @@ class Report:
                         summary[name][data['reason']] = summary[name][data['reason']] + 1
                     summary[name]['totalWorkingHours'] = summary[name]['totalWorkingHours'] + data['workingHours']
             for name in summary:
-                summary[name] = self.get_summary(summary[name])
+                summary[name] = self._get_summary(summary[name])
                 summary_list.append(summary[name])
-
-        get_page = Page(page)
-        return get_page.paginate(summary_list)
-
-    def get_summary(self, summary):
-        summary['totalWorkingDay'] = summary['totalDay']
-        for status in summary:
-            if status in WORKING['offDay']:
-                summary['totalWorkingDay'] = summary['totalWorkingDay'] - summary[status] * WORKING['offDay'][status]
-        summary['totalWorkingDay'] = round(summary['totalWorkingDay'], 2)
-        summary['totalWorkingHours'] = round(summary['totalWorkingHours'], 2)
-        summary['휴가'] = summary['휴가'] + summary['연차'] + summary['월차']
-        summary['외근'] = summary['외근'] + summary['출장'] + summary['미팅'] + summary['설명회'] + summary['평가']
-        del summary['연차']
-        del summary['월차']
-        del summary['출장']
-        del summary['미팅']
-        del summary['설명회']
-        del summary['평가']
-        return summary
+        if page == 'all':
+            return summary_list
+        else:
+            get_page = Page(page)
+            return get_page.paginate(summary_list)
 
     def update(self, date=None):
         '''
@@ -346,6 +338,23 @@ class Report:
             if begin:
                 wifi_list.append({'mac': mac, 'date': date, 'begin': begin, 'end': end, 'owner': device['owner'], 'device': device['device'],})
         return paging, wifi_list
+
+    def _get_summary(self, summary):
+        summary['totalWorkingDay'] = summary['totalDay']
+        for status in summary:
+            if status in WORKING['offDay']:
+                summary['totalWorkingDay'] = summary['totalWorkingDay'] - summary[status] * WORKING['offDay'][status]
+        summary['totalWorkingDay'] = round(summary['totalWorkingDay'], 2)
+        summary['totalWorkingHours'] = round(summary['totalWorkingHours'], 2)
+        summary['휴가'] = summary['휴가'] + summary['연차'] + summary['월차']
+        summary['외근'] = summary['외근'] + summary['출장'] + summary['미팅'] + summary['설명회'] + summary['평가']
+        del summary['연차']
+        del summary['월차']
+        del summary['출장']
+        del summary['미팅']
+        del summary['설명회']
+        del summary['평가']
+        return summary
 
     def _calculate_working_hours(self, begin, end, overnight=False):
         working_hours = (int(end[0:2]) - int(begin[0:2])) + \
