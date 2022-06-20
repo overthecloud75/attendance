@@ -438,7 +438,7 @@ class Report:
         begin = report['begin']
         if begin is not None:
             begin = begin[0:2] + ':' + begin[2:4] + ':' + begin[4:6]
-        status = report['status'][0]
+        status = report['status']
         working_hours = report['workingHours']
         if status in EMAIL_NOTICE_BASE:
             # https://techexpert.tips/ko/python-ko/파이썬-office-365를-사용하여-이메일-보내기
