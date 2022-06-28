@@ -185,3 +185,10 @@
 # 2022/06/20
   2.0.4 err fix
     - form error
+
+# 2022/06/28
+  2.0.5
+    - WORKING['update'] = ['상근', '병특']
+
+  2.06
+    - 퇴사 : employee['mode'] -> employee['status']

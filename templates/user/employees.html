@@ -31,8 +31,8 @@
             <td>{{ data.beginDate }}</td>
             <td>{{ data.endDate }}</td>
             <td>{{ data.email }}</td>
-            {% if data.regular in ['병특', '비상근'] %}
-            <td style='color:red'>{{ data.regular }}</td>
+            {% if data.regular not in ['상근'] %}
+                <td style='color:red'>{{ data.regular }}</td>
             {% else %}
                 <td>{{ data.regular }}</td>
             {% endif %}

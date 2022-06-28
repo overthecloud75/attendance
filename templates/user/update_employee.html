@@ -40,7 +40,7 @@
                    value="{{ data.email or '' }}">
         </div>
         <div class="form-group">
-            <label for="regular">상근 여부 [ex)상근, 비상근, 휴직, 병특]</label>
+            <label for="regular">상근 여부 [ex)상근, 병특, 비상근, 휴직, 퇴사]</label>
             <select class="form-select" name="regular" id="regular" aria-label="Default select regular">
                 {% for regular in employees_status.regular %}
                 <option value="{{ regular }}">{{ regular }}</option>
@@ -48,7 +48,7 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="status">상태 [ex)파견, 퇴사]</label>
+            <label for="status">상태 [ex)내근, 파견]</label>
              <select class="form-select" name="status" id="status" aria-label="Default select status">
                 {% for mode in employees_status.mode %}
                 <option value="{{ mode }}">{{ mode }}</option>

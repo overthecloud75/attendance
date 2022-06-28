@@ -271,7 +271,8 @@ class Report:
                         attend[name]['workingHours'] = None # 파견인 경우 18시 전에 workingHours에 대한 내용이 없어서 추가
                 elif attend[name]['begin']:
                     if not is_holiday:
-                        if attend[name]['regular'] != '비상근' and int(attend[name]['begin']) > int(WORKING['time']['beginTime']):
+                        if 'reqular' in attend[name] and attend[name]['regular'] in WORKING['update'] and \
+                                int(attend[name]['begin']) > int(WORKING['time']['beginTime']):
                             # fulltime job만 지각 처리
                             attend[name]['status'] = '지각'
                         else:
@@ -296,7 +297,8 @@ class Report:
                     else:
                         attend[name]['status'] = '정상출근'
                 try:
-                    if not is_holiday and attend[name]['regular'] == '비상근' and attend[name]['status'] in ['미출근', '출근전', '지각'] :
+                    if not is_holiday and 'regular' in attend[name] and attend[name]['regular'] not in WORKING['update'] and \
+                            attend[name]['status'] not in ['정상출근'] :
                         # fulltime이 아닌 직원에 대해 미출근과 출근전인 경우 기록하지 않음
                         # 주말인 경우 employee 정보 수집을 하지 않기 때문에 regular key가 없을 수 있음
                         pass
