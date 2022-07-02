@@ -5,9 +5,10 @@ from werkzeug.security import generate_password_hash
 from werkzeug.utils import redirect
 import functools
 
-from models import User
-from form import UserCreateForm, UserLoginForm, EmailForm, PasswordResetForm
+from models import User, Employee
+from form import UserCreateForm, UserLoginForm, EmailForm, PasswordResetForm, EmployeeSubmitForm
 from utils import request_get, check_private_ip
+from config import EMPLOYEES_STATUS
 
 # blueprint
 bp = Blueprint('user', __name__, url_prefix='/user')
@@ -195,4 +196,37 @@ def confirm_reset_password(token):
 @bp.route('/password_unconfirmed/')
 def password_unconfirmed():
     return render_template('user/password_unconfirmed.html')
+
+
+@bp.route('/employees/', methods=('GET',))
+@admin_required
+def employees():
+    employee = Employee()
+    page, name, _, _ = request_get(request.args)
+    paging, data_list = employee.get(page=page)
+    return render_template('user/employees.html', **locals())
+
+
+@bp.route('/update_employee/', methods=('GET', 'POST'))
+@admin_required
+def update_employee():
+    form = EmployeeSubmitForm()
+    employee = Employee()
+    employees_status = EMPLOYEES_STATUS
+    _id = request.args.get('_id', '')
+    if request.method == 'POST' and form.validate_on_submit():
+        request_data = {'name': form.name.data, 'department': form.department.data, 'rank': form.rank.data,
+                        'regular': form.regular.data, 'mode': form.mode.data}
+        if form.employeeId.data:
+            request_data['employeeId'] = int(form.employeeId.data)
+        if form.beginDate.data:
+            request_data['beginDate'] = form.beginDate.data.strftime('%Y-%m-%d')
+        if form.endDate.data:
+            request_data['endDate'] = form.endDate.data.strftime('%Y-%m-%d')
+        if form.email.data:
+            request_data['email'] = form.email.data
+        employee.post(request_data)
+        return redirect(url_for('user.employees'))
+    data = employee.get(_id=_id)
+    return render_template('user/update_employee.html', **locals())
 

@@ -2,9 +2,9 @@
 {% block content %}
 
 <div class="container my-3">
-    {% if g.user %}
-    <button type="submit" onclick="location.href={{ url_for('main.update_employee') }}" class="btn btn-primary my-3">등록</button>
-    {% endif %}
+    <form id="submitForm" method="get" action="{{ url_for('user.update_employee') }}">
+        <button type="submit" class="btn btn-primary my-3">등록</button>
+    </form>
     <table class="table">
     {% if data_list %}
         <thead>
@@ -24,7 +24,7 @@
         {% for data in data_list %}
         <tr>
             <td>{{ paging.offset + loop.index0 + 1}}</td>
-            <td><a href="{{ url_for('main.update_employee', name=data.name) }}">{{ data.name }}</a></td>
+            <td><a href="{{ url_for('user.update_employee', _id=data._id) }}">{{ data.name }}</a></td>
             <td>{{ data.department }}</td>
             <td>{{ data.rank }}</td>
             <td>{{ data.employeeId }}</td>

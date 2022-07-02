@@ -4,10 +4,9 @@ from csvalidate import ValidatedWriter
 from werkzeug.utils import redirect
 import functools
 
-from models import get_setting, Employee, Report, Device
-from form import EmployeeSubmitForm, PeriodSubmitForm, DateSubmitForm, DeviceSubmitForm
+from models import get_setting, Report, Device
+from form import PeriodSubmitForm, DateSubmitForm, DeviceSubmitForm
 from utils import request_get, check_private_ip
-from config import EMPLOYEES_STATUS
 
 # blueprint
 bp = Blueprint('main', __name__, url_prefix='/')
@@ -70,40 +69,7 @@ def index():
 @admin_required
 def setting():
     use_wifi_attendance, use_notice_email, account, cc, working = get_setting()
-    return render_template('user/setting.html', **locals())
-
-
-@bp.route('/employees/', methods=('GET',))
-@admin_required
-def employees():
-    employee = Employee()
-    page, name, _, _ = request_get(request.args)
-    paging, data_list = employee.get(page=page)
-    return render_template('user/employees.html', **locals())
-
-
-@bp.route('/update_employee/', methods=('GET', 'POST'))
-@admin_required
-def update_employee():
-    form = EmployeeSubmitForm()
-    employee = Employee()
-    employees_status = EMPLOYEES_STATUS
-    _, name, _, _ = request_get(request.args)
-    if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'name': form.name.data, 'department': form.department.data, 'rank': form.rank.data,
-                        'regular': form.regular.data, 'mode': form.mode.data}
-        if form.employeeId.data:
-            request_data['employeeId'] = int(form.employeeId.data)
-        if form.beginDate.data:
-            request_data['beginDate'] = form.beginDate.data.strftime('%Y-%m-%d')
-        if form.endDate.data:
-            request_data['endDate'] = form.endDate.data.strftime('%Y-%m-%d')
-        if form.email.data:
-            request_data['email'] = form.email.data
-        employee.post(request_data)
-        return redirect(url_for('main.employees'))
-    data = employee.get(name=name)
-    return render_template('user/update_employee.html', **locals())
+    return render_template('setting/setting.html', **locals())
 
 
 @bp.route('/device/', methods=('GET', 'POST'))
@@ -121,7 +87,7 @@ def get_device():
         devices.post(request_data)
     page, _, _, _ = request_get(request.args)
     paging, data_list = devices.get(page=page)
-    return render_template('user/device.html', **locals())
+    return render_template('setting/device.html', **locals())
 
 
 @bp.route('/wifi_attend/', methods=('GET', ))
@@ -130,7 +96,7 @@ def wifi_attend():
     form = DateSubmitForm()
     page, _, start, _ = request_get(request.args)
     paging, data_list = report.wifi_attend(page=page, date=start)
-    return render_template('user/wifi_attend.html', **locals())
+    return render_template('setting/wifi_attend.html', **locals())
 
 
 @bp.route('/attend/', methods=('GET', 'POST'))

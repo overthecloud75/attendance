@@ -1,3 +1,6 @@
+from bson.objectid import ObjectId
+# https://stackoverflow.com/questions/7846001/what-is-the-correct-way-to-query-mongodb-for-id-using-string-by-using-python
+
 from .db import db
 from utils import Page
 
@@ -6,8 +9,11 @@ class Employee:
     def __init__(self):
         self.collection = db['employees']
 
-    def get(self, page=1, name=None, date=None):
-        if name:
+    def get(self, page=1, _id='', name=None, date=None):
+        if _id:
+            employee = self.collection.find_one({'_id': ObjectId(_id)})
+            return employee
+        elif name:
             employee = self.collection.find_one({'name': name})
             return employee
         elif page == 'all':
