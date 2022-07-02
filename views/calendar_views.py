@@ -22,7 +22,7 @@ def client_ip_check(view):
     def wrapped_view(**kwargs):
         if 'X-Forwarded-For' in request.headers and g.user is None:
             if not check_private_ip(request.headers['X-Forwarded-For']):
-                return redirect(url_for('main.login'))
+                return redirect(url_for('user.login'))
         return view(**kwargs)
     return wrapped_view
 

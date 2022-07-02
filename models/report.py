@@ -177,7 +177,6 @@ class Report:
             # attend 초기화
             attend = {}
             schedule_dict = {}
-            overnight_employees = []
 
             if not is_holiday:
                 employees_list = self.employee.get(page='all', date=date)
@@ -188,8 +187,8 @@ class Report:
                         name = employee['name']
                         employee_id = employee['employeeId']
                         regular = employee['regular']
-                        if employee['status'] in WORKING['status']:
-                            reason = employee['status']
+                        if employee['mode'] in WORKING['status']:
+                            reason = employee['mode']
                         else:
                             reason = None
                         # 같은 employee_id 인데 이름이 바뀌는 경우 발생
@@ -200,34 +199,7 @@ class Report:
                         self._notice_email(employees_list=employees_list)
 
             # 지문 인식 출퇴근 기록
-            access_today = date[0:4] + date[5:7] + date[8:]  # access_day 형식으로 변환
-            cursor.execute("select e_id, e_name, e_date, e_time, e_mode from tenter where e_date = ?", access_today)
-
-            for row in cursor.fetchall():
-                employee_id = row[0]
-                name = row[1]
-                time = row[3]
-                mode = int(row[4])
-                # card 출근자 name = ''
-                if name != '':
-                    if int(time) > int(WORKING['time']['overNight']):   # overnight가 아닌 것에 대한 기준
-                        if name not in attend:
-                            attend[name] = {'date': date, 'name': name, 'employeeId': int(employee_id), 'begin': None, 'end': None, 'reason': None}
-                        if attend[name]['begin']:
-                            if int(time) < int(attend[name]['begin']):
-                                attend[name]['begin'] = time
-                            if hour >= 18:
-                                attend[name]['end'] = time
-                        else:
-                            attend[name]['begin'] = time
-                            if hour >= 18:
-                                attend[name]['end'] = time
-                            else:
-                                attend[name]['end'] = None
-                    else:
-                        print('overnight', employee_id, time)
-                        if employee_id not in overnight_employees:
-                            overnight_employees.append(employee_id)
+            attend, overnight_employees = self.fingerprint_attend(attend, date, hour)
 
             # wifi device
             devices = Device()
@@ -271,7 +243,7 @@ class Report:
                         attend[name]['workingHours'] = None # 파견인 경우 18시 전에 workingHours에 대한 내용이 없어서 추가
                 elif attend[name]['begin']:
                     if not is_holiday:
-                        if 'reqular' in attend[name] and attend[name]['regular'] in WORKING['update'] and \
+                        if 'regular' in attend[name] and attend[name]['regular'] in WORKING['update'] and \
                                 int(attend[name]['begin']) > int(WORKING['time']['beginTime']):
                             # fulltime job만 지각 처리
                             attend[name]['status'] = '지각'
@@ -297,10 +269,11 @@ class Report:
                     else:
                         attend[name]['status'] = '정상출근'
                 try:
-                    if not is_holiday and 'regular' in attend[name] and attend[name]['regular'] not in WORKING['update'] and \
+                    if 'regular' in attend[name] and attend[name]['regular'] not in WORKING['update'] and \
                             attend[name]['status'] not in ['정상출근'] :
                         # fulltime이 아닌 직원에 대해 미출근과 출근전인 경우 기록하지 않음
                         # 주말인 경우 employee 정보 수집을 하지 않기 때문에 regular key가 없을 수 있음
+                        # employee 등록이 안 된 경우 regular key가 없을 수 있음
                         pass
                     else:
                         self.collection.update_one({'date': date, 'name': name}, {'$set': attend[name]}, upsert=True)
@@ -322,6 +295,40 @@ class Report:
                 date_list.append(data['date'])
         for date in date_list:
             self.update(date=date)
+
+    def fingerprint_attend(self, attend, date, hour):
+        overnight_employees = []
+
+        access_today = date[0:4] + date[5:7] + date[8:]  # access_day 형식으로 변환
+        cursor.execute("select e_id, e_name, e_date, e_time, e_mode from tenter where e_date = ?", access_today)
+
+        for row in cursor.fetchall():
+            employee_id = row[0]
+            name = row[1]
+            time = row[3]
+            mode = int(row[4])
+            # card 출근자 name = ''
+            if name != '':
+                if int(time) > int(WORKING['time']['overNight']):  # overnight가 아닌 것에 대한 기준
+                    if name not in attend:
+                        attend[name] = {'date': date, 'name': name, 'employeeId': int(employee_id), 'begin': None,
+                                        'end': None, 'reason': None}
+                    if attend[name]['begin']:
+                        if int(time) < int(attend[name]['begin']):
+                            attend[name]['begin'] = time
+                        if hour >= 18:
+                            attend[name]['end'] = time
+                    else:
+                        attend[name]['begin'] = time
+                        if hour >= 18:
+                            attend[name]['end'] = time
+                        else:
+                            attend[name]['end'] = None
+                else:
+                    print('overnight', employee_id, time)
+                    if employee_id not in overnight_employees:
+                        overnight_employees.append(employee_id)
+        return attend, overnight_employees
 
     def wifi_attend(self, page=1, date=None):
         if date is None:

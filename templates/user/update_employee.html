@@ -43,15 +43,15 @@
             <label for="regular">상근 여부 [ex)상근, 병특, 비상근, 휴직, 퇴사]</label>
             <select class="form-select" name="regular" id="regular" aria-label="Default select regular">
                 {% for regular in employees_status.regular %}
-                <option value="{{ regular }}">{{ regular }}</option>
+                <option value="{{ regular }}" {% if data.regular == regular %} selected {% endif %}>{{ regular }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="form-group">
-            <label for="status">상태 [ex)내근, 파견]</label>
-             <select class="form-select" name="status" id="status" aria-label="Default select status">
+            <label for="mode">상태 [ex)내근, 파견]</label>
+             <select class="form-select" name="mode" id="mode" aria-label="Default select status">
                 {% for mode in employees_status.mode %}
-                <option value="{{ mode }}">{{ mode }}</option>
+                <option value="{{ mode }}" {% if data.mode == mode %} selected {% endif %}>{{ mode }}</option>
                 {% endfor %}
             </select>
         </div>

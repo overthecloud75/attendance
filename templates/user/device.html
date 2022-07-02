@@ -19,19 +19,19 @@
         <tr>
             <td>{{ paging.offset + loop.index0 + 1}}</td>
             <td>{{ data.mac }}</td>
-            {% if (not data.owner and not data.device) %}
-            <form method="post" class="my-3">
-                {{ form.csrf_token }}
-                <input type="hidden" name="mac" value="{{ data.mac }}">
-                <td><input type="date" class="form-control" name="registerDate" value="{{ data.registerDate }}"></td>
-                <td><input type="date" class="form-control" name="endDate" value="{{ data.endDate }}"></td>
-                <td><input type="text" class="form-control" name="owner" value="{{ data.owner }}"></td>
-                <td><input type="text" class="form-control" name="device" value="{{ data.device }}"></td>
-                <td><input type="submit" class="btn btn-primary"></td>
-            </form>
-            {% else %}
             <td>{{ data.registerDate }}</td>
             <td>{{ data.endDate }}</td>
+            {% if (not data.owner and not data.device) %}
+            <form method="post" class="my-3">
+            {{ form.csrf_token }}
+            <input type="hidden" name="mac" value="{{ data.mac }}">
+            <input type="hidden" class="form-control" name="registerDate" value="{{ data.registerDate }}">
+            <input type="hidden" class="form-control" name="endDate" value="{{ data.endDate }}">
+            <td><input type="text" class="form-control" name="owner" value="{{ data.owner }}"></td>
+            <td><input type="text" class="form-control" name="device" value="{{ data.device }}"></td>
+            <td><input type="submit" class="btn btn-primary"></td>
+            </form>
+            {% else %}
             <td>{{ data.owner }}</td>
             <td>{{ data.device }}</td>
             <td></td>

@@ -9,7 +9,7 @@
             <ul class="navbar-nav">
             {% if g.user %}
                 <li class="nav-item ">
-                    <a class="nav-link" href="{{ url_for('main.logout') }}">{{ g.user.name }} (logout)</a>
+                    <a class="nav-link" href="{{ url_for('user.logout') }}">{{ g.user.name }} (logout)</a>
                 </li>
                 {% if g.user.is_admin %}
                 <li class="nav-item ">
@@ -31,10 +31,10 @@
                 {% endif %}
             {% else %}
                 <li class="nav-item ">
-                    <a class="nav-link" href="{{ url_for('main.signup') }}">signup</a>
+                    <a class="nav-link" href="{{ url_for('user.signup') }}">signup</a>
                 </li>
                 <li class="nav-item ">
-                    <a class="nav-link" href="{{ url_for('main.login') }}">login</a>
+                    <a class="nav-link" href="{{ url_for('user.login') }}">login</a>
                 </li>
             {% endif %}
                 <li class="nav-item ">

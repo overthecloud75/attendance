@@ -35,8 +35,9 @@ def create_app():
     app.config['SECRET_KEY'] = os.urandom(32)
     app.config['SESSION_COOKIE_SECURE'] = True
 
-    from views import main_views, calendar_views, board_views
+    from views import main_views, user_views, calendar_views, board_views
     app.register_blueprint(main_views.bp)
+    app.register_blueprint(user_views.bp)
     app.register_blueprint(calendar_views.bp)
     app.register_blueprint(board_views.bp)
 

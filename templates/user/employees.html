@@ -36,11 +36,7 @@
             {% else %}
                 <td>{{ data.regular }}</td>
             {% endif %}
-            {% if data.status in ['퇴사']%}
-                <td style='color:red'>{{ data.status }}</td>
-            {% else %}
-                <td>{{ data.status }}</td>
-            {% endif %}
+            <td>{{ data.mode }}</td>
         </tr>
         {% endfor %}
     {% else %}

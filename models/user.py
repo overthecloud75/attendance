@@ -22,30 +22,26 @@ class User:
         collection = db['employees']
         return collection.find_one({'email': request_data['email'], 'name': request_data['name']})
 
-    def generate_confirmation_token(self, email):
-        serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
-        return serializer.dumps(email)
-
-    def confirm_token(self, token, expiration=3600):
+    def confirm_token(self, token):
         error = None
         user_data = None
-        serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
         try:
-            email = serializer.loads(
-                token,
-                max_age=expiration
-            )
+            email = self._token_to_email(token)
             if email:
                 user_data = self.get_user({'email': email})
-                if user_data and not user_data['email_confirmed']:
-                    self.collection.update_one({'email': email}, {'$set': {'email_confirmed': True}}, upsert=True)
-                elif user_data and user_data['email_confirmed']:
-                    error = 'Account already confirmed.'
             else:
                 error = 'The confirmation link is invalid or has expired'
         except:
             error = 'The confirmation link is invalid or has expired'
         return error, user_data
+
+    def confirm_email(self, user_data):
+        error = None
+        if not user_data['email_confirmed']:
+            self.collection.update_one({'email': user_data['email']}, {'$set': {'email_confirmed': True}}, upsert=True)
+        elif user_data['email_confirmed']:
+            error = 'Account already confirmed.'
+        return error
 
     def signup(self, request_data):
         '''
@@ -71,8 +67,7 @@ class User:
                 request_data['is_admin'] = True
 
             request_data['create_time'] = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            token = self.generate_confirmation_token(request_data['email'])
-            result = self.signup_email(request_data, token=token)
+            result = self._signup_email(request_data['name'], request_data['email'])
             if result:
                 request_data['user_id'] = user_id
                 request_data['email_confirmed'] = False
@@ -90,13 +85,25 @@ class User:
             error = "비밀번호가 올바르지 않습니다."
         return error, user_data
 
-    def resend(self, email):
+    def reset_password(self, request_data):
         error = None
-        user_data = self.get_user({'email': email})
+        user_data = self.get_user({'email': request_data['email']})
+        if user_data:
+            result = self._reset_password_email(user_data['email'])
+            if not result:
+                error = 'email이 보내지지 않았습니다.'
+        else:
+            error = 'email 주소가 잘 못 되었습니다.'
+        return error
+
+    def change_password(self, request_data):
+        self.collection.update_one({'email': request_data['email']}, {'$set': {'password': request_data['password']}}, upsert=True)
+
+    def resend(self, request_data):
+        error = None
+        user_data = self.get_user({'email': request_data['email']})
         if user_data and not user_data['email_confirmed']:
-            request_data = {'name': user_data['name'], 'email': user_data['email']}
-            token = self.generate_confirmation_token(email)
-            result = self.signup_email(request_data, token=token)
+            result = self._signup_email(user_data['name'], user_data['email'])
             if not result:
                 error = 'email이 보내지지 않았습니다.'
         elif user_data and user_data['email_confirmed']:
@@ -105,15 +112,33 @@ class User:
             error = 'email 주소가 잘 못 되었습니다.'
         return error
 
-    def signup_email(self, request_data, token=None):
-        name = request_data['name']
-        email = request_data['email']
+    def _signup_email(self, name, email):
+        token = self._generate_confirmation_token(email)
         subject = '[Attendance] 안녕하세요 %s님 site 가입을 환영합니다. \n ' \
                   % (name)
         body = ' 안녕하세요 %s님 \n' \
                'Welcome! Thanks for signing up. Please follow this link to activate your account: \n' \
                '%s \n' \
-               % (name, SERVER_URL + 'confirm' + '/' + token)
+               % (name, SERVER_URL + 'user/email_confirm' + '/' + token)
         return send_email(email=email, subject=subject, body=body, include_cc=False)
+
+    def _reset_password_email(self, email):
+        token = self._generate_confirmation_token(email)
+        subject = '[Attendance] password 재설정 확인'
+        body = ' 안녕하세요 %s님 \n' \
+               'Please follow this link to reset password: \n' \
+               '%s \n' \
+               % (email, SERVER_URL + 'user/reset_password' + '/' + token)
+        return send_email(email=email, subject=subject, body=body, include_cc=False)
+
+    def _generate_confirmation_token(self, email):
+        serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        return serializer.dumps(email)
+
+    def _token_to_email(self, token, expiration=3600):
+        serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        email = serializer.loads(token, max_age=expiration)
+        return email
+
 
 

@@ -20,7 +20,7 @@ class Employee:
                     email = None
                 # 퇴사하지 않은 직원만 포함하기 위해서
                 if employee['regular'] != '퇴사':
-                    employee_info = {'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': employee['regular'], 'status': employee['status']}
+                    employee_info = {'name': employee['name'], 'employeeId': employee['employeeId'], 'email': email, 'regular': employee['regular'], 'mode': employee['mode']}
                     if 'beginDate' not in employee and 'endDate' not in employee:
                         employees_list.append(employee_info)
                     elif 'beginDate' in employee and date and date >= employee['beginDate'] and 'endDate' not in employee:

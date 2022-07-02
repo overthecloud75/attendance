@@ -23,8 +23,14 @@ class UserLoginForm(FlaskForm):
     password = PasswordField('password', validators=[DataRequired()])
 
 
-class ResendForm(FlaskForm):
+class EmailForm(FlaskForm):
     email = EmailField('email', validators=[DataRequired(), Email()])
+
+
+class PasswordResetForm(FlaskForm):
+    password1 = PasswordField('password', validators=[
+        DataRequired(), EqualTo('password2', '비밀번호가 일치하지 않습니다')])
+    password2 = PasswordField('confirm password', validators=[DataRequired()])
 
 
 class EmployeeSubmitForm(FlaskForm):
@@ -37,7 +43,7 @@ class EmployeeSubmitForm(FlaskForm):
     endDate = DateField('endDate', format='%Y-%m-%d', validators=(Optional(),))
     email = EmailField('email', validators=[Optional(), Email()])
     regular = SelectField('regular', choices=EMPLOYEE_REGULAR)
-    status = SelectField('status', choices=EMPLOYEE_MODE)
+    mode = SelectField('mode', choices=EMPLOYEE_MODE)
 
 
 class PeriodSubmitForm(FlaskForm):

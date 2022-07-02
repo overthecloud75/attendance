@@ -161,7 +161,7 @@
     - EMPLOYEES_STATUS in config.py
 
   1.9.7
-    - regular, status select field in upldate_employee.html
+    - regular, status select field in update_employee.html
 
   1.9.8
     - attend['status'] = (status, 1) -> attend['status'] = status
@@ -191,4 +191,17 @@
     - WORKING['update'] = ['상근', '병특']
 
   2.06
-    - 퇴사 : employee['mode'] -> employee['status']
+    - 퇴사 : employee['status'] -> employee['regular']
+
+ # 2022/07/02
+  2.0.7
+    - option selected in update_employee.html
+
+  2.0.8
+    - 'status' to 'mode' in employee
+
+  2.0.9
+    - reset password
+
+  2.1.0
+    - reset password link
