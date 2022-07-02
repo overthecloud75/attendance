@@ -6,7 +6,7 @@ from werkzeug.utils import redirect
 import functools
 
 from models import User, Employee
-from form import UserCreateForm, UserLoginForm, EmailForm, PasswordResetForm, EmployeeSubmitForm
+from form import UserCreateForm, UserLoginForm, EmailForm, PasswordResetForm, EmployeeSubmitForm, UserUpdateForm
 from utils import request_get, check_private_ip
 from config import EMPLOYEES_STATUS
 
@@ -73,7 +73,7 @@ def signup():
             flash(error)
             return make_response(render_template('user/signup.html', form=form), 400)
         else:
-            return redirect(url_for('user.email_unconfirmed'))
+            return redirect(url_for('user.unconfirmed', _type='email'))
     elif request.method == 'POST' and not form.validate_on_submit():
         return make_response(render_template('user/signup.html', form=form), 400)
     return render_template('user/signup.html', form=form)
@@ -95,7 +95,7 @@ def login():
                 session[key] = user_data[key]
             return redirect(url_for('main.attend'))
         elif error is None and not user_data['email_confirmed']:
-            return redirect(url_for('user.email_unconfirmed'))
+            return redirect(url_for('user.unconfirmed', _type='email'))
         else:
             flash(error)
             return make_response(render_template('user/login.html', form=form), 400)
@@ -115,6 +115,8 @@ def logout():
 def email_confirm(token):
     user = User()
     error, user_data = user.confirm_token(token)
+    form = EmailForm()
+    button_title = '이메일 다시 보내기'
     if error is None:
         error = user.confirm_email(user_data)
         if error is None:
@@ -127,15 +129,20 @@ def email_confirm(token):
             return redirect(url_for('main.attend'))
         else:
             flash(error)
-            return make_response(render_template('user/email_unconfirmed.html'), 400)
+            return make_response(render_template('user/email_send.html', **locals()), 400)
     else:
         flash(error)
-        return make_response(render_template('user/email_unconfirmed.html'), 400)
+        return make_response(render_template('user/email_send.html', **locals()), 400)
 
 
-@bp.route('/email_unconfirmed/')
-def email_unconfirmed():
-    return render_template('user/email_unconfirmed.html')
+@bp.route('/unconfirmed/<_type>')
+def unconfirmed(_type):
+    if _type == 'email':
+        return render_template('user/email_unconfirmed.html')
+    elif _type == 'password':
+        return render_template('user/password_unconfirmed.html')
+    else:
+        return redirect(url_for('main.attend'))
 
 
 @bp.route('/resend/', methods=('GET', 'POST'))
@@ -150,9 +157,9 @@ def resend():
             return redirect(url_for('user.email_unconfirmed'))
         else:
             flash(error)
-            return make_response(render_template('user/email_send.html', **locals(), form=form), 400)
+            return make_response(render_template('user/email_send.html', **locals()), 400)
     elif request.method == 'POST' and not form.validate_on_submit():
-        return make_response(render_template('user/resend.html', form=form), 400)
+        return make_response(render_template('user/email_send.html', **locals()), 400)
     return render_template('user/email_send.html', **locals())
 
 
@@ -168,7 +175,7 @@ def reset_password():
             flash(error)
             return make_response(render_template('user/email_send.html', **locals()), 400)
         else:
-            return redirect(url_for('user.password_unconfirmed'))
+            return redirect(url_for('user.unconfirmed', _type='password'))
     elif request.method == 'POST' and not form.validate_on_submit():
         return make_response(render_template('user/email_send.html', **locals()), 400)
     return render_template('user/email_send.html', **locals())
@@ -193,16 +200,11 @@ def confirm_reset_password(token):
         return render_template('user/confirm_reset_password.html', form=form)
 
 
-@bp.route('/password_unconfirmed/')
-def password_unconfirmed():
-    return render_template('user/password_unconfirmed.html')
-
-
 @bp.route('/employees/', methods=('GET',))
 @admin_required
 def employees():
     employee = Employee()
-    page, name, _, _ = request_get(request.args)
+    page, _, _, _ = request_get(request.args)
     paging, data_list = employee.get(page=page)
     return render_template('user/employees.html', **locals())
 
@@ -229,4 +231,23 @@ def update_employee():
         return redirect(url_for('user.employees'))
     data = employee.get(_id=_id)
     return render_template('user/update_employee.html', **locals())
+
+
+@bp.route('/users/', methods=('GET',))
+@admin_required
+def users():
+    user = User()
+    page, _, _, _ = request_get(request.args)
+    paging, data_list = user.get(page=page)
+    return render_template('user/users.html', **locals())
+
+
+@bp.route('/update_user/', methods=('GET',))
+@admin_required
+def update_user():
+    form = UserUpdateForm()
+    user = User()
+    _id = request.args.get('_id', '')
+    data = user.get(_id=_id)
+    return render_template('user/update_user.html', **locals())
 

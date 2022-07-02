@@ -211,3 +211,9 @@
 
   2.1.2
     - employee.get(_id)
+
+  2.1.3
+    - email_unconfirmed, password_unconfirmed -> unconfirmed/_type
+
+  2.1.4
+    - users

@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, PasswordField, DateField, SelectField
+from wtforms import StringField, TextAreaField, PasswordField, DateField, SelectField, BooleanField
 from wtforms.fields.html5 import EmailField
 from wtforms.validators import DataRequired, Optional, Length, EqualTo, Email
 from datetime import date
@@ -16,6 +16,13 @@ class UserCreateForm(FlaskForm):
     password1 = PasswordField('password', validators=[
         DataRequired(), EqualTo('password2', '비밀번호가 일치하지 않습니다')])
     password2 = PasswordField('confirm password', validators=[DataRequired()])
+
+
+class UserUpdateForm(FlaskForm):
+    name = StringField('username', validators=[DataRequired(), Length(min=2, max=5)])
+    email = EmailField('email', validators=[DataRequired(), Email()])
+    password = PasswordField('password', validators=[DataRequired()])
+    is_admin = BooleanField('is_admin', validators=[DataRequired()])
 
 
 class UserLoginForm(FlaskForm):

@@ -2,8 +2,10 @@ from werkzeug.security import check_password_hash
 import datetime
 from itsdangerous import URLSafeTimedSerializer
 from flask import current_app
+from bson.objectid import ObjectId
 
 from .db import db
+from utils import Page
 from .mail import send_email
 try:
     from mainconfig import SERVER_URL
@@ -15,9 +17,6 @@ class User:
     def __init__(self):
         self.collection = db['user']
 
-    def get_user(self, request_data):
-        return self.collection.find_one({'email': request_data['email']})
-
     def get_employee(self, request_data):
         collection = db['employees']
         return collection.find_one({'email': request_data['email'], 'name': request_data['name']})
@@ -28,7 +27,7 @@ class User:
         try:
             email = self._token_to_email(token)
             if email:
-                user_data = self.get_user({'email': email})
+                user_data = self._get_user({'email': email})
             else:
                 error = 'The confirmation link is invalid or has expired'
         except:
@@ -49,7 +48,7 @@ class User:
             2. from the second user, request_data['email'] must be in the employees data.
         '''
         error = None
-        user_data = self.get_user(request_data)
+        user_data = self._get_user(request_data)
         if user_data:
             error = '이미 존재하는 사용자입니다.'
         else:
@@ -78,7 +77,7 @@ class User:
 
     def login(self, request_data):
         error = None
-        user_data = self.get_user(request_data)
+        user_data = self._get_user(request_data)
         if not user_data:
             error = "존재하지 않는 사용자입니다."
         elif not check_password_hash(user_data['password'], request_data['password']):
@@ -87,7 +86,7 @@ class User:
 
     def reset_password(self, request_data):
         error = None
-        user_data = self.get_user({'email': request_data['email']})
+        user_data = self._get_user({'email': request_data['email']})
         if user_data:
             result = self._reset_password_email(user_data['email'])
             if not result:
@@ -101,7 +100,7 @@ class User:
 
     def resend(self, request_data):
         error = None
-        user_data = self.get_user({'email': request_data['email']})
+        user_data = self._get_user({'email': request_data['email']})
         if user_data and not user_data['email_confirmed']:
             result = self._signup_email(user_data['name'], user_data['email'])
             if not result:
@@ -111,6 +110,18 @@ class User:
         else:
             error = 'email 주소가 잘 못 되었습니다.'
         return error
+
+    def get(self, page=1, _id=''):
+        if _id:
+            user = self.collection.find_one({'_id': ObjectId(_id)})
+            return user
+        else:
+            data_list = self.collection.find(sort=[('name', 1)])
+            get_page = Page(page)
+            return get_page.paginate(data_list)
+
+    def _get_user(self, request_data):
+        return self.collection.find_one({'email': request_data['email']})
 
     def _signup_email(self, name, email):
         token = self._generate_confirmation_token(email)

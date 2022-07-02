@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container my-3">
+    <form id="submitForm" method="get" action="{{ url_for('user.update_user') }}">
+        <button type="submit" class="btn btn-primary my-3">등록</button>
+    </form>
+    <table class="table">
+    {% if data_list %}
+        <thead>
+        <tr class="table-dark">
+            <th>번호</th>
+            <th>이름</th>
+            <th>이메일</th>
+            <th>admin</th>
+            <th>email 확인</th>
+            <th>생성일</th>
+        </tr>
+        </thead>
+        {% for data in data_list %}
+        <tr>
+            <td>{{ paging.offset + loop.index0 + 1}}</td>
+            <td><a href="{{ url_for('user.update_user', _id=data._id) }}">{{ data.name }}</a></td>
+            <td>{{ data.email }}</td>
+            <td>{{ data.is_admin }}</td>
+            <td>{{ data.email_confirmed }}</td>
+            <td>{{ data.create_time }}</td>
+        </tr>
+        {% endfor %}
+    {% else %}
+        <tr>
+            <td colspan="3">users 정보가 없습니다.</td>
+        </tr>
+    {% endif %}
+    </table>
+</div>
+{% include 'paging.html' %}
+{% endblock %}
