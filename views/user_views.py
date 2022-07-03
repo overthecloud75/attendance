@@ -7,22 +7,11 @@ import functools
 
 from models import User, Employee
 from form import UserCreateForm, UserLoginForm, EmailForm, PasswordResetForm, EmployeeSubmitForm, UserUpdateForm
-from utils import request_get, check_private_ip
+from utils import request_get, check_private_ip, log_message
 from config import EMPLOYEES_STATUS
 
 # blueprint
 bp = Blueprint('user', __name__, url_prefix='/user')
-
-
-@bp.before_app_request
-def load_logged_in_user():
-    user_id = session.get('user_id')
-    if user_id is None:
-        g.user = None
-    else:
-        g.user = {}
-        for key in session:
-            g.user[key] = session[key]
 
 
 @bp.after_request

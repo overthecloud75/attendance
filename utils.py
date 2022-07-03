@@ -338,6 +338,17 @@ def check_private_ip(ip):
     return is_private_ip
 
 
+def log_message(headers):
+    referer = ''
+    if 'Referer' in headers:
+        referer = headers['Referer']
+    remote_addr = headers['X-Forwarded-For']
+    url = headers['X-Original-Url']
+    user_agent = headers['User-Agent']
+    message = remote_addr + ' - ' + referer + ' - ' + url + ' - ' + user_agent
+    return message
+
+
 
 
 

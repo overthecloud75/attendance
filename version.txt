@@ -230,3 +230,9 @@
 
   2.1.8
     - hidden -> readonly in device.html
+
+  2.1.9
+    - apply flask log
+
+  2.2.0
+    - remove load_logged_in_user in views except main_views

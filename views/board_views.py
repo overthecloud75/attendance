@@ -7,21 +7,10 @@ import functools
 
 from models import get_setting, User, Employee, Report, Device, Board
 from form import WriteSubmitForm
-from utils import request_get
+from utils import request_get, check_private_ip, log_message
 
 # blueprint
 bp = Blueprint('board', __name__, url_prefix='/board')
-
-
-@bp.before_app_request
-def load_logged_in_user():
-    user_id = session.get('user_id')
-    if user_id is None:
-        g.user = None
-    else:
-        g.user = {}
-        for key in session:
-            g.user[key] = session[key]
 
 
 @bp.after_request
@@ -51,7 +40,18 @@ def login_required(view):
     return wrapped_view
 
 
+def client_ip_check(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if 'X-Forwarded-For' in request.headers and g.user is None:
+            if not check_private_ip(request.headers['X-Forwarded-For']):
+                return redirect(url_for('user.login'))
+        return view(**kwargs)
+    return wrapped_view
+
+
 @bp.route('/')
+@client_ip_check
 def get_board():
     board = Board()
     page, _, start, end = request_get(request.args)
@@ -60,6 +60,7 @@ def get_board():
 
 
 @bp.route('/content')
+@client_ip_check
 def get_content():
     board = Board()
     create_time = request.args.get('create_time', None)
@@ -68,6 +69,7 @@ def get_content():
 
 
 @bp.route('/write', methods=('GET', 'POST'))
+@client_ip_check
 def write():
     form = WriteSubmitForm()
     board = Board()

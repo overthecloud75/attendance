@@ -6,7 +6,7 @@ import functools
 
 from models import get_setting, Report, Device
 from form import PeriodSubmitForm, DateSubmitForm, DeviceSubmitForm
-from utils import request_get, check_private_ip
+from utils import request_get, check_private_ip, log_message
 
 
 # blueprint
@@ -15,6 +15,9 @@ bp = Blueprint('main', __name__, url_prefix='/')
 
 @bp.before_app_request
 def load_logged_in_user():
+    message = log_message(request.headers)
+    current_app.logger.info(message)
+
     user_id = session.get('user_id')
     if user_id is None:
         g.user = None

@@ -4,7 +4,7 @@ import functools
 
 from models import Event
 from config import WORKING
-from utils import check_private_ip
+from utils import check_private_ip, log_message
 
 # blueprint
 bp = Blueprint('calendar', __name__, url_prefix='/calendar')

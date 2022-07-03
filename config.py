@@ -1,3 +1,4 @@
+
 # paging
 PAGE_DEFAULT = {
     'per_page': 20,
