@@ -340,9 +340,11 @@ def check_private_ip(ip):
 
 def log_message(headers):
     referer = ''
+    remote_addr = ''
     if 'Referer' in headers:
         referer = headers['Referer']
-    remote_addr = headers['X-Forwarded-For']
+    if 'X-Forwarded-For' in headers:
+        remote_addr = headers['X-Forwarded-For']
     url = headers['X-Original-Url']
     user_agent = headers['User-Agent']
     message = remote_addr + ' - ' + referer + ' - ' + url + ' - ' + user_agent

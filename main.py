@@ -11,26 +11,11 @@ import utils
 
 BASE_DIR= os.getcwd()
 LOG_DIR = 'logs'
-print(BASE_DIR)
 if os.path.exists(os.path.join(BASE_DIR, LOG_DIR)):
     pass
 else:
     os.mkdir(os.path.join(BASE_DIR, LOG_DIR))
 
-import logging
-from flask import has_request_context, request
-from flask.logging import default_handler
-
-class RequestFormatter(logging.Formatter):
-    def format(self, record):
-        if has_request_context():
-            record.url = request.url
-            record.remote_addr = request.remote_addr
-        else:
-            record.url = None
-            record.remote_addr = None
-
-        return super().format(record)
 
 def create_app():
     # https://flask.palletsprojects.com/en/2.0.x/logging/
