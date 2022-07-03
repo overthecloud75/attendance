@@ -14,8 +14,12 @@
             <input type="password" class="form-control" name="password" id="password"
                    value="{{ form.password.data or '' }}">
         </div>
-        <button type="submit" class="btn btn-primary">로그인</button>
+        <div class="my-3">
+            <button type="submit" class="btn btn-primary">로그인</button>
+        </div>
     </form>
-    <div class="my-3"><a href="{{ url_for('user.reset_password') }}">비밀번호 변경하기</a></div>
+    <div class="my-3">
+        <a href="{{ url_for('user.reset_password') }}">비밀번호 변경하기</a>
+    </div>
 </div>
 {% endblock %}

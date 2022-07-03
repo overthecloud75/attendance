@@ -6,7 +6,7 @@ from .report import Report
 from .event import Event
 from .board import Board
 
-from config import USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, EMAIL_NOTICE_BASE, WORKING
+from config import USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, EMAIL_NOTICE_BASE, WORKING, EMPLOYEES_STATUS
 try:
     from mainconfig import ACCOUNT
 except Exception as e:
@@ -23,5 +23,5 @@ except Exception as e:
 
 
 def get_setting():
-    return USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, ACCOUNT, CC, WORKING
+    return USE_WIFI_ATTENDANCE, USE_NOTICE_EMAIL, ACCOUNT, CC, WORKING, EMPLOYEES_STATUS
 

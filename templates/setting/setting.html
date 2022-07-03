@@ -33,6 +33,12 @@
             <td>{{ working[key] }}</td>
         </tr>
         {% endfor %}
+        {% for key in employees_status %}
+        <tr>
+            <td>{{ key }}</td>
+            <td>{{ employees_status[key] }}</td>
+        </tr>
+        {% endfor %}
     </table>
 </div>
 {% endblock %}

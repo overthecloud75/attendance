@@ -21,8 +21,7 @@ class UserCreateForm(FlaskForm):
 class UserUpdateForm(FlaskForm):
     name = StringField('username', validators=[DataRequired(), Length(min=2, max=5)])
     email = EmailField('email', validators=[DataRequired(), Email()])
-    password = PasswordField('password', validators=[DataRequired()])
-    is_admin = BooleanField('is_admin', validators=[DataRequired()])
+    is_admin = BooleanField('is_admin', validators=[Optional()])
 
 
 class UserLoginForm(FlaskForm):
@@ -45,7 +44,7 @@ class EmployeeSubmitForm(FlaskForm):
     name = StringField('name', validators=[DataRequired(), Length(min=2, max=5)])
     department = StringField('department', validators=[DataRequired(), Length(min=2, max=10)])
     rank = StringField('rank', validators=[DataRequired(), Length(min=2, max=10)])
-    employeeId = StringField('employeeId', validators=[Optional(), Length(min=1, max=4)])
+    employeeId = StringField('employeeId', validators=[DataRequired(), Length(min=1, max=4)])
     beginDate = DateField('beginDate', format='%Y-%m-%d', validators=(Optional(),))
     endDate = DateField('endDate', format='%Y-%m-%d', validators=(Optional(),))
     email = EmailField('email', validators=[Optional(), Email()])

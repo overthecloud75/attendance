@@ -8,6 +8,7 @@ from models import get_setting, Report, Device
 from form import PeriodSubmitForm, DateSubmitForm, DeviceSubmitForm
 from utils import request_get, check_private_ip
 
+
 # blueprint
 bp = Blueprint('main', __name__, url_prefix='/')
 
@@ -68,7 +69,7 @@ def index():
 @bp.route('/setting/', methods=('GET', 'POST'))
 @admin_required
 def setting():
-    use_wifi_attendance, use_notice_email, account, cc, working = get_setting()
+    use_wifi_attendance, use_notice_email, account, cc, working, employees_status = get_setting()
     return render_template('setting/setting.html', **locals())
 
 

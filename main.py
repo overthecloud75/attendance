@@ -84,7 +84,7 @@ if __name__ == '__main__':
     app = create_app()
     save_db()
 
-    use_wifi_attendance, _, _, _, _ = get_setting()
+    use_wifi_attendance, _, _, _, _, _ = get_setting()
 
     if use_wifi_attendance:
         th = threading.Thread(target=check_mac)

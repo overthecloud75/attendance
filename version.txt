@@ -217,3 +217,16 @@
 
   2.1.4
     - users
+
+  # 2022/07/03
+  2.1.5
+    - <div class="my-3"> in submit button
+
+  2.1.6
+    - create user
+
+  2.1.7
+    - employees_status in setting.html
+
+  2.1.8
+    - hidden -> readonly in device.html

@@ -14,17 +14,14 @@
             <input type="email" class="form-control" name="email" id="email"
                    value="{{ data.email or '' }}">
         </div>
-        <div class="form-group my-3">
-            <label for="password">비밀번호</label>
-            <input type="password" class="form-control" name="password" id="password"
-                   value="{{ data.password or '' }}">
+        <div class="form-check my-3">
+            <input type="checkbox" class="form-check-input" name="is_admin" id="is_admin"
+                   {% if data.is_admin %} checked {% endif %}>
+            <label class="form-check-label" for="is_admin">Is_admin</label>
         </div>
-        <div class="form-group my-3">
-            <label for="is_admin">is_admin</label>
-            <input type="text" class="form-control" name="is_admin" id="is_admin"
-                   value="{{ data.is_admin or '' }}">
+        <div class="my-3">
+            <button type="submit" class="btn btn-primary">등록</button>
         </div>
-        <button type="submit" class="btn btn-primary">등록</button>
     </form>
 </div>
 {% endblock %}

@@ -41,8 +41,5 @@ class Employee:
             return get_page.paginate(data_list)
 
     def post(self, request_data):
-        if 'employeeId' not in request_data:
-            data = self.collection.find_one(sort=[('employeeId', -1)])
-            request_data['employeeId'] = data['employeeId'] + 1
-        self.collection.update_one({'name': request_data['name'], 'employeeId': request_data['employeeId']},
+        self.collection.update_one({'employeeId': request_data['employeeId']},
                                    {'$set': request_data}, upsert=True)

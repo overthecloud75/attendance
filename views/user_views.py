@@ -75,8 +75,8 @@ def signup():
         else:
             return redirect(url_for('user.unconfirmed', _type='email'))
     elif request.method == 'POST' and not form.validate_on_submit():
-        return make_response(render_template('user/signup.html', form=form), 400)
-    return render_template('user/signup.html', form=form)
+        return make_response(render_template('user/signup.html', **locals()), 400)
+    return render_template('user/signup.html', **locals())
 
 
 @bp.route('/login/', methods=('GET', 'POST'))
@@ -98,10 +98,10 @@ def login():
             return redirect(url_for('user.unconfirmed', _type='email'))
         else:
             flash(error)
-            return make_response(render_template('user/login.html', form=form), 400)
+            return make_response(render_template('user/login.html', **locals()), 400)
     elif request.method == 'POST' and not form.validate_on_submit():
-        return make_response(render_template('user/login.html', form=form), 400)
-    return render_template('user/login.html', form=form)
+        return make_response(render_template('user/login.html', **locals()), 400)
+    return render_template('user/login.html', **locals())
 
 
 @bp.route('/logout/')
@@ -196,8 +196,8 @@ def confirm_reset_password(token):
             user.change_password(user_data)
             return redirect(url_for('user.login'))
         elif request.method == 'POST' and not form.validate_on_submit():
-            return make_response(render_template('user/confirm_reset_password.html', form=form), 400)
-        return render_template('user/confirm_reset_password.html', form=form)
+            return make_response(render_template('user/confirm_reset_password.html', **locals()), 400)
+        return render_template('user/confirm_reset_password.html', **locals())
 
 
 @bp.route('/employees/', methods=('GET',))
@@ -215,7 +215,6 @@ def update_employee():
     form = EmployeeSubmitForm()
     employee = Employee()
     employees_status = EMPLOYEES_STATUS
-    _id = request.args.get('_id', '')
     if request.method == 'POST' and form.validate_on_submit():
         request_data = {'name': form.name.data, 'department': form.department.data, 'rank': form.rank.data,
                         'regular': form.regular.data, 'mode': form.mode.data}
@@ -229,6 +228,7 @@ def update_employee():
             request_data['email'] = form.email.data
         employee.post(request_data)
         return redirect(url_for('user.employees'))
+    _id = request.args.get('_id', '')
     data = employee.get(_id=_id)
     return render_template('user/update_employee.html', **locals())
 
@@ -242,11 +242,19 @@ def users():
     return render_template('user/users.html', **locals())
 
 
-@bp.route('/update_user/', methods=('GET',))
+@bp.route('/update_user/', methods=('GET', 'POST'))
 @admin_required
 def update_user():
     form = UserUpdateForm()
     user = User()
+    if request.method == 'POST' and form.validate_on_submit():
+        request_data = {'name': form.name.data, 'email': form.email.data, 'is_admin': form.is_admin.data}
+        error = user.post(request_data)
+        if error:
+            flash(error)
+            return make_response(render_template('user/update_user.html', **locals()), 400)
+        else:
+            return redirect(url_for('user.users'))
     _id = request.args.get('_id', '')
     data = user.get(_id=_id)
     return render_template('user/update_user.html', **locals())

@@ -9,7 +9,9 @@
             <input type="email" class="form-control" name="email" id="email"
                    value="{{ form.email.data or '' }}">
         </div>
-        <button type="submit" class="btn btn-primary">{{ button_title }}</button>
+        <div class="my-3">
+            <button type="submit" class="btn btn-primary">{{ button_title }}</button>
+        </div>
     </form>
 </div>
 {% endblock %}

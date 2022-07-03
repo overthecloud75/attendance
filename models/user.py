@@ -1,4 +1,4 @@
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 import datetime
 from itsdangerous import URLSafeTimedSerializer
 from flask import current_app
@@ -66,13 +66,17 @@ class User:
                 request_data['is_admin'] = True
 
             request_data['create_time'] = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            result = self._signup_email(request_data['name'], request_data['email'])
-            if result:
-                request_data['user_id'] = user_id
-                request_data['email_confirmed'] = False
+            request_data['user_id'] = user_id
+            if user_id == 1:
+                request_data['email_confirmed'] = True
                 self.collection.insert(request_data)
             else:
-                error = 'email이 보내지지 않았습니다.'
+                result = self._signup_email(request_data['name'], request_data['email'])
+                if result:
+                    request_data['email_confirmed'] = False
+                    self.collection.insert(request_data)
+                else:
+                    error = 'email이 보내지지 않았습니다.'
         return error
 
     def login(self, request_data):
@@ -108,7 +112,7 @@ class User:
         elif user_data and user_data['email_confirmed']:
             error = 'Account already confirmed.'
         else:
-            error = 'email 주소가 잘 못 되었습니다.'
+            error = 'email이 보내지지 않았습니다.'
         return error
 
     def get(self, page=1, _id=''):
@@ -120,15 +124,33 @@ class User:
             get_page = Page(page)
             return get_page.paginate(data_list)
 
+    def post(self, request_data):
+        error = None
+        user_data = self._get_user(request_data)
+        if user_data:
+           self.collection.update_one({'email': request_data['email']}, {'$set': request_data}, upsert=True)
+        else:
+            result = self._create_id_email(request_data['name'], request_data['email'])
+            if result:
+                user_data = self.collection.find_one(sort=[('create_time', -1)])
+                request_data['user_id'] = user_data['user_id'] + 1
+                request_data['password'] = generate_password_hash('123456')
+                request_data['email_confirmed'] = True
+                request_data['create_time'] = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                self.collection.update_one({'email': request_data['email']}, {'$set': request_data}, upsert=True)
+            else:
+                error = 'email이 보내지지 않았습니다.'
+        return error
+
     def _get_user(self, request_data):
         return self.collection.find_one({'email': request_data['email']})
 
     def _signup_email(self, name, email):
         token = self._generate_confirmation_token(email)
-        subject = '[Attendance] 안녕하세요 %s님 site 가입을 환영합니다. \n ' \
-                  % (name)
-        body = ' 안녕하세요 %s님 \n' \
-               'Welcome! Thanks for signing up. Please follow this link to activate your account: \n' \
+        subject = '[Attendance] 안녕하세요 %s님 site 가입을 환영합니다. \n '% (name)
+        body = ' 안녕하세요 %s님 \n\n' \
+               'Welcome! Thanks for signing up. \n' \
+               'Please follow this link to activate your account: \n' \
                '%s \n' \
                % (name, SERVER_URL + 'user/email_confirm' + '/' + token)
         return send_email(email=email, subject=subject, body=body, include_cc=False)
@@ -136,10 +158,19 @@ class User:
     def _reset_password_email(self, email):
         token = self._generate_confirmation_token(email)
         subject = '[Attendance] password 재설정 확인'
-        body = ' 안녕하세요 %s님 \n' \
+        body = ' 안녕하세요 %s님 \n\n' \
                'Please follow this link to reset password: \n' \
                '%s \n' \
                % (email, SERVER_URL + 'user/reset_password' + '/' + token)
+        return send_email(email=email, subject=subject, body=body, include_cc=False)
+
+    def _create_id_email(self, name, email):
+        subject = '[Attendance] 안녕하세요 %s님 id 생성이 되었습니다.. \n '% (name)
+        body = ' 안녕하세요 %s님 \n\n' \
+               'id가 생성이 되었습니다. \n' \
+               '다음의 site 에서 password 변경 후 사용해 주세요.: \n' \
+               '%s \n' \
+               % (name, SERVER_URL + 'user/reset_password' + '/')
         return send_email(email=email, subject=subject, body=body, include_cc=False)
 
     def _generate_confirmation_token(self, email):
