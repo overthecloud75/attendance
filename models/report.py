@@ -66,22 +66,16 @@ class Report:
                          'date': data['date'], 'begin': begin, 'end': end, 'reason': reason})
             return attend_list
         else:
-            if start and end:
-                if name:
-                    employee = self.employee.get(name=name)
-                    if employee and employee['regular'] == '병특' and ALTERNATIVE_MILITARY_ATTEND_MODE:
-                        data_list = self._altertative_military_attend(employee, start, end)
-                    else:
-                        data_list = self.collection.find({'date': {'$gte': start, '$lte': end}, 'name': name},
-                                                         sort=[('name', 1), ('date', -1)])
+            if name:
+                employee = self.employee.get(name=name)
+                if employee and employee['regular'] == '병특' and ALTERNATIVE_MILITARY_ATTEND_MODE:
+                    data_list = self._altertative_military_attend(employee, start, end)
                 else:
-                    data_list = self.collection.find({'date': {'$gte': start, '$lte': end}},
+                    data_list = self.collection.find({'date': {'$gte': start, '$lte': end}, 'name': name},
                                                      sort=[('name', 1), ('date', -1)])
             else:
-                if name:
-                    data_list = self.collection.find({'date': self.today, 'name': name}, sort=[('date', -1)])
-                else:
-                    data_list = self.collection.find({'date': self.today}, sort=[('name', 1)])
+                data_list = self.collection.find({'date': {'$gte': start, '$lte': end}},
+                                                 sort=[('name', 1), ('date', -1)])
 
             get_page = Page(page)
             paging, data_list = get_page.paginate(data_list)
@@ -440,7 +434,7 @@ class Report:
         name = employee['name']
         employee_id = employee['employeeId']
         email = employee['email']
-        print('send_notice_email', self.today, name)
+        regular = employee['regular']
 
         report = self.collection.find_one({'name': name, 'employeeId': employee_id, 'date': {"$lt": self.today}}, sort=[('date', -1)])
         report_date = report['date']
@@ -449,7 +443,8 @@ class Report:
             begin = begin[0:2] + ':' + begin[2:4] + ':' + begin[4:6]
         status = report['status']
         working_hours = report['workingHours']
-        if status in EMAIL_NOTICE_BASE:
+        if status in EMAIL_NOTICE_BASE and regular in WORKING['update']:
+            print('send_notice_email', self.today, name)
             # https://techexpert.tips/ko/python-ko/파이썬-office-365를-사용하여-이메일-보내기
             # https://nowonbun.tistory.com/684 (참조자)
             body = '\n' \

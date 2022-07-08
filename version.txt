@@ -236,3 +236,7 @@
 
   2.2.0
     - remove load_logged_in_user in views except main_views
+
+  # 2022/07/08
+  2.2.1
+    -  if start is None: start = form.start.data.strftime('%Y-%m-%d') in attend

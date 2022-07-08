@@ -99,6 +99,8 @@ def wifi_attend():
     report = Report()
     form = DateSubmitForm()
     page, _, start, _ = request_get(request.args)
+    if start is None:
+        start = form.start.data.strftime('%Y-%m-%d')
     paging, data_list = report.wifi_attend(page=page, date=start)
     return render_template('setting/wifi_attend.html', **locals())
 
@@ -126,6 +128,11 @@ def attend():
             return send_file(buf, attachment_filename=filename, as_attachment=True, mimetype='text/csv')
     form = PeriodSubmitForm()
     page, name, start, end = request_get(request.args)
+    if start is None:
+        start = form.start.data.strftime('%Y-%m-%d')
+    if end is None:
+        end = form.end.data.strftime('%Y-%m-%d')
+    print('formdata', 'form', form.start.data, form.end.data, 'start', start, end)
     paging, today, data_list, summary = report.attend(page=page, name=name, start=start, end=end)
     return render_template('report/attendance.html', **locals())
 
@@ -154,4 +161,6 @@ def summarize():
     page, _, start, end = request_get(request.args)
     paging, data_list = report.summary(page=page, start=start, end=end)
     return render_template('report/summary.html', **locals())
+
+
 

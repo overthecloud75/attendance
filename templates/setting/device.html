@@ -22,13 +22,15 @@
             {{ form.csrf_token }}
             <td><input type="text" class="form-control" name="mac" value="{{ data.mac }}" readonly></td>
             <td><input type="text" class="form-control" name="registerDate" value="{{ data.registerDate }}"
-                       {% if (data.registerDate) %} readonly {% endif %}></td>
+                       {% if data.registerDate %} readonly {% endif %}></td>
             <td> <input type="text" class="form-control" name="endDate" value="{{ data.endDate }}" readonly ></td>
             <td><input type="text" class="form-control" name="owner" value="{{ data.owner }}"
-                       {% if (data.owner) %} readonly {% endif %}></td>
+                       {% if data.owner %} readonly {% endif %}></td>
             <td><input type="text" class="form-control" name="device" value="{{ data.device }}"
-                       {% if (data.device) %} readonly {% endif %}></td>
+                       {% if data.device %} readonly {% endif %}></td>
+             {% if not data.owner and not data.device %}
             <td><input type="submit" class="btn btn-primary"></td>
+            {% endif %}
             </form>
         </tr>
         {% endfor %}
