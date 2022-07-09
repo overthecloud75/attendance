@@ -3,6 +3,7 @@ from io import BytesIO, StringIO
 from csvalidate import ValidatedWriter
 from werkzeug.utils import redirect
 import functools
+from datetime import date
 
 from models import get_setting, Report, Device
 from form import PeriodSubmitForm, DateSubmitForm, DeviceSubmitForm
@@ -64,6 +65,16 @@ def client_ip_check(view):
     return wrapped_view
 
 
+def date_form(start, end):
+    form = PeriodSubmitForm()
+    start = start or date.today().strftime('%Y-%m-%d')
+    end = end or date.today().strftime('%Y-%m-%d')
+
+    form.start.data = start
+    form.end.data = end
+    return form, start, end
+
+
 @bp.route('/')
 def index():
     return redirect(url_for('main.attend'))
@@ -97,11 +108,10 @@ def get_device():
 @bp.route('/wifi_attend/', methods=('GET', ))
 def wifi_attend():
     report = Report()
-    form = DateSubmitForm()
-    page, _, start, _ = request_get(request.args)
-    if start is None:
-        start = form.start.data.strftime('%Y-%m-%d')
-    paging, data_list = report.wifi_attend(page=page, date=start)
+    page, _, start, end = request_get(request.args)
+    form, start, end = date_form(start, end)
+
+    paging, data_list = report.wifi_attend(page=page, start=start, end=end)
     return render_template('setting/wifi_attend.html', **locals())
 
 
@@ -126,13 +136,10 @@ def attend():
             buf.seek(0)
             buf = BytesIO(buf.read().encode(encoding))
             return send_file(buf, attachment_filename=filename, as_attachment=True, mimetype='text/csv')
-    form = PeriodSubmitForm()
+
     page, name, start, end = request_get(request.args)
-    if start is None:
-        start = form.start.data.strftime('%Y-%m-%d')
-    if end is None:
-        end = form.end.data.strftime('%Y-%m-%d')
-    print('formdata', 'form', form.start.data, form.end.data, 'start', start, end)
+    form, start, end = date_form(start, end)
+
     paging, today, data_list, summary = report.attend(page=page, name=name, start=start, end=end)
     return render_template('report/attendance.html', **locals())
 
@@ -157,8 +164,9 @@ def summarize():
             buf.seek(0)
             buf = BytesIO(buf.read().encode(encoding))
             return send_file(buf, attachment_filename=filename, as_attachment=True, mimetype='text/csv')
-    form = PeriodSubmitForm()
     page, _, start, end = request_get(request.args)
+    form, start, end = date_form(start, end)
+
     paging, data_list = report.summary(page=page, start=start, end=end)
     return render_template('report/summary.html', **locals())
 

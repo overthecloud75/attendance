@@ -3,18 +3,7 @@
 
 <div class="container my-3">
     {% include 'search.html' %}
-    <h1>{{ start }} ~ {{ end }}</h1>
-    <div class="my-3">
-        <form method="get" action="">
-            {% include "form_errors.html" %}
-            <div class="row">
-                <input type="hidden" class="form-control" name="name" value="{{ name or '' }}">
-                <div class="col"><input type="date" class="form-control" name="start" value="{{ start }}"></div>
-                <div class="col"><input type="date" class="form-control" name="end" value="{{ end }}"></div>
-                <div class="col"><button type="submit" class="btn btn-primary">기간</button></div>
-            </div>
-        </form>
-    </div>
+    {% include 'date_form.html' %}
     <table class="table">
     {% if data_list %}
         <thead>

@@ -12,15 +12,12 @@ class Device:
         self.employee = Employee()
 
     def get(self, page=1, date=None):
-        if date is None and page=='all':
+        if date is None:
             device_list = self.collection.find()
         else:
-            if date is None:
-                _, today, _ = check_time()
-                date = today
             date = get_date_several_months_before(date, delta=2)
             device_list = self.collection.find({'endDate': {"$gt": date}})
-        if page == 'all':
+        if page=='all':
             return device_list
         else:
             get_page = Page(page)

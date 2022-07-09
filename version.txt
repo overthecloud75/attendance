@@ -240,3 +240,10 @@
   # 2022/07/08
   2.2.1
     -  if start is None: start = form.start.data.strftime('%Y-%m-%d') in attend
+
+  # 2022/07/09
+  2.2.2
+    - date.today() : form.py -> main_view.py
+
+  2.2.3
+    - date_form

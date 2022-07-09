@@ -195,28 +195,10 @@ class Report:
             # 지문 인식 출퇴근 기록
             attend, overnight_employees = self.fingerprint_attend(attend, date, hour)
 
-            # wifi device
-            devices = Device()
-            device_dict = devices.by_employees(date=date)
+            # 지문 인식기 + wifi 출퇴근 기록
+            attend = self._fingerprint_or_wifi(attend, date)
 
-            # wifi 와 지문 인식기 근태 비교
-            for name in device_dict:
-                begin, end = self.mac.get(device_dict[name], date=date)
-                if begin:
-                    if name in attend:
-                        if attend[name]['begin']:
-                            if int(begin) < int(attend[name]['begin']):
-                                attend[name]['begin'] = begin
-                        else:
-                            attend[name]['begin'] = begin
-                        if attend[name]['end']:
-                            if int(end) > int(attend[name]['end']):
-                                attend[name]['end'] = end
-                        else:
-                            attend[name]['end'] = end
-                    else:
-                        attend[name] = {'date': date, 'name': name, 'begin': begin, 'end': end, 'reason': None}
-
+            # attend
             for name in attend:
                 if name in schedule_dict:
                     status = schedule_dict[name]
@@ -324,24 +306,46 @@ class Report:
                         overnight_employees.append(employee_id)
         return attend, overnight_employees
 
-    def wifi_attend(self, page=1, date=None):
-        if date is None:
-            date = self.today
+    def wifi_attend(self, page=1, start=None, end=None):
+        wifi_list = []
         devices = Device()
-        device_list = devices.get(page='all', date=date)
+        device_list = devices.get(page='all', date=start)
         device_dict = {}
         for device in device_list:
             device_dict[device['mac']] = device
 
-        paging, mac_list = self.mac.get_device_list(page=page, date=date)
+        paging, mac_list = self.mac.get_device_list(page=page, date=start)
 
-        wifi_list = []
         for mac in mac_list:
-            begin, end = self.mac.get([mac], date=date)
+            begin, end = self.mac.get([mac], date=start)
             device = device_dict[mac]
             if begin:
-                wifi_list.append({'mac': mac, 'date': date, 'begin': begin, 'end': end, 'owner': device['owner'], 'device': device['device'],})
+                wifi_list.append({'mac': mac, 'date': start, 'begin': begin, 'end': end, 'owner': device['owner'], 'device': device['device'],})
         return paging, wifi_list
+
+    def _fingerprint_or_wifi(self, attend, date):
+        # wifi device
+        devices = Device()
+        device_dict = devices.by_employees(date=date)
+
+        # wifi 와 지문 인식기 근태 비교
+        for name in device_dict:
+            begin, end = self.mac.get(device_dict[name], date=date)
+            if begin:
+                if name in attend:
+                    if attend[name]['begin']:
+                        if int(begin) < int(attend[name]['begin']):
+                            attend[name]['begin'] = begin
+                    else:
+                        attend[name]['begin'] = begin
+                    if attend[name]['end']:
+                        if int(end) > int(attend[name]['end']):
+                            attend[name]['end'] = end
+                    else:
+                        attend[name]['end'] = end
+                else:
+                    attend[name] = {'date': date, 'name': name, 'begin': begin, 'end': end, 'reason': None}
+        return attend
 
     def _get_summary(self, summary):
         summary['totalWorkingDay'] = summary['totalDay']
