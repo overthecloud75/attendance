@@ -2,9 +2,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import datetime
 from itsdangerous import URLSafeTimedSerializer
 from flask import current_app
-from bson.objectid import ObjectId
 
-from .db import db
+from .db import BasicModel
 from utils import Page
 from .mail import send_email
 try:
@@ -13,9 +12,9 @@ except Exception as e:
     SERVER_URL = 'http://127.0.0.1:5000/'
 
 
-class User:
+class User(BasicModel):
     def __init__(self):
-        self.collection = db['user']
+        super().__init__(model='user')
 
     def get_employee(self, request_data):
         collection = db['employees']
@@ -115,14 +114,10 @@ class User:
             error = 'email이 보내지지 않았습니다.'
         return error
 
-    def get(self, page=1, _id=''):
-        if _id:
-            user = self.collection.find_one({'_id': ObjectId(_id)})
-            return user
-        else:
-            data_list = self.collection.find(sort=[('name', 1)])
-            get_page = Page(page)
-            return get_page.paginate(data_list)
+    def get(self, page=1):
+        data_list = self.collection.find(sort=[('name', 1)])
+        get_page = Page(page)
+        return get_page.paginate(data_list)
 
     def post(self, request_data):
         error = None

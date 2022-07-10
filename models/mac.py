@@ -1,11 +1,11 @@
-from .db import db
+from .db import BasicModel
 from utils import Page
 from config import WORKING
 
 
-class Mac:
+class Mac(BasicModel):
     def __init__(self):
-        self.collection = db['mac']
+        super().__init__(model='mac')
 
     def get(self, mac_list, date=None):
         begin = None

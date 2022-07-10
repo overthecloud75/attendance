@@ -1,11 +1,11 @@
-from .db import db
+from .db import BasicModel
 from .report import Report
 from utils import request_event
 
 
-class Event:
+class Event(BasicModel):
     def __init__(self):
-        self.collection = db['event']
+        super().__init__(model='event')
 
     def get(self, args):
         _, start, end, _ = request_event(args)

@@ -2,12 +2,12 @@ from flask import Blueprint, request, render_template, url_for, current_app, ses
 from io import BytesIO, StringIO
 from csvalidate import ValidatedWriter
 from werkzeug.utils import redirect
-import functools
 from datetime import date
 
 from models import get_setting, Report, Device
-from form import PeriodSubmitForm, DateSubmitForm, DeviceSubmitForm
-from utils import request_get, check_private_ip, log_message
+from form import PeriodSubmitForm, DeviceSubmitForm
+from utils import request_get, log_message
+from .utils import *
 
 
 # blueprint
@@ -35,36 +35,6 @@ def add_security_headers(resp):
     return resp
 
 
-def admin_required(view):
-    @functools.wraps(view)
-    def wrapped_view(**kwargs):
-        if g.user is None:
-            return redirect(url_for('user.login'))
-        elif not g.user['is_admin']:
-            return redirect(url_for('main.attend'))
-        return view(**kwargs)
-    return wrapped_view
-
-
-def login_required(view):
-    @functools.wraps(view)
-    def wrapped_view(**kwargs):
-        if g.user is None:
-            return redirect(url_for('user.login'))
-        return view(**kwargs)
-    return wrapped_view
-
-
-def client_ip_check(view):
-    @functools.wraps(view)
-    def wrapped_view(**kwargs):
-        if 'X-Forwarded-For' in request.headers and g.user is None:
-            if not check_private_ip(request.headers['X-Forwarded-For']):
-                return redirect(url_for('user.login'))
-        return view(**kwargs)
-    return wrapped_view
-
-
 def date_form(start, end):
     form = PeriodSubmitForm()
     start = start or date.today().strftime('%Y-%m-%d')
@@ -87,9 +57,19 @@ def setting():
     return render_template('setting/setting.html', **locals())
 
 
-@bp.route('/device/', methods=('GET', 'POST'))
+@bp.route('/device/', methods=('GET', ))
 @admin_required
-def get_device():
+def device():
+    form = DeviceSubmitForm()
+    devices = Device()
+    page, _, _, _ = request_get(request.args)
+    paging, data_list = devices.get(page=page, date=date.today().strftime('%Y-%m-%d'))
+    return render_template('setting/device.html', **locals())
+
+
+@bp.route('/update_device/', methods=('GET', 'POST'))
+@admin_required
+def update_device():
     form = DeviceSubmitForm()
     devices = Device()
     if request.method == 'POST' and form.validate_on_submit():
@@ -98,11 +78,11 @@ def get_device():
             request_data['registerDate'] = form.registerDate.data.strftime('%Y-%m-%d')
         if form.endDate.data:
             request_data['endDate'] = form.endDate.data.strftime('%Y-%m-%d')
-
         devices.post(request_data)
-    page, _, _, _ = request_get(request.args)
-    paging, data_list = devices.get(page=page)
-    return render_template('setting/device.html', **locals())
+        return redirect(url_for('main.device'))
+    _id = request.args.get('_id', '')
+    data = devices.get_by_id(_id=_id)
+    return render_template('setting/update_device.html', **locals())
 
 
 @bp.route('/wifi_attend/', methods=('GET', ))

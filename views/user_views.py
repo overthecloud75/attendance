@@ -3,11 +3,11 @@ from io import BytesIO, StringIO
 from csvalidate import ValidatedWriter
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import redirect
-import functools
 
 from models import User, Employee
 from form import UserCreateForm, UserLoginForm, EmailForm, PasswordResetForm, EmployeeSubmitForm, UserUpdateForm
-from utils import request_get, check_private_ip, log_message
+from utils import request_get
+from .utils import *
 from config import EMPLOYEES_STATUS
 
 # blueprint
@@ -19,36 +19,6 @@ def add_security_headers(resp):
     # https://flask.palletsprojects.com/en/2.1.x/security/
     resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
     return resp
-
-
-def admin_required(view):
-    @functools.wraps(view)
-    def wrapped_view(**kwargs):
-        if g.user is None:
-            return redirect(url_for('user.login'))
-        elif not g.user['is_admin']:
-            return redirect(url_for('main.attend'))
-        return view(**kwargs)
-    return wrapped_view
-
-
-def login_required(view):
-    @functools.wraps(view)
-    def wrapped_view(**kwargs):
-        if g.user is None:
-            return redirect(url_for('user.login'))
-        return view(**kwargs)
-    return wrapped_view
-
-
-def client_ip_check(view):
-    @functools.wraps(view)
-    def wrapped_view(**kwargs):
-        if 'X-Forwarded-For' in request.headers and g.user is None:
-            if not check_private_ip(request.headers['X-Forwarded-For']):
-                return redirect(url_for('user.login'))
-        return view(**kwargs)
-    return wrapped_view
 
 
 @bp.route('/signup/', methods=('GET', 'POST'))
@@ -218,7 +188,7 @@ def update_employee():
         employee.post(request_data)
         return redirect(url_for('user.employees'))
     _id = request.args.get('_id', '')
-    data = employee.get(_id=_id)
+    data = employee.get_by_id(_id=_id)
     return render_template('user/update_employee.html', **locals())
 
 
@@ -245,6 +215,6 @@ def update_user():
         else:
             return redirect(url_for('user.users'))
     _id = request.args.get('_id', '')
-    data = user.get(_id=_id)
+    data = user.get_by_id(_id=_id)
     return render_template('user/update_user.html', **locals())
 

@@ -56,10 +56,6 @@ class PeriodSubmitForm(FlaskForm):
     end = DateField('Pick a Date', format='%Y-%m-%d')
 
 
-class DateSubmitForm(FlaskForm):
-    start = DateField('Pick a Date', format='%Y-%m-%d')
-
-
 class DeviceSubmitForm(FlaskForm):
     mac = StringField('mac', validators=[DataRequired(), Length(min=2, max=30)])
     registerDate = DateField('registerDate', format='%Y-%m-%d', validators=(Optional(),))

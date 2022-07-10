@@ -2,8 +2,8 @@ import pyodbc
 from collections import OrderedDict
 import random
 
-from utils import check_time, check_holiday, get_delta_day, date_range, Page #, request_event, request_delta, request_get, get_date_several_months_before
-from .db import db
+from utils import check_time, check_holiday, get_delta_day, date_range, Page
+from .db import BasicModel
 from .mail import send_email
 from .employee import Employee
 from .mac import Mac
@@ -24,9 +24,9 @@ conn = pyodbc.connect(r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=c:
 cursor = conn.cursor()
 
 
-class Report:
+class Report(BasicModel):
     def __init__(self):
-        self.collection = db['report']
+        super().__init__(model='report')
         self.employee = Employee()
         self.mac = Mac()
 

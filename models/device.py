@@ -1,14 +1,14 @@
 import datetime
 
-from .db import db
+from .db import BasicModel
 from .employee import Employee
 from utils import check_time, get_date_several_months_before, Page
 
 
 # Device
-class Device:
+class Device(BasicModel):
     def __init__(self):
-        self.collection = db['device']
+        super().__init__(model='device')
         self.employee = Employee()
 
     def get(self, page=1, date=None):

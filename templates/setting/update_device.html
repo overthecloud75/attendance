@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-3">
+    <form method="post" class="my-3">
+        {{ form.csrf_token }}
+        {% include "form_errors.html" %}
+            <div class="form-group"><label for="mac">mac</label>
+            <input type="text" class="form-control" name="mac" id="mac" value="{{ data.mac }}" readonly>
+         </div>
+        <div class="form-group">
+            <label for="registerDate">등록일</label>
+            <input type="text" class="form-control" name="registerDate" id="registerDate" value="{{ data.registerDate or ''}}" readonly>
+        </div>
+        <div class="form-group">
+            <label for="endDate">최종 확인일</label>
+            <input type="text" class="form-control" name="endDate" id="endDate" value="{{ data.endDate or ''}}" readonly >
+        </div>
+        <div class="form-group">
+            <label for="owner">owner</label>
+            <input type="text" class="form-control" name="owner" id="owner" value="{{ data.owner or ''}}">
+        </div>
+        <div class="form-group">
+            <label for="device">device</label>
+            <input type="text" class="form-control" name="device" id="device" value="{{ data.device or ''}}">
+        </div>
+        <div class="my-3">
+            <button type="submit" class="btn btn-primary">수정</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

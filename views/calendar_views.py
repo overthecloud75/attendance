@@ -1,10 +1,10 @@
 from flask import Blueprint, request, render_template, url_for, current_app, session, g, flash, jsonify
 from werkzeug.utils import redirect
-import functools
 
 from models import Event
 from config import WORKING
-from utils import check_private_ip, log_message
+from .utils import *
+
 
 # blueprint
 bp = Blueprint('calendar', __name__, url_prefix='/calendar')
@@ -15,16 +15,6 @@ def add_security_headers(resp):
     # https://flask.palletsprojects.com/en/2.1.x/security/
     resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
     return resp
-
-
-def client_ip_check(view):
-    @functools.wraps(view)
-    def wrapped_view(**kwargs):
-        if 'X-Forwarded-For' in request.headers and g.user is None:
-            if not check_private_ip(request.headers['X-Forwarded-For']):
-                return redirect(url_for('user.login'))
-        return view(**kwargs)
-    return wrapped_view
 
 
 @bp.route('/', methods=('GET', 'POST'))

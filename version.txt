@@ -247,3 +247,13 @@
 
   2.2.3
     - date_form
+
+  # 2022/07/10
+  2.2.4
+    - update_device
+
+  2.2.5
+    - views.utils
+
+  2.2.6
+    - BasicModel

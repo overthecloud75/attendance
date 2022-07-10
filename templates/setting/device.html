@@ -9,29 +9,19 @@
             <th>번호</th>
             <th>address</th>
             <th>등록일</th>
-            <th>최종확인일</th>
+            <th>최종 확인일</th>
             <th>owner</th>
             <th>device</th>
-            <th>확인</th>
         </tr>
         </thead>
         {% for data in data_list %}
         <tr>
             <td>{{ paging.offset + loop.index0 + 1}}</td>
-            <form method="post" class="my-3">
-            {{ form.csrf_token }}
-            <td><input type="text" class="form-control" name="mac" value="{{ data.mac }}" readonly></td>
-            <td><input type="text" class="form-control" name="registerDate" value="{{ data.registerDate }}"
-                       {% if data.registerDate %} readonly {% endif %}></td>
-            <td> <input type="text" class="form-control" name="endDate" value="{{ data.endDate }}" readonly ></td>
-            <td><input type="text" class="form-control" name="owner" value="{{ data.owner }}"
-                       {% if data.owner %} readonly {% endif %}></td>
-            <td><input type="text" class="form-control" name="device" value="{{ data.device }}"
-                       {% if data.device %} readonly {% endif %}></td>
-             {% if not data.owner and not data.device %}
-            <td><input type="submit" class="btn btn-primary"></td>
-            {% endif %}
-            </form>
+            <td><a href="{{ url_for('main.update_device', _id=data._id) }}">{{ data.mac }}</a></td>
+            <td>{{ data.registerDate }}</td>
+            <td>{{ data.endDate }}</td>
+            <td>{{ data.owner }}</td>
+            <td>{{ data.device }}</td>
         </tr>
         {% endfor %}
     {% else %}
