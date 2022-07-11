@@ -1,5 +1,8 @@
 from .db import BasicModel
 from utils import Page
+from config import EMPLOYEES_STATUS
+
+POSITIONS = EMPLOYEES_STATUS['position']
 
 
 class Employee(BasicModel):
@@ -37,3 +40,17 @@ class Employee(BasicModel):
     def post(self, request_data):
         self.collection.update_one({'employeeId': request_data['employeeId']},
                                    {'$set': request_data}, upsert=True)
+
+    def get_approver(self, email=None):
+        employee = self.collection.find_one({'email': email})
+        approver = None
+        if employee:
+            department = employee['department']
+            position = employee['position']
+            if position == POSITIONS[0]:
+                approver = self.collection.find_one({'department': department, 'position': POSITIONS[1]})
+                if approver is None:
+                    approver = self.collection.find_one({'position': POSITIONS[2]})
+            else:
+                approver = self.collection.find_one({'position': POSITIONS[-1]})
+        return approver

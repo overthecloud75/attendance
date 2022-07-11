@@ -1,6 +1,7 @@
 from flask import request, render_template, url_for, g
 from werkzeug.utils import redirect
 import functools
+from datetime import date
 
 from utils import check_private_ip
 
@@ -33,3 +34,12 @@ def client_ip_check(view):
                 return redirect(url_for('user.login'))
         return view(**kwargs)
     return wrapped_view
+
+
+def date_form(form, start='', end=''):
+    start = start or date.today().strftime('%Y-%m-%d')
+    end = end or date.today().strftime('%Y-%m-%d')
+
+    form.start.data = start
+    form.end.data = end
+    return form, start, end

@@ -1,9 +1,11 @@
 from flask import Blueprint, request, render_template, url_for, current_app, session, g, flash, jsonify
 from werkzeug.utils import redirect
 
-from models import Event
+from models import Event, Employee
+from form import ApprovalSubmitForm
 from config import WORKING
 from .utils import *
+from config import APPROVAL_REASON
 
 
 # blueprint
@@ -25,6 +27,18 @@ def calendar():
     # https://www.freecodecamp.org/news/how-to-use-html-to-open-link-in-new-tab/
     # To open a link in a new tab, just set the target attribute to _blank:
     return render_template('report/calendar.html', **locals())
+
+
+@bp.route('/approval', methods=('GET', 'POST'))
+@login_required
+@client_ip_check
+def approval():
+    form = ApprovalSubmitForm()
+    form, start, end = date_form(form)
+    approval_reason = APPROVAL_REASON
+    employees = Employee()
+    approver = employees.get_approver(email=g.user['email'])
+    return render_template('report/approval.html', **locals())
 
 
 @bp.route('/get_event/')

@@ -26,3 +26,5 @@ class BasicModel:
             data = None
             print(e)
         return data
+
+

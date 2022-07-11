@@ -7,7 +7,7 @@ class Mac(BasicModel):
     def __init__(self):
         super().__init__(model='mac')
 
-    def get(self, mac_list, date=None):
+    def get(self, mac_list, date=''):
         begin = None
         end = None
         # if users have devices
@@ -26,7 +26,7 @@ class Mac(BasicModel):
                     end = data['time']
         return begin, end
 
-    def get_device_list(self, page=1, date=None):
+    def get_device_list(self, page=1, date=''):
         device_list = []
         data_list = self.collection.aggregate([
             {'$match':{'date': date, 'time': {"$gt": WORKING['time']['overNight']}}},

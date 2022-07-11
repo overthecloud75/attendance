@@ -34,9 +34,14 @@ PRIVATE_IP_RANGE = '192.168.0.0'
 
 # employees
 EMPLOYEES_STATUS = {
+    'department': ['연구소', '솔루션', '컨설팅', '기획', '아도스'],
+    'position': ['팀원', '팀장', '본부장', '대표이사'],
     'regular': ['상근', '병특', '비상근', '휴직', '퇴사'],
-    'mode': ['내근', '파견']
+    'mode': ['내근', '파견'],
 }
+
+# approval
+APPROVAL_REASON = ['휴가', '반차', '재택', '기타']
 
 # 병특
 ALTERNATIVE_MILITARY_ATTEND_MODE = True

@@ -2,7 +2,6 @@ from flask import Blueprint, request, render_template, url_for, current_app, ses
 from io import BytesIO, StringIO
 from csvalidate import ValidatedWriter
 from werkzeug.utils import redirect
-from datetime import date
 
 from models import get_setting, Report, Device
 from form import PeriodSubmitForm, DeviceSubmitForm
@@ -33,16 +32,6 @@ def add_security_headers(resp):
     # https://flask.palletsprojects.com/en/2.1.x/security/
     resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
     return resp
-
-
-def date_form(start, end):
-    form = PeriodSubmitForm()
-    start = start or date.today().strftime('%Y-%m-%d')
-    end = end or date.today().strftime('%Y-%m-%d')
-
-    form.start.data = start
-    form.end.data = end
-    return form, start, end
 
 
 @bp.route('/')
@@ -89,7 +78,8 @@ def update_device():
 def wifi_attend():
     report = Report()
     page, _, start, end = request_get(request.args)
-    form, start, end = date_form(start, end)
+    form = PeriodSubmitForm()
+    form, start, end = date_form(form, start=start, end=end)
 
     paging, data_list = report.wifi_attend(page=page, start=start, end=end)
     return render_template('setting/wifi_attend.html', **locals())
@@ -118,7 +108,8 @@ def attend():
             return send_file(buf, attachment_filename=filename, as_attachment=True, mimetype='text/csv')
 
     page, name, start, end = request_get(request.args)
-    form, start, end = date_form(start, end)
+    form = PeriodSubmitForm()
+    form, start, end = date_form(form, start=start, end=start)
 
     paging, today, data_list, summary = report.attend(page=page, name=name, start=start, end=end)
     return render_template('report/attendance.html', **locals())
@@ -145,7 +136,8 @@ def summarize():
             buf = BytesIO(buf.read().encode(encoding))
             return send_file(buf, attachment_filename=filename, as_attachment=True, mimetype='text/csv')
     page, _, start, end = request_get(request.args)
-    form, start, end = date_form(start, end)
+    form = PeriodSubmitForm()
+    form, start, end = date_form(form, start=start, end=start)
 
     paging, data_list = report.summary(page=page, start=start, end=end)
     return render_template('report/summary.html', **locals())

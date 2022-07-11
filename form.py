@@ -3,10 +3,7 @@ from wtforms import StringField, TextAreaField, PasswordField, DateField, Select
 from wtforms.fields.html5 import EmailField
 from wtforms.validators import DataRequired, Optional, Length, EqualTo, Email
 
-from config import EMPLOYEES_STATUS
-
-EMPLOYEE_REGULAR = [(regular, regular) for regular in EMPLOYEES_STATUS['regular']]
-EMPLOYEE_MODE = [(mode, mode) for mode in EMPLOYEES_STATUS['mode']]
+from config import EMPLOYEES_STATUS, APPROVAL_REASON
 
 
 class UserCreateForm(FlaskForm):
@@ -41,14 +38,15 @@ class PasswordResetForm(FlaskForm):
 class EmployeeSubmitForm(FlaskForm):
     # Optional - https://wtforms.readthedocs.io/en/2.3.x/validators/
     name = StringField('name', validators=[DataRequired(), Length(min=2, max=5)])
-    department = StringField('department', validators=[DataRequired(), Length(min=2, max=10)])
-    rank = StringField('rank', validators=[DataRequired(), Length(min=2, max=10)])
     employeeId = StringField('employeeId', validators=[DataRequired(), Length(min=1, max=4)])
+    email = EmailField('email', validators=[Optional(), Email()])
     beginDate = DateField('beginDate', format='%Y-%m-%d', validators=(Optional(),))
     endDate = DateField('endDate', format='%Y-%m-%d', validators=(Optional(),))
-    email = EmailField('email', validators=[Optional(), Email()])
-    regular = SelectField('regular', choices=EMPLOYEE_REGULAR)
-    mode = SelectField('mode', choices=EMPLOYEE_MODE)
+    department = SelectField('department', choices=[(i, i) for i in EMPLOYEES_STATUS['department']])
+    position = SelectField('position', choices=[(i, i) for i in EMPLOYEES_STATUS['position']])
+    rank = StringField('rank', validators=[DataRequired(), Length(min=2, max=10)])
+    regular = SelectField('regular', choices=[(i, i) for i in EMPLOYEES_STATUS['regular']])
+    mode = SelectField('mode', choices=[(i, i) for i in EMPLOYEES_STATUS['mode']])
 
 
 class PeriodSubmitForm(FlaskForm):
@@ -68,4 +66,15 @@ class WriteSubmitForm(FlaskForm):
     name = StringField('name', validators=[DataRequired(), Length(min=2, max=5)])
     title = StringField('title', validators=[DataRequired(), Length(min=2, max=100)])
     content = StringField('content', validators=[DataRequired(), Length(min=2, max=1000)])
+
+
+class ApprovalSubmitForm(FlaskForm):
+    name = StringField('name', validators=[DataRequired(), Length(min=2, max=5)])
+    email = EmailField('email', validators=[DataRequired(), Email()])
+    approver = StringField('approver', validators=[DataRequired(), Length(min=2, max=5)])
+    start = DateField('start', format='%Y-%m-%d', validators=(Optional(),))
+    end = DateField('end', format='%Y-%m-%d', validators=(Optional(),))
+    reason = SelectField('reason', choices=[(i, i) for i in APPROVAL_REASON])
+    detail = StringField('detail', validators=[DataRequired(), Length(min=2, max=100)])
+
 

@@ -33,8 +33,8 @@ def get_board():
 @client_ip_check
 def get_content():
     board = Board()
-    create_time = request.args.get('create_time', None)
-    data = board.get_content(create_time=create_time)
+    _id = request.args.get('_id', '')
+    data = board.get_by_id(_id=_id)
     return render_template('report/get_content.html', data=data)
 
 

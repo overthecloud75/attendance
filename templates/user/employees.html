@@ -11,12 +11,13 @@
         <tr class="table-dark">
             <th>번호</th>
             <th>이름</th>
-            <th>소속</th>
-            <th>직급</th>
             <th>사원번호</th>
+            <th>email</th>
             <th>입사일</th>
             <th>퇴사일</th>
-            <th>email</th>
+            <th>소속</th>
+            <th>position</th>
+            <th>직급</th>
             <th>상근 여부</th>
             <th>상태</th>
         </tr>
@@ -25,12 +26,13 @@
         <tr>
             <td>{{ paging.offset + loop.index0 + 1}}</td>
             <td><a href="{{ url_for('user.update_employee', _id=data._id) }}">{{ data.name }}</a></td>
-            <td>{{ data.department }}</td>
-            <td>{{ data.rank }}</td>
             <td>{{ data.employeeId }}</td>
+            <td>{{ data.email }}</td>
             <td>{{ data.beginDate }}</td>
             <td>{{ data.endDate }}</td>
-            <td>{{ data.email }}</td>
+            <td>{{ data.department }}</td>
+            <td>{{ data.position }}</td>
+            <td>{{ data.rank }}</td>
             {% if data.regular not in ['상근'] %}
                 <td style='color:red'>{{ data.regular }}</td>
             {% else %}

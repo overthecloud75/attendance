@@ -19,7 +19,7 @@
             <td>{{ paging.offset + loop.index0 + 1}}</td>
             <td>{{ data.create_time }}</td>
             <td>{{ data.name }}</td>
-            <td><a href="{{ url_for('board.get_content', create_time=data.create_time) }}">{{ data.title }}</a></td>
+            <td><a href="{{ url_for('board.get_content', _id=data._id) }}">{{ data.title }}</a></td>
         </tr>
         {% endfor %}
     {% else %}

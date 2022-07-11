@@ -175,16 +175,16 @@ def update_employee():
     employee = Employee()
     employees_status = EMPLOYEES_STATUS
     if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'name': form.name.data, 'department': form.department.data, 'rank': form.rank.data,
-                        'regular': form.regular.data, 'mode': form.mode.data}
+        request_data = {'name': form.name.data, 'department': form.department.data, 'position': form.position.data,
+                        'rank': form.rank.data, 'regular': form.regular.data, 'mode': form.mode.data}
         if form.employeeId.data:
             request_data['employeeId'] = int(form.employeeId.data)
+        if form.email.data:
+            request_data['email'] = form.email.data
         if form.beginDate.data:
             request_data['beginDate'] = form.beginDate.data.strftime('%Y-%m-%d')
         if form.endDate.data:
             request_data['endDate'] = form.endDate.data.strftime('%Y-%m-%d')
-        if form.email.data:
-            request_data['email'] = form.email.data
         employee.post(request_data)
         return redirect(url_for('user.employees'))
     _id = request.args.get('_id', '')

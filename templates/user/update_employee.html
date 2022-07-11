@@ -10,19 +10,14 @@
                    value="{{ data.name or '' }}">
         </div>
         <div class="form-group">
-            <label for="department">소속</label>
-            <input type="text" class="form-control" name="department" id="department"
-                   value="{{ data.department or '' }}">
-        </div>
-        <div class="form-group">
-            <label for="rank">직급</label>
-            <input type="text" class="form-control" name="rank" id="rank"
-                   value="{{ data.rank or '' }}">
-        </div>
-        <div class="form-group">
             <label for="employeeId">사원 번호</label>
             <input type="text" class="form-control" name="employeeId" id="employeeId"
                    value="{{ data.employeeId or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="email">이메일</label>
+            <input type="text" class="form-control" name="email" id="email" placeholder="name@example.com"
+                   value="{{ data.email or '' }}">
         </div>
         <div class="form-group">
             <label for="beginDate">입사일</label>
@@ -35,12 +30,28 @@
                    value="{{ data.endDate or '' }}">
         </div>
         <div class="form-group">
-            <label for="email">이메일</label>
-            <input type="text" class="form-control" name="email" id="email" placeholder="name@example.com"
-                   value="{{ data.email or '' }}">
+            <label for="department">소속</label>
+            <select class="form-select" name="department" id="department" aria-label="Default select department">
+                {% for department in employees_status.department %}
+                <option value="{{ department }}" {% if data.department == department %} selected {% endif %}>{{ department }}</option>
+                {% endfor %}
+            </select>
         </div>
         <div class="form-group">
-            <label for="regular">상근 여부 [ex)상근, 병특, 비상근, 휴직, 퇴사]</label>
+            <label for="position">position ex) {{ employees_status.position }} </label>
+            <select class="form-select" name="position" id="position" aria-label="Default select position">
+                {% for position in employees_status.position %}
+                <option value="{{ position }}" {% if data.position == position %} selected {% endif %}>{{ position }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="rank">직급</label>
+            <input type="text" class="form-control" name="rank" id="rank"
+                   value="{{ data.rank or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="regular">상근 여부 ex) {{ employees_status.regular }}</label>
             <select class="form-select" name="regular" id="regular" aria-label="Default select regular">
                 {% for regular in employees_status.regular %}
                 <option value="{{ regular }}" {% if data.regular == regular %} selected {% endif %}>{{ regular }}</option>
@@ -48,8 +59,8 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="mode">상태 [ex)내근, 파견]</label>
-             <select class="form-select" name="mode" id="mode" aria-label="Default select status">
+            <label for="mode">상태 ex) {{ employees_status.regular }} </label>
+             <select class="form-select" name="mode" id="mode" aria-label="Default select mode">
                 {% for mode in employees_status.mode %}
                 <option value="{{ mode }}" {% if data.mode == mode %} selected {% endif %}>{{ mode }}</option>
                 {% endfor %}

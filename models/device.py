@@ -1,4 +1,4 @@
-import datetime
+from datetime import date
 
 from .db import BasicModel
 from .employee import Employee
@@ -24,9 +24,8 @@ class Device(BasicModel):
             return get_page.paginate(device_list)
 
     def new_post(self, request_data): # new device 발견인 경우
-        now = datetime.datetime.now() # 최초 등록 시간 기록
-        now = str(now)[:10]
-        request_data = {'mac': request_data['mac'], 'registerDate': now, 'endDate': now, 'owner': None, 'device': None}
+        register_date = date.today().strftime('%Y-%m-%d')   # 최초 등록 시간 기록
+        request_data = {'mac': request_data['mac'], 'registerDate': register_date, 'endDate': register_date, 'owner': None, 'device': None}
         self.collection.update_one({'mac': request_data['mac']}, {'$set': request_data}, upsert=True)
 
     def post(self, request_data):

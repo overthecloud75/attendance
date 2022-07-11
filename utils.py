@@ -223,15 +223,13 @@ def date_range(start, end):
 def request_get(request_data):
     page = int(request_data.get('page', 1))
     name = request_data.get('name', None)
-    start = request_data.get('start', None)
-    if start == '':
-        start = None
+    start = request_data.get('start', '')
+
     if start and len(start) >=5:
         if start[4] != '-':
             start = start[6:] + '-' + start[:2] + '-' + start[3:5]
-    end = request_data.get('end', None)
-    if end == '':
-        end = None
+    end = request_data.get('end', '')
+
     if end and len(end) >=5:
         if end[4] != '-':
             end = end[6:] + '-' + end[:2] + '-' + end[3:5]

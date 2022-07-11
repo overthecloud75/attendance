@@ -3,7 +3,7 @@ from collections import OrderedDict
 import random
 
 from utils import check_time, check_holiday, get_delta_day, date_range, Page
-from .db import BasicModel
+from .db import db, BasicModel
 from .mail import send_email
 from .employee import Employee
 from .mac import Mac

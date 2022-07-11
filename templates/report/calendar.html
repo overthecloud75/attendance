@@ -85,6 +85,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <div class="container my-3">
+     {% if g.user %}
+    <div class="justify-content-end">
+        <form id="submitForm" method="get" action="{{ url_for('calendar.approval') }}">
+            <button type="submit" class="btn btn-primary my-3">등록</button>
+        </form>
+    </div>
+     {% endif %}
     <div class="container">
         <div id="calendar"></div>
     </div>
