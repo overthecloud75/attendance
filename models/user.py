@@ -14,7 +14,7 @@ except Exception as e:
 
 class User(BasicModel):
     def __init__(self):
-        super().__init__(model='user')
+        super().__init__(model='users')
 
     def get_employee(self, request_data):
         collection = db['employees']
@@ -35,9 +35,9 @@ class User(BasicModel):
 
     def confirm_email(self, user_data):
         error = None
-        if not user_data['email_confirmed']:
-            self.collection.update_one({'email': user_data['email']}, {'$set': {'email_confirmed': True}}, upsert=True)
-        elif user_data['email_confirmed']:
+        if not user_data['emailConfirm']:
+            self.collection.update_one({'email': user_data['email']}, {'$set': {'emailConfirm': True}}, upsert=True)
+        elif user_data['emailConfirm']:
             error = 'Account already confirmed.'
         return error
 
@@ -51,31 +51,25 @@ class User(BasicModel):
         if user_data:
             error = '이미 존재하는 사용자입니다.'
         else:
-            user_data = self.collection.find_one(sort=[('create_time', -1)])
+            user_data = self.collection.find_one(sort=[('createdAt', -1)])
+            request_data['createdAt'] = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             if user_data:
                 employee_data = self.get_employee(request_data)
                 if employee_data:
-                    user_id = user_data['user_id'] + 1
-                    request_data['is_admin'] = False
+                    request_data['isAdmin'] = False
+                    result = self._signup_email(request_data['name'], request_data['email'])
+                    if result:
+                        request_data['emailConfirm'] = False
+                        self.collection.insert(request_data)
+                    else:
+                        error = 'email이 보내지지 않았습니다.'
                 else:
                     error = '가입 요건이 되지 않습니다.'
                     return error
             else:
-                user_id = 1
-                request_data['is_admin'] = True
-
-            request_data['create_time'] = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            request_data['user_id'] = user_id
-            if user_id == 1:
-                request_data['email_confirmed'] = True
+                request_data['isAdmin'] = True
+                request_data['emailConfirm'] = True
                 self.collection.insert(request_data)
-            else:
-                result = self._signup_email(request_data['name'], request_data['email'])
-                if result:
-                    request_data['email_confirmed'] = False
-                    self.collection.insert(request_data)
-                else:
-                    error = 'email이 보내지지 않았습니다.'
         return error
 
     def login(self, request_data):
@@ -127,11 +121,11 @@ class User(BasicModel):
         else:
             result = self._create_id_email(request_data['name'], request_data['email'])
             if result:
-                user_data = self.collection.find_one(sort=[('create_time', -1)])
-                request_data['user_id'] = user_data['user_id'] + 1
+                user_data = self.collection.find_one(sort=[('createdAt', -1)])
+                request_data['userId'] = user_data['userId'] + 1
                 request_data['password'] = generate_password_hash('123456')
-                request_data['email_confirmed'] = True
-                request_data['create_time'] = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                request_data['emailConfirm'] = True
+                request_data['createdAt'] = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 self.collection.update_one({'email': request_data['email']}, {'$set': request_data}, upsert=True)
             else:
                 error = 'email이 보내지지 않았습니다.'

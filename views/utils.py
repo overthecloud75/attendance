@@ -11,7 +11,7 @@ def admin_required(view):
     def wrapped_view(**kwargs):
         if g.user is None:
             return redirect(url_for('user.login'))
-        elif not g.user['is_admin']:
+        elif not g.user['isAdmin']:
             return redirect(url_for('main.attend'))
         return view(**kwargs)
     return wrapped_view

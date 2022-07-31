@@ -9,7 +9,7 @@ from config import APPROVAL_REASON
 
 
 # blueprint
-bp = Blueprint('calendar', __name__, url_prefix='/calendar')
+bp = Blueprint('calendar', __name__, url_prefix='/schedule')
 
 
 @bp.after_request

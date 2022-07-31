@@ -261,3 +261,7 @@
   # 2022/07/11
   2.2.7
     - position, approval
+
+  # 2022/07/30
+  2.2.8
+    - MongoDB collection name: report -> reports, event -> events

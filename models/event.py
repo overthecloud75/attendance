@@ -5,7 +5,7 @@ from utils import request_event
 
 class Event(BasicModel):
     def __init__(self):
-        super().__init__(model='event')
+        super().__init__(model='events')
 
     def get(self, args):
         _, start, end, _ = request_event(args)

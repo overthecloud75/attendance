@@ -45,15 +45,15 @@ def login():
         user = User()
         request_data = {'email': form.email.data, 'password': form.password.data}
         error, user_data = user.login(request_data)
-        if error is None and user_data['email_confirmed']:
-            del user_data['_id']
+        if error is None and user_data['emailConfirm']:
             del user_data['password']
+            user_data['_id'] = str(user_data['_id'])
 
             session.clear()
             for key in user_data:
                 session[key] = user_data[key]
             return redirect(url_for('main.attend'))
-        elif error is None and not user_data['email_confirmed']:
+        elif error is None and not user_data['emailConfirm']:
             return redirect(url_for('user.unconfirmed', _type='email'))
         else:
             flash(error)
@@ -207,7 +207,7 @@ def update_user():
     form = UserUpdateForm()
     user = User()
     if request.method == 'POST' and form.validate_on_submit():
-        request_data = {'name': form.name.data, 'email': form.email.data, 'is_admin': form.is_admin.data}
+        request_data = {'name': form.name.data, 'email': form.email.data, 'isAdmin': form.is_admin.data}
         error = user.post(request_data)
         if error:
             flash(error)

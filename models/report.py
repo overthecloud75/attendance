@@ -26,7 +26,7 @@ cursor = conn.cursor()
 
 class Report(BasicModel):
     def __init__(self):
-        super().__init__(model='report')
+        super().__init__(model='reports')
         self.employee = Employee()
         self.mac = Mac()
 
@@ -462,7 +462,7 @@ class Report(BasicModel):
                    '- 사유: %s \n' \
                    '\n' \
                    '연차, 외근 등의 사유가 있는 경우 %s 에 기록을 하시면 근태가 정정이 됩니다. ' \
-                   %(name, name, report_date, begin, working_hours, str(status), SERVER_URL + 'calendar')
+                   %(name, name, report_date, begin, working_hours, str(status), SERVER_URL + 'schedule')
 
             subject = '[근태 관리] ' + report_date + ' ' + name + ' ' + str(status)
             sent = send_email(email=email, subject=subject, body=body, include_cc=True)

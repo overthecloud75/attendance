@@ -18,8 +18,9 @@ def load_logged_in_user():
     message = log_message(request.headers)
     current_app.logger.info(message)
 
-    user_id = session.get('user_id')
-    if user_id is None:
+    _id = session.get('_id')
+
+    if _id is None:
         g.user = None
     else:
         g.user = {}
@@ -109,7 +110,7 @@ def attend():
 
     page, name, start, end = request_get(request.args)
     form = PeriodSubmitForm()
-    form, start, end = date_form(form, start=start, end=start)
+    form, start, end = date_form(form, start=start, end=end)
 
     paging, today, data_list, summary = report.attend(page=page, name=name, start=start, end=end)
     return render_template('report/attendance.html', **locals())
@@ -137,7 +138,7 @@ def summarize():
             return send_file(buf, attachment_filename=filename, as_attachment=True, mimetype='text/csv')
     page, _, start, end = request_get(request.args)
     form = PeriodSubmitForm()
-    form, start, end = date_form(form, start=start, end=start)
+    form, start, end = date_form(form, start=start, end=end)
 
     paging, data_list = report.summary(page=page, start=start, end=end)
     return render_template('report/summary.html', **locals())
